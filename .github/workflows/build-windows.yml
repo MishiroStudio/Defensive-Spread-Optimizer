@@ -1,0 +1,38 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Projekt herunterladen
+        uses: actions/checkout@v6
+
+      - name: Python installieren
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Pakete installieren
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install PySide6 PyInstaller
+
+      - name: Windows-App erstellen
+        run: >
+          python -m PyInstaller
+          --noconfirm
+          --clean
+          --windowed
+          --name "Defensive Spread Optimizer"
+          --add-data "data:data"
+          src/app.py
+
+      - name: Windows-App hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Defensive-Spread-Optimizer-Windows
+          path: dist/Defensive Spread Optimizer/
