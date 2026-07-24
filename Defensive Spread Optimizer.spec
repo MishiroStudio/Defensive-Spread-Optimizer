@@ -46,6 +46,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Defensive Spread Optimizer.app',
-    icon='Defensive Spread Optimizer.icns',
+    icon='assets/icons/Defensive Spread Optimizer.icns',
     bundle_identifier=None,
 )
