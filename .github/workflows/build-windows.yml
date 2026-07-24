@@ -29,7 +29,7 @@ jobs:
           --windowed
           --name "Defensive Spread Optimizer"
           --add-data "data:data"
-          --icon "assets/icons/Defensive Spread Optimizer.ico" ^
+          --icon "assets/icons/Defensive Spread Optimizer.ico"
           src/app.py
 
       - name: Windows-App hochladen
