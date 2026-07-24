@@ -31,9 +31,14 @@ This helps create a balanced defensive spread instead of investing only in physi
 
 ## Availability
 
-Currently, only the macOS version is available.
+Pre-built downloads are available for:
 
-A Windows version may be added in the future.
+- **macOS** — tested
+- **Windows** — available, but not yet tested on a physical Windows system
+
+The Windows version should currently be considered experimental. Feedback and test reports are welcome.
+
+Download the latest version from the [Releases](../../releases) page.
 
 ## Download
 
