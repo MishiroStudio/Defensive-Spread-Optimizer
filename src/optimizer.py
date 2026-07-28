@@ -11,15 +11,76 @@ from damage import calculate_simple_damage
 from natures import get_natures_by_stat_changes
 
 
+VALID_ITEMS = {
+    "none",
+    "eviolite",
+    "assault_vest",
+}
+
+
+def apply_stat_stage(stat: int, stage: int) -> int:
+    """
+    Apply a Pokémon stat stage from -6 to +6.
+
+    Examples:
+    +1 = x1.5
+    +2 = x2
+    -1 = x2/3
+    -2 = x1/2
+    """
+    if not -6 <= stage <= 6:
+        raise ValueError("Stat stage must be between -6 and +6.")
+
+    if stage >= 0:
+        return stat * (2 + stage) // 2
+
+    return stat * 2 // (2 - stage)
+
+
+def apply_defensive_item(
+    defense: int,
+    special_defense: int,
+    held_item: str
+) -> tuple[int, int]:
+    """
+    Apply the defensive effect of the selected held item.
+
+    Eviolite:
+        Defense and Special Defense x1.5
+
+    Assault Vest:
+        Special Defense x1.5
+    """
+    if held_item not in VALID_ITEMS:
+        raise ValueError(f"Unknown held item: {held_item}")
+
+    if held_item == "eviolite":
+        defense = defense * 3 // 2
+        special_defense = special_defense * 3 // 2
+
+    elif held_item == "assault_vest":
+        special_defense = special_defense * 3 // 2
+
+    return defense, special_defense
+
+
 def find_best_defensive_spread(
     pokemon,
     increased_nature_stat,
     decreased_nature_stat,
     fixed_atk_points=0,
     fixed_spa_points=0,
-    fixed_spe_points=0
+    fixed_spe_points=0,
+    defense_stage=0,
+    special_defense_stage=0,
+    held_item="none"
 ):
-    remaining_points = 66 - fixed_atk_points - fixed_spa_points - fixed_spe_points
+    remaining_points = (
+        66
+        - fixed_atk_points
+        - fixed_spa_points
+        - fixed_spe_points
+    )
 
     best_score = None
     best_spread = None
@@ -38,7 +99,12 @@ def find_best_defensive_spread(
             for def_points in range(33):
                 for spd_points in range(33):
 
-                    if hp_points + def_points + spd_points != remaining_points:
+                    if (
+                        hp_points
+                        + def_points
+                        + spd_points
+                        != remaining_points
+                    ):
                         continue
 
                     hp = calculate_hp(
@@ -52,7 +118,7 @@ def find_best_defensive_spread(
                         nature["attack"]
                     )
 
-                    defense = calculate_defense(
+                    raw_defense = calculate_defense(
                         pokemon["base_def"],
                         def_points,
                         nature["defense"]
@@ -64,7 +130,7 @@ def find_best_defensive_spread(
                         nature["special_attack"]
                     )
 
-                    special_defense = calculate_special_defense(
+                    raw_special_defense = calculate_special_defense(
                         pokemon["base_spd"],
                         spd_points,
                         nature["special_defense"]
@@ -76,10 +142,36 @@ def find_best_defensive_spread(
                         nature["speed"]
                     )
 
-                    physical_damage = calculate_simple_damage(defense)
-                    special_damage = calculate_simple_damage(special_defense)
+                    # Apply stat stages first.
+                    defense = apply_stat_stage(
+                        raw_defense,
+                        defense_stage
+                    )
 
-                    score = (physical_damage / hp) + (special_damage / hp)
+                    special_defense = apply_stat_stage(
+                        raw_special_defense,
+                        special_defense_stage
+                    )
+
+                    # Apply Eviolite or Assault Vest afterwards.
+                    defense, special_defense = apply_defensive_item(
+                        defense,
+                        special_defense,
+                        held_item
+                    )
+
+                    physical_damage = calculate_simple_damage(
+                        defense
+                    )
+
+                    special_damage = calculate_simple_damage(
+                        special_defense
+                    )
+
+                    score = (
+                        physical_damage / hp
+                        + special_damage / hp
+                    )
 
                     if best_score is None or score < best_score:
                         best_score = score
@@ -96,50 +188,27 @@ def find_best_defensive_spread(
 
                             "hp": hp,
                             "attack": attack,
+
+                            # Unmodified calculated stats
+                            "raw_defense": raw_defense,
+                            "raw_special_defense": (
+                                raw_special_defense
+                            ),
+
+                            # Effective battle stats
                             "defense": defense,
-                            "special_attack": special_attack,
                             "special_defense": special_defense,
+
+                            "special_attack": special_attack,
                             "speed": speed,
+
+                            "defense_stage": defense_stage,
+                            "special_defense_stage": (
+                                special_defense_stage
+                            ),
+                            "held_item": held_item,
 
                             "score": score
                         }
 
     return best_spread
-
-## TEST RUN
-#if __name__ == "__main__":
-    test_pokemon = {
-        "name_en": "Pelipper",
-        "name_de": "Pelipper",
-        "base_hp": 60,
-        "base_atk": 50,
-        "base_def": 100,
-        "base_spa": 95,
-        "base_spd": 70,
-        "base_spe": 65
-    }
-
-    result = find_best_defensive_spread(
-        pokemon=test_pokemon,
-        increased_nature_stat="attack",
-        decreased_nature_stat="speed"
-    )
-
-    if result is None:
-        print("No matching spread found.")
-    else:
-        print("Nature:", result["nature"]["name_en"])
-        print("Positive:", result["nature"]["positive"])
-        print("Negative:", result["nature"]["negative"])
-
-        print("\nInvestment:")
-        print("HP:", result["hp_points"])
-        print("Defense:", result["def_points"])
-        print("Special Defense:", result["spd_points"])
-
-        print("\nFinal stats:")
-        print("HP:", result["hp"])
-        print("Defense:", result["defense"])
-        print("Special Defense:", result["special_defense"])
-
-        print("\nScore:", result["score"])

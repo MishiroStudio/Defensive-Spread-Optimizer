@@ -5,7 +5,10 @@ a = Analysis(
     ['src/app.py'],
     pathex=[],
     binaries=[],
-    datas=[('data', 'data')],
+    datas=[
+        ("data", "data"),
+        ("assets/sprites", "assets/sprites"),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

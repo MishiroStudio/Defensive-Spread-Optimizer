@@ -29,6 +29,7 @@ jobs:
           --windowed
           --name "Defensive Spread Optimizer"
           --add-data "data:data"
+          --add-data "assets/sprites:assets/sprites"
           --icon "assets/icons/Defensive Spread Optimizer.ico"
           src/app.py
 
