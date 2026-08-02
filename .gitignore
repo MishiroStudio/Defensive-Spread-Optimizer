@@ -24,8 +24,13 @@ dist/
 /public/assets/sprites/
 
 # Web application
+node_modules/
 web/node_modules/
 web/dist/
 web/.vite/
 web/.env
 web/.env.local
+
+Defensive Spread Optimizer.spec
+Defensive-Spread-Optimizer-v1.0.0-macOS.zip
+Defensive-Spread-Optimizer-v1.1.0-macOS.zip
