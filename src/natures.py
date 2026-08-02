@@ -132,7 +132,7 @@ NATURES = {
     "sassy": {
         "id": "sassy",
         "name_en": "Sassy",
-        "name_de": "Frech",
+        "name_de": "Forsch",
         "positive": "special_defense",
         "negative": "speed",
         "attack": 1.0,
@@ -164,6 +164,161 @@ NATURES = {
         "defense": 1.0,
         "special_attack": 0.9,
         "special_defense": 1.1,
+        "speed": 1.0
+    },
+    "lonely": {
+        "id": "lonely",
+        "name_en": "Lonely",
+        "name_de": "Solo",
+        "positive": "attack",
+        "negative": "defense",
+        "attack": 1.1,
+        "defense": 0.9,
+        "special_attack": 1.0,
+        "special_defense": 1.0,
+        "speed": 1.0
+    },
+
+    "naughty": {
+        "id": "naughty",
+        "name_en": "Naughty",
+        "name_de": "Frech",
+        "positive": "attack",
+        "negative": "special_defense",
+        "attack": 1.1,
+        "defense": 1.0,
+        "special_attack": 1.0,
+        "special_defense": 0.9,
+        "speed": 1.0
+    },
+
+    "docile": {
+        "id": "docile",
+        "name_en": "Docile",
+        "name_de": "Sanft",
+        "positive": None,
+        "negative": None,
+        "attack": 1.0,
+        "defense": 1.0,
+        "special_attack": 1.0,
+        "special_defense": 1.0,
+        "speed": 1.0
+    },
+
+    "lax": {
+        "id": "lax",
+        "name_en": "Lax",
+        "name_de": "Lasch",
+        "positive": "defense",
+        "negative": "special_defense",
+        "attack": 1.0,
+        "defense": 1.1,
+        "special_attack": 1.0,
+        "special_defense": 0.9,
+        "speed": 1.0
+    },
+
+    "hasty": {
+        "id": "hasty",
+        "name_en": "Hasty",
+        "name_de": "Hastig",
+        "positive": "speed",
+        "negative": "defense",
+        "attack": 1.0,
+        "defense": 0.9,
+        "special_attack": 1.0,
+        "special_defense": 1.0,
+        "speed": 1.1
+    },
+
+    "serious": {
+        "id": "serious",
+        "name_en": "Serious",
+        "name_de": "Ernst",
+        "positive": None,
+        "negative": None,
+        "attack": 1.0,
+        "defense": 1.0,
+        "special_attack": 1.0,
+        "special_defense": 1.0,
+        "speed": 1.0
+    },
+
+    "naive": {
+        "id": "naive",
+        "name_en": "Naive",
+        "name_de": "Naiv",
+        "positive": "speed",
+        "negative": "special_defense",
+        "attack": 1.0,
+        "defense": 1.0,
+        "special_attack": 1.0,
+        "special_defense": 0.9,
+        "speed": 1.1
+    },
+
+    "mild": {
+        "id": "mild",
+        "name_en": "Mild",
+        "name_de": "Mild",
+        "positive": "special_attack",
+        "negative": "defense",
+        "attack": 1.0,
+        "defense": 0.9,
+        "special_attack": 1.1,
+        "special_defense": 1.0,
+        "speed": 1.0
+    },
+
+    "bashful": {
+        "id": "bashful",
+        "name_en": "Bashful",
+        "name_de": "Zaghaft",
+        "positive": None,
+        "negative": None,
+        "attack": 1.0,
+        "defense": 1.0,
+        "special_attack": 1.0,
+        "special_defense": 1.0,
+        "speed": 1.0
+    },
+
+    "rash": {
+        "id": "rash",
+        "name_en": "Rash",
+        "name_de": "Hitzig",
+        "positive": "special_attack",
+        "negative": "special_defense",
+        "attack": 1.0,
+        "defense": 1.0,
+        "special_attack": 1.1,
+        "special_defense": 0.9,
+        "speed": 1.0
+    },
+
+    "gentle": {
+        "id": "gentle",
+        "name_en": "Gentle",
+        "name_de": "Zart",
+        "positive": "special_defense",
+        "negative": "defense",
+        "attack": 1.0,
+        "defense": 0.9,
+        "special_attack": 1.0,
+        "special_defense": 1.1,
+        "speed": 1.0
+    },
+
+    "quirky": {
+        "id": "quirky",
+        "name_en": "Quirky",
+        "name_de": "Kauzig",
+        "positive": None,
+        "negative": None,
+        "attack": 1.0,
+        "defense": 1.0,
+        "special_attack": 1.0,
+        "special_defense": 1.0,
         "speed": 1.0
     },
 }

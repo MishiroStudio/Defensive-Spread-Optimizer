@@ -19,3 +19,13 @@ dist/
 
 # Logs
 *.log
+
+#Sprites
+/public/assets/sprites/
+
+# Web application
+web/node_modules/
+web/dist/
+web/.vite/
+web/.env
+web/.env.local
