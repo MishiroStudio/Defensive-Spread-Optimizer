@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/Defensive-Spread-Optimizer/',
   plugins: [
     react(),
 
@@ -16,14 +17,14 @@ export default defineConfig({
       ],
 
       manifest: {
-        id: '/',
+        id: '/Defensive-Spread-Optimizer/',
         name: 'Defensive Spread Optimizer',
         short_name: 'Spread Optimizer',
         description:
           'Find the bulkiest defensive spread for your Pokémon.',
 
-        start_url: '/',
-        scope: '/',
+        start_url: '/Defensive-Spread-Optimizer/',
+        scope: '/Defensive-Spread-Optimizer/',
 
         display: 'standalone',
         orientation: 'portrait',
