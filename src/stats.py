@@ -1,15 +1,9 @@
-import math
+"""Stat helpers for the Defensive Spread Optimizer.
 
+The actual calculations live centrally in shared.calculations.stats.
+"""
 
-def calculate_hp(base_hp, stat_points):
-    level_50_hp = math.floor((2 * base_hp + 31) / 2) + 60
-    return level_50_hp + stat_points
-
-
-def calculate_other_stat(base_stat, stat_points, nature=1.0):
-    level_50_stat = math.floor((2 * base_stat + 31) / 2) + 5
-    stat_with_points = level_50_stat + stat_points
-    return math.floor(stat_with_points * nature)
+from shared.calculations.stats import calculate_hp, calculate_other_stat
 
 
 def calculate_attack(base_atk, stat_points, nature=1.0):

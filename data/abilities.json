@@ -1,0 +1,2506 @@
+[
+    {
+        "ability_id": 1,
+        "api_name": "stench",
+        "name_en": "Stench",
+        "name_de": "Duftnote",
+        "description_en": "Has a 10% chance of making target Pokémon flinch with each hit.",
+        "description_de": "Bei jedem Treffer besteht eine Chance von 10 %, das Ziel zurückschrecken zu lassen."
+    },
+    {
+        "ability_id": 2,
+        "api_name": "drizzle",
+        "name_en": "Drizzle",
+        "name_de": "Niesel",
+        "description_en": "Summons rain that lasts indefinitely upon entering battle.",
+        "description_de": "Erzeugt beim Einwechseln für 5 Runden Regen."
+    },
+    {
+        "ability_id": 3,
+        "api_name": "speed-boost",
+        "name_en": "Speed Boost",
+        "name_de": "Temposchub",
+        "description_en": "Raises Speed one stage after each turn.",
+        "description_de": "Steigert die Initiative um 1 Stufe nach jeder Runde."
+    },
+    {
+        "ability_id": 4,
+        "api_name": "battle-armor",
+        "name_en": "Battle Armor",
+        "name_de": "Kampfpanzer",
+        "description_en": "Protects against critical hits.",
+        "description_de": "Schützt vor kritischen Treffern."
+    },
+    {
+        "ability_id": 5,
+        "api_name": "sturdy",
+        "name_en": "Sturdy",
+        "name_de": "Robustheit",
+        "description_en": "Prevents being KOed from full HP, leaving 1 HP instead. Protects against the one-hit KO moves regardless of HP.",
+        "description_de": "Verhindert K.-o.-Treffer bei vollen KP, das Pokémon behält 1 KP. Schützt gegen K.-o.-Attacken."
+    },
+    {
+        "ability_id": 6,
+        "api_name": "damp",
+        "name_en": "Damp",
+        "name_de": "Feuchtigkeit",
+        "description_en": "Prevents Self-Destruct, Explosion, and Aftermath from working while the Pokémon is in battle.",
+        "description_de": "Verhindert Finale, Explosion und Finalschlag."
+    },
+    {
+        "ability_id": 7,
+        "api_name": "limber",
+        "name_en": "Limber",
+        "name_de": "Flexibilität",
+        "description_en": "Prevents paralysis.",
+        "description_de": "Verhindert Paralyse."
+    },
+    {
+        "ability_id": 8,
+        "api_name": "sand-veil",
+        "name_en": "Sand Veil",
+        "name_de": "Sandschleier",
+        "description_en": "Increases evasion to 1.25× during a sandstorm. Protects against sandstorm damage.",
+        "description_de": "Senkt im Sandsturm die Genauigkeit gegnerischer Attacken gegen das Pokémon auf das 0,8-Fache."
+    },
+    {
+        "ability_id": 9,
+        "api_name": "static",
+        "name_en": "Static",
+        "name_de": "Statik",
+        "description_en": "Has a 30% chance of paralyzing attacking Pokémon on contact.",
+        "description_de": "Wird das Pokémon von einer Kontaktattacke getroffen, besteht eine Chance von 30 %, den Angreifer zu paralysieren."
+    },
+    {
+        "ability_id": 10,
+        "api_name": "volt-absorb",
+        "name_en": "Volt Absorb",
+        "name_de": "Voltabsorber",
+        "description_en": "Absorbs Electric moves, healing for 1/4 max HP.",
+        "description_de": "Absorbiert Elektro-Attacken und heilt 1/4 der maximalen KP."
+    },
+    {
+        "ability_id": 11,
+        "api_name": "water-absorb",
+        "name_en": "Water Absorb",
+        "name_de": "H2O-Absorber",
+        "description_en": "Absorbs Water moves, healing for 1/4 max HP.",
+        "description_de": "Absorbiert Wasser-Attacken und heilt 1/4 der maximalen KP."
+    },
+    {
+        "ability_id": 12,
+        "api_name": "oblivious",
+        "name_en": "Oblivious",
+        "name_de": "Dösigkeit",
+        "description_en": "Prevents infatuation and protects against Captivate.",
+        "description_de": "Verhindert Verliebtheit und schützt gegen Liebreiz."
+    },
+    {
+        "ability_id": 13,
+        "api_name": "cloud-nine",
+        "name_en": "Cloud Nine",
+        "name_de": "Wolke Sieben",
+        "description_en": "Negates all effects of weather, but does not prevent the weather itself.",
+        "description_de": "Entfernt alle Wettereffekte aber ändert nicht das Wetter selbst."
+    },
+    {
+        "ability_id": 14,
+        "api_name": "compound-eyes",
+        "name_en": "Compound Eyes",
+        "name_de": "Facettenauge",
+        "description_en": "Increases moves' accuracy to 1.3×.",
+        "description_de": "Erhöht die Genauigkeit eigener Attacken um den Faktor 1,3."
+    },
+    {
+        "ability_id": 15,
+        "api_name": "insomnia",
+        "name_en": "Insomnia",
+        "name_de": "Insomnia",
+        "description_en": "Prevents sleep.",
+        "description_de": "Verhindert Schlaf."
+    },
+    {
+        "ability_id": 16,
+        "api_name": "color-change",
+        "name_en": "Color Change",
+        "name_de": "Farbwechsel",
+        "description_en": "Changes type to match when hit by a damaging move.",
+        "description_de": "Ändert den Typ des Pokémons in den der Attacke von der es getroffen wird."
+    },
+    {
+        "ability_id": 17,
+        "api_name": "immunity",
+        "name_en": "Immunity",
+        "name_de": "Immunität",
+        "description_en": "Prevents poison.",
+        "description_de": "Verhindert Vergiftung."
+    },
+    {
+        "ability_id": 18,
+        "api_name": "flash-fire",
+        "name_en": "Flash Fire",
+        "name_de": "Feuerfänger",
+        "description_en": "Protects against Fire moves. Once one has been blocked, the Pokémon's own Fire moves inflict 1.5× damage until it leaves battle.",
+        "description_de": "Schützt vor Feuer-Attacken. Sobald eine Feuer-Attacke blockiert wurde, erhöht sich der Schaden der eigenen Feuer-Attacken um 50 %."
+    },
+    {
+        "ability_id": 19,
+        "api_name": "shield-dust",
+        "name_en": "Shield Dust",
+        "name_de": "Puderabwehr",
+        "description_en": "Protects against incoming moves' extra effects.",
+        "description_de": "Schützt vor Zusatzeffekten von Attacken."
+    },
+    {
+        "ability_id": 20,
+        "api_name": "own-tempo",
+        "name_en": "Own Tempo",
+        "name_de": "Gleichmut",
+        "description_en": "Prevents confusion.",
+        "description_de": "Verhindert Verwirrung und schützt vor der Angriffssenkung durch Bedroher."
+    },
+    {
+        "ability_id": 21,
+        "api_name": "suction-cups",
+        "name_en": "Suction Cups",
+        "name_de": "Saugnapf",
+        "description_en": "Prevents being forced out of battle by other Pokémon's moves.",
+        "description_de": "Verhindert den Austausch von Pokémon durch Attacken."
+    },
+    {
+        "ability_id": 22,
+        "api_name": "intimidate",
+        "name_en": "Intimidate",
+        "name_de": "Bedroher",
+        "description_en": "Lowers opponents' Attack one stage upon entering battle.",
+        "description_de": "Senkt beim Einwechseln den Angriff aller angrenzenden gegnerischen Pokémon um 1 Stufe."
+    },
+    {
+        "ability_id": 23,
+        "api_name": "shadow-tag",
+        "name_en": "Shadow Tag",
+        "name_de": "Wegsperre",
+        "description_en": "Prevents opponents from fleeing or switching out.",
+        "description_de": "Verhindert, dass der Gegner flieht oder ausgetauscht wird."
+    },
+    {
+        "ability_id": 24,
+        "api_name": "rough-skin",
+        "name_en": "Rough Skin",
+        "name_de": "Rauhaut",
+        "description_en": "Damages attacking Pokémon for 1/8 their max HP on contact.",
+        "description_de": "Angreifende Pokémon erhalten 1/8 ihrer maximalen KP Schaden bei Kontakt."
+    },
+    {
+        "ability_id": 25,
+        "api_name": "wonder-guard",
+        "name_en": "Wonder Guard",
+        "name_de": "Wunderwache",
+        "description_en": "Protects against damaging moves that are not super effective.",
+        "description_de": "Schützt gegen Schaden verursachende Attacken die nicht sehr effektiv sind."
+    },
+    {
+        "ability_id": 26,
+        "api_name": "levitate",
+        "name_en": "Levitate",
+        "name_de": "Schwebe",
+        "description_en": "Evades Ground moves.",
+        "description_de": "Verhindert Boden-Attacken."
+    },
+    {
+        "ability_id": 27,
+        "api_name": "effect-spore",
+        "name_en": "Effect Spore",
+        "name_de": "Sporenwirt",
+        "description_en": "Has a 30% chance of inflcting either paralysis, poison, or sleep on attacking Pokémon on contact.",
+        "description_de": "Wird das Pokémon von einer Kontaktattacke getroffen, besteht eine Chance von 30 %, den Angreifer einzuschläfern, zu paralysieren oder zu vergiften."
+    },
+    {
+        "ability_id": 28,
+        "api_name": "synchronize",
+        "name_en": "Synchronize",
+        "name_de": "Synchro",
+        "description_en": "Copies burns, paralysis, and poison received onto the Pokémon that inflicted them.",
+        "description_de": "Kopiert Verbrennung, Paralyse und Vergiftung auf den Verursacher."
+    },
+    {
+        "ability_id": 29,
+        "api_name": "clear-body",
+        "name_en": "Clear Body",
+        "name_de": "Neutraltorso",
+        "description_en": "Prevents stats from being lowered by other Pokémon.",
+        "description_de": "Verhindert negative Statusveränderung von anderen Pokémon."
+    },
+    {
+        "ability_id": 30,
+        "api_name": "natural-cure",
+        "name_en": "Natural Cure",
+        "name_de": "Innere Kraft",
+        "description_en": "Cures any major status ailment upon switching out.",
+        "description_de": "Heilt beim Auswechseln das Statusproblem des Pokémon."
+    },
+    {
+        "ability_id": 31,
+        "api_name": "lightning-rod",
+        "name_en": "Lightning Rod",
+        "name_de": "Blitzfänger",
+        "description_en": "Redirects single-target Electric moves to this Pokémon where possible. Absorbs Electric moves, raising Special Attack one stage.",
+        "description_de": "Leitet Elektro-Attacken mit nur einem Ziel auf dieses Pokémon um. Absorbiert Elektro-Attacken und erhöht dabei den Spezialangriff um 1 Stufe."
+    },
+    {
+        "ability_id": 32,
+        "api_name": "serene-grace",
+        "name_en": "Serene Grace",
+        "name_de": "Edelmut",
+        "description_en": "Doubles the chance of moves' extra effects occurring.",
+        "description_de": "Verdoppelt die Chance das ein Zusatzeffekt beim Einsatz einer Attacke auftritt."
+    },
+    {
+        "ability_id": 33,
+        "api_name": "swift-swim",
+        "name_en": "Swift Swim",
+        "name_de": "Wassertempo",
+        "description_en": "Doubles Speed during rain.",
+        "description_de": "Verdoppelt die Initiative während es regnet."
+    },
+    {
+        "ability_id": 34,
+        "api_name": "chlorophyll",
+        "name_en": "Chlorophyll",
+        "name_de": "Chlorophyll",
+        "description_en": "Doubles Speed during strong sunlight.",
+        "description_de": "Verdoppelt die Initiative während starkem Sonnenlicht."
+    },
+    {
+        "ability_id": 35,
+        "api_name": "illuminate",
+        "name_en": "Illuminate",
+        "name_de": "Erleuchtung",
+        "description_en": "Doubles the wild encounter rate.",
+        "description_de": "Verdoppelt die Wahrscheinlichkeit, einem wilden Pokémon zu begegnen."
+    },
+    {
+        "ability_id": 36,
+        "api_name": "trace",
+        "name_en": "Trace",
+        "name_de": "Erfassen",
+        "description_en": "Copies an opponent's ability upon entering battle.",
+        "description_de": "Kopiert die Fähigkeit des Gegners beim Betreten des Kampfes."
+    },
+    {
+        "ability_id": 37,
+        "api_name": "huge-power",
+        "name_en": "Huge Power",
+        "name_de": "Kraftkoloss",
+        "description_en": "Doubles Attack in battle.",
+        "description_de": "Verdoppelt den Angriff im Kampf."
+    },
+    {
+        "ability_id": 38,
+        "api_name": "poison-point",
+        "name_en": "Poison Point",
+        "name_de": "Giftdorn",
+        "description_en": "Has a 30% chance of poisoning attacking Pokémon on contact.",
+        "description_de": "Wird das Pokémon von einer Kontaktattacke getroffen, besteht eine Chance von 30 %, den Angreifer zu vergiften."
+    },
+    {
+        "ability_id": 39,
+        "api_name": "inner-focus",
+        "name_en": "Inner Focus",
+        "name_de": "Konzentrator",
+        "description_en": "Prevents flinching.",
+        "description_de": "Verhindert zurückschrecken."
+    },
+    {
+        "ability_id": 40,
+        "api_name": "magma-armor",
+        "name_en": "Magma Armor",
+        "name_de": "Magmapanzer",
+        "description_en": "Prevents freezing.",
+        "description_de": "Verhindert einfrieren."
+    },
+    {
+        "ability_id": 41,
+        "api_name": "water-veil",
+        "name_en": "Water Veil",
+        "name_de": "Aquahülle",
+        "description_en": "Prevents burns.",
+        "description_de": "Verhindert Verbrennung."
+    },
+    {
+        "ability_id": 42,
+        "api_name": "magnet-pull",
+        "name_en": "Magnet Pull",
+        "name_de": "Magnetfalle",
+        "description_en": "Prevents Steel opponents from fleeing or switching out.",
+        "description_de": "Verhindert, dass Stahl Pokémon fliehen oder ausgetauscht werden können."
+    },
+    {
+        "ability_id": 43,
+        "api_name": "soundproof",
+        "name_en": "Soundproof",
+        "name_de": "Lärmschutz",
+        "description_en": "Protects against sound-based moves.",
+        "description_de": "Schützt vor Schall Attacken."
+    },
+    {
+        "ability_id": 44,
+        "api_name": "rain-dish",
+        "name_en": "Rain Dish",
+        "name_de": "Regengenuss",
+        "description_en": "Heals for 1/16 max HP after each turn during rain.",
+        "description_de": "Regeneriert bei Regen am Ende jeder Runde 1/16 der maximalen KP."
+    },
+    {
+        "ability_id": 45,
+        "api_name": "sand-stream",
+        "name_en": "Sand Stream",
+        "name_de": "Sandsturm",
+        "description_en": "Summons a sandstorm that lasts indefinitely upon entering battle.",
+        "description_de": "Erzeugt beim Einwechseln für 5 Runden Sandsturm."
+    },
+    {
+        "ability_id": 46,
+        "api_name": "pressure",
+        "name_en": "Pressure",
+        "name_de": "Erzwinger",
+        "description_en": "Increases the PP cost of moves targetting the Pokémon by one.",
+        "description_de": "Erhöht die AP Kosten des Gegners um 1."
+    },
+    {
+        "ability_id": 47,
+        "api_name": "thick-fat",
+        "name_en": "Thick Fat",
+        "name_de": "Speckschicht",
+        "description_en": "Halves damage from Fire and Ice moves.",
+        "description_de": "Halbiert den Schaden von Feuer und Eis-Attacken."
+    },
+    {
+        "ability_id": 48,
+        "api_name": "early-bird",
+        "name_en": "Early Bird",
+        "name_de": "Frühwecker",
+        "description_en": "Makes sleep pass twice as quickly.",
+        "description_de": "Pokémon wachen doppelt so schnell wieder auf."
+    },
+    {
+        "ability_id": 49,
+        "api_name": "flame-body",
+        "name_en": "Flame Body",
+        "name_de": "Flammkörper",
+        "description_en": "Has a 30% chance of burning attacking Pokémon on contact.",
+        "description_de": "Hat eine 30 % Chance, bei Kontakt Verbrennung auszulösen."
+    },
+    {
+        "ability_id": 50,
+        "api_name": "run-away",
+        "name_en": "Run Away",
+        "name_de": "Angsthase",
+        "description_en": "Ensures success fleeing from wild battles.",
+        "description_de": "Stellt sicher, dass die Flucht vor wilden Pokémon gelingt."
+    },
+    {
+        "ability_id": 51,
+        "api_name": "keen-eye",
+        "name_en": "Keen Eye",
+        "name_de": "Adlerauge",
+        "description_en": "Prevents accuracy from being lowered.",
+        "description_de": "Verhindert das Absenken der Genauigkeit."
+    },
+    {
+        "ability_id": 52,
+        "api_name": "hyper-cutter",
+        "name_en": "Hyper Cutter",
+        "name_de": "Scherenmacht",
+        "description_en": "Prevents Attack from being lowered by other Pokémon.",
+        "description_de": "Verhindert das Absenken des Angriffs."
+    },
+    {
+        "ability_id": 53,
+        "api_name": "pickup",
+        "name_en": "Pickup",
+        "name_de": "Mitnahme",
+        "description_en": "Picks up other Pokémon's used and Flung held items. May also pick up an item after battle.",
+        "description_de": "Hebt benutzte oder weggeschleuderte getragene Items von anderen Pokémon auf. Kann nach dem Kampf ein Item aufheben."
+    },
+    {
+        "ability_id": 54,
+        "api_name": "truant",
+        "name_en": "Truant",
+        "name_de": "Schnarchnase",
+        "description_en": "Skips every second turn.",
+        "description_de": "Überspringt jede zweite Runde."
+    },
+    {
+        "ability_id": 55,
+        "api_name": "hustle",
+        "name_en": "Hustle",
+        "name_de": "Übereifer",
+        "description_en": "Strengthens physical moves to inflict 1.5× damage, but decreases their accuracy to 0.8×.",
+        "description_de": "Erhöht den Angriff um den Faktor 1,5, senkt aber die Genauigkeit physischer Attacken auf das 0,8-Fache."
+    },
+    {
+        "ability_id": 56,
+        "api_name": "cute-charm",
+        "name_en": "Cute Charm",
+        "name_de": "Charmebolzen",
+        "description_en": "Has a 30% chance of infatuating attacking Pokémon on contact.",
+        "description_de": "Bei Kontakt besteht eine 30 % Chance beim Gegner Anziehung auszulösen."
+    },
+    {
+        "ability_id": 57,
+        "api_name": "plus",
+        "name_en": "Plus",
+        "name_de": "Plus",
+        "description_en": "Increases Special Attack to 1.5× when a friendly Pokémon has Plus or Minus.",
+        "description_de": "Erhöht den Spezialangriff um 50 % wenn ein Team-Pokémon Plus oder Minus hat."
+    },
+    {
+        "ability_id": 58,
+        "api_name": "minus",
+        "name_en": "Minus",
+        "name_de": "Minus",
+        "description_en": "Increases Special Attack to 1.5× when a friendly Pokémon has Plus or Minus.",
+        "description_de": "Erhöht den Spezialangriff um 50 % wenn ein Team-Pokémon Plus oder Minus hat."
+    },
+    {
+        "ability_id": 59,
+        "api_name": "forecast",
+        "name_en": "Forecast",
+        "name_de": "Prognose",
+        "description_en": "Changes Castform's type and form to match the weather.",
+        "description_de": "Ändert den Typ von Formeo zu dem des Wetters."
+    },
+    {
+        "ability_id": 60,
+        "api_name": "sticky-hold",
+        "name_en": "Sticky Hold",
+        "name_de": "Klebekörper",
+        "description_en": "Prevents a held item from being removed by other Pokémon.",
+        "description_de": "Verhindert, dass ein getragenes Item von einem anderen Pokémon gestohlen werden kann."
+    },
+    {
+        "ability_id": 61,
+        "api_name": "shed-skin",
+        "name_en": "Shed Skin",
+        "name_de": "Expidermis",
+        "description_en": "Has a 33% chance of curing any major status ailment after each turn.",
+        "description_de": "Nach jeder Runde besteht eine 33 % Chance von einer bestehenden Statusänderung geheilt zu werden."
+    },
+    {
+        "ability_id": 62,
+        "api_name": "guts",
+        "name_en": "Guts",
+        "name_de": "Adrenalin",
+        "description_en": "Increases Attack to 1.5× with a major status ailment.",
+        "description_de": "Erhöht den Angriff um den Faktor 1,5, wenn das Pokémon von einem Statusproblem betroffen ist. Ignoriert dabei die Angriffssenkung durch Verbrennung."
+    },
+    {
+        "ability_id": 63,
+        "api_name": "marvel-scale",
+        "name_en": "Marvel Scale",
+        "name_de": "Notschutz",
+        "description_en": "Increases Defense to 1.5× with a major status ailment.",
+        "description_de": "Erhöht die Verteidigung um den Faktor 1,5, wenn das Pokémon von einem Statusproblem betroffen ist."
+    },
+    {
+        "ability_id": 64,
+        "api_name": "liquid-ooze",
+        "name_en": "Liquid Ooze",
+        "name_de": "Kloakensoße",
+        "description_en": "Damages opponents using leeching moves for as much as they would heal.",
+        "description_de": "Gegnern die absorbierende Attacken einsetzen, wird Schaden in der Höhe zugefügt, die die Attacke geheilt hätte."
+    },
+    {
+        "ability_id": 65,
+        "api_name": "overgrow",
+        "name_en": "Overgrow",
+        "name_de": "Notdünger",
+        "description_en": "Strengthens Grass moves to inflict 1.5× damage at 1/3 max HP or less.",
+        "description_de": "Erhöht den Schaden von Pflanze-Attacken um 50 % wenn nur noch 1/3 der maximalen KP oder weniger übrig sind."
+    },
+    {
+        "ability_id": 66,
+        "api_name": "blaze",
+        "name_en": "Blaze",
+        "name_de": "Großbrand",
+        "description_en": "Strengthens Fire moves to inflict 1.5× damage at 1/3 max HP or less.",
+        "description_de": "Erhöht den Schaden von Feuer-Attacken um 50 % wenn nur noch 1/3 der maximalen KP oder weniger übrig sind."
+    },
+    {
+        "ability_id": 67,
+        "api_name": "torrent",
+        "name_en": "Torrent",
+        "name_de": "Sturzbach",
+        "description_en": "Strengthens Water moves to inflict 1.5× damage at 1/3 max HP or less.",
+        "description_de": "Erhöht den Schaden von Wasser-Attacken um 50 % wenn nur noch 1/3 der maximalen KP oder weniger übrig sind."
+    },
+    {
+        "ability_id": 68,
+        "api_name": "swarm",
+        "name_en": "Swarm",
+        "name_de": "Hexaplaga",
+        "description_en": "Strengthens Bug moves to inflict 1.5× damage at 1/3 max HP or less.",
+        "description_de": "Erhöht den Schaden von Käfer-Attacken um 50 % wenn nur noch 1/3 der maximalen KP oder weniger übrig sind."
+    },
+    {
+        "ability_id": 69,
+        "api_name": "rock-head",
+        "name_en": "Rock Head",
+        "name_de": "Steinhaupt",
+        "description_en": "Protects against recoil damage.",
+        "description_de": "Schützt vor Rückstoßschaden."
+    },
+    {
+        "ability_id": 70,
+        "api_name": "drought",
+        "name_en": "Drought",
+        "name_de": "Dürre",
+        "description_en": "Summons strong sunlight that lasts indefinitely upon entering battle.",
+        "description_de": "Erzeugt beim Einwechseln für 5 Runden Sonnenschein."
+    },
+    {
+        "ability_id": 71,
+        "api_name": "arena-trap",
+        "name_en": "Arena Trap",
+        "name_de": "Ausweglos",
+        "description_en": "Prevents opponents from fleeing or switching out. Eluded by Flying-types and Pokémon in the air.",
+        "description_de": "Verhindert, dass der Gegner flieht oder ausgetauscht wird wenn er nicht vom Typ Flug ist oder schwebt."
+    },
+    {
+        "ability_id": 72,
+        "api_name": "vital-spirit",
+        "name_en": "Vital Spirit",
+        "name_de": "Munterkeit",
+        "description_en": "Prevents sleep.",
+        "description_de": "Verhindert Schlaf."
+    },
+    {
+        "ability_id": 73,
+        "api_name": "white-smoke",
+        "name_en": "White Smoke",
+        "name_de": "Pulverrauch",
+        "description_en": "Prevents stats from being lowered by other Pokémon.",
+        "description_de": "Verhindert negative Statusveränderung von anderen Pokémon."
+    },
+    {
+        "ability_id": 74,
+        "api_name": "pure-power",
+        "name_en": "Pure Power",
+        "name_de": "Mentalkraft",
+        "description_en": "Doubles Attack in battle.",
+        "description_de": "Verdoppelt den Angriff im Kampf."
+    },
+    {
+        "ability_id": 75,
+        "api_name": "shell-armor",
+        "name_en": "Shell Armor",
+        "name_de": "Panzerhaut",
+        "description_en": "Protects against critical hits.",
+        "description_de": "Schützt vor kritischen Treffern."
+    },
+    {
+        "ability_id": 76,
+        "api_name": "air-lock",
+        "name_en": "Air Lock",
+        "name_de": "Klimaschutz",
+        "description_en": "Negates all effects of weather, but does not prevent the weather itself.",
+        "description_de": "Entfernt alle Wettereffekte aber ändert nicht das Wetter selbst."
+    },
+    {
+        "ability_id": 77,
+        "api_name": "tangled-feet",
+        "name_en": "Tangled Feet",
+        "name_de": "Taumelschritt",
+        "description_en": "Doubles evasion when confused.",
+        "description_de": "Verdoppelt den Ausweichwert bei Verwirrung."
+    },
+    {
+        "ability_id": 78,
+        "api_name": "motor-drive",
+        "name_en": "Motor Drive",
+        "name_de": "Starthilfe",
+        "description_en": "Absorbs Electric moves, raising Speed one stage.",
+        "description_de": "Absorbiert Elektro-Attacken und erhöht dabei die Initiative um 1 Stufe."
+    },
+    {
+        "ability_id": 79,
+        "api_name": "rivalry",
+        "name_en": "Rivalry",
+        "name_de": "Rivalität",
+        "description_en": "Increases damage inflicted to 1.25× against Pokémon of the same gender, but decreases damage to 0.75× against the opposite gender.",
+        "description_de": "Verstärkt Attacken gegen Pokémon gleichen Geschlechts um den Faktor 1,25 und schwächt sie gegen Pokémon anderen Geschlechts auf den Faktor 0,75."
+    },
+    {
+        "ability_id": 80,
+        "api_name": "steadfast",
+        "name_en": "Steadfast",
+        "name_de": "Felsenfest",
+        "description_en": "Raises Speed one stage upon flinching.",
+        "description_de": "Erhöht die Initiative um 1 Stufe wenn das Pokémon zurückschreckt."
+    },
+    {
+        "ability_id": 81,
+        "api_name": "snow-cloak",
+        "name_en": "Snow Cloak",
+        "name_de": "Schneemantel",
+        "description_en": "Increases evasion to 1.25× during hail. Protects against hail damage.",
+        "description_de": "Senkt bei Schnee die Genauigkeit gegnerischer Attacken gegen das Pokémon auf das 0,8-Fache."
+    },
+    {
+        "ability_id": 82,
+        "api_name": "gluttony",
+        "name_en": "Gluttony",
+        "name_de": "Völlerei",
+        "description_en": "Makes the Pokémon eat any held Berry triggered by low HP below 1/2 its max HP.",
+        "description_de": "Lässt das Pokémon eine getragene Beere essen, wenn es weniger als die Hälfte seiner maximalen KP hat."
+    },
+    {
+        "ability_id": 83,
+        "api_name": "anger-point",
+        "name_en": "Anger Point",
+        "name_de": "Kurzschluss",
+        "description_en": "Raises Attack to the maximum of six stages upon receiving a critical hit.",
+        "description_de": "Erhöht den Angriff auf die höchste Stufe (6) wenn es einen kritischen Treffer erleidet."
+    },
+    {
+        "ability_id": 84,
+        "api_name": "unburden",
+        "name_en": "Unburden",
+        "name_de": "Entlastung",
+        "description_en": "Doubles Speed upon using or losing a held item.",
+        "description_de": "Verdoppelt die Initiative wenn das Pokémon ein getragenes Item benutzt oder verliert."
+    },
+    {
+        "ability_id": 85,
+        "api_name": "heatproof",
+        "name_en": "Heatproof",
+        "name_de": "Hitzeschutz",
+        "description_en": "Halves damage from Fire moves and burns.",
+        "description_de": "Halbiert den Schaden von Feuer-Attacken und Verbrennung."
+    },
+    {
+        "ability_id": 86,
+        "api_name": "simple",
+        "name_en": "Simple",
+        "name_de": "Wankelmut",
+        "description_en": "Doubles the Pokémon's stat modifiers. These doubled modifiers are still capped at -6 or 6 stages.",
+        "description_de": "Verdoppelt die Statuswertänderungen. Die Änderungen gehen nicht über -6 oder 6 Stufen hinaus."
+    },
+    {
+        "ability_id": 87,
+        "api_name": "dry-skin",
+        "name_en": "Dry Skin",
+        "name_de": "Trockenheit",
+        "description_en": "Causes 1/8 max HP in damage each turn during strong sunlight, but heals for 1/8 max HP during rain. Increases damage from Fire moves to 1.25×, but absorbs Water moves, healing for 1/4 max HP.",
+        "description_de": "Erleidet 1/8 der maximalen KP Schaden während starkem Sonnenlicht, aber heilt 1/8 der maximalen KP während Regen. Erhöht den erhaltenen Schaden durch Feuer-Attacken um 25 %, aber absorbiert Wasser-Attacken, und heilt dabei 1/4 der maximalen KP."
+    },
+    {
+        "ability_id": 88,
+        "api_name": "download",
+        "name_en": "Download",
+        "name_de": "Download",
+        "description_en": "Raises the attack stat corresponding to the opponents' weaker defense one stage upon entering battle.",
+        "description_de": "Erhöht den Angriffswert entsprechend des schwächeren Verteidigungswerts um 1 Stufe beim Betreten des Kampfs."
+    },
+    {
+        "ability_id": 89,
+        "api_name": "iron-fist",
+        "name_en": "Iron Fist",
+        "name_de": "Eisenfaust",
+        "description_en": "Strengthens punch-based moves to 1.2× their power.",
+        "description_de": "Verstärkt schlagbasierte Attacken um 20 %."
+    },
+    {
+        "ability_id": 90,
+        "api_name": "poison-heal",
+        "name_en": "Poison Heal",
+        "name_de": "Giftheilung",
+        "description_en": "Heals for 1/8 max HP after each turn when poisoned in place of damage.",
+        "description_de": "Regeneriert am Ende jeder Runde 1/8 der maximalen KP, wenn das Pokémon vergiftet ist; Giftschaden wird dabei verhindert."
+    },
+    {
+        "ability_id": 91,
+        "api_name": "adaptability",
+        "name_en": "Adaptability",
+        "name_de": "Anpassung",
+        "description_en": "Increases the same-type attack bonus from 1.5× to 2×.",
+        "description_de": "Erhöht den STAB von 1,5× auf 2×."
+    },
+    {
+        "ability_id": 92,
+        "api_name": "skill-link",
+        "name_en": "Skill Link",
+        "name_de": "Wertelink",
+        "description_en": "Extends two-to-five-hit moves and Triple Kick to their full length every time.",
+        "description_de": "Erweitert mehrfach treffende Attacken wie Dreifachkick zu ihrer vollen Länge."
+    },
+    {
+        "ability_id": 93,
+        "api_name": "hydration",
+        "name_en": "Hydration",
+        "name_de": "Hydration",
+        "description_en": "Cures any major status ailment after each turn during rain.",
+        "description_de": "Heilt bei Regen am Ende jeder Runde das Statusproblem des Pokémon."
+    },
+    {
+        "ability_id": 94,
+        "api_name": "solar-power",
+        "name_en": "Solar Power",
+        "name_de": "Solarkraft",
+        "description_en": "Increases Special Attack to 1.5× but costs 1/8 max HP after each turn during strong sunlight.",
+        "description_de": "Erhöht den Spezialangriff um 50 % aber zieht jede Runde 1/8 der maximalen KP ab während starkem Sonnenlicht."
+    },
+    {
+        "ability_id": 95,
+        "api_name": "quick-feet",
+        "name_en": "Quick Feet",
+        "name_de": "Rasanz",
+        "description_en": "Increases Speed to 1.5× with a major status ailment.",
+        "description_de": "Erhöht die Initiative um den Faktor 1,5, wenn das Pokémon von einem Statusproblem betroffen ist; die Initiative wird bei Paralyse nicht gesenkt."
+    },
+    {
+        "ability_id": 96,
+        "api_name": "normalize",
+        "name_en": "Normalize",
+        "name_de": "Regulierung",
+        "description_en": "Makes the Pokémon's moves all act Normal-type.",
+        "description_de": "Attacken des Pokémon werden alle zu Normal-Attacken."
+    },
+    {
+        "ability_id": 97,
+        "api_name": "sniper",
+        "name_en": "Sniper",
+        "name_de": "Superschütze",
+        "description_en": "Strengthens critical hits to inflict 3× damage rather than 2×.",
+        "description_de": "Verstärkt kritische Treffer, so dass sie 3× so viel Schaden verursachen anstatt 2×."
+    },
+    {
+        "ability_id": 98,
+        "api_name": "magic-guard",
+        "name_en": "Magic Guard",
+        "name_de": "Magieschild",
+        "description_en": "Protects against damage not directly caused by a move.",
+        "description_de": "Schützt vor jeglichem Schaden der nicht direkt von Attacken verursacht wird."
+    },
+    {
+        "ability_id": 99,
+        "api_name": "no-guard",
+        "name_en": "No Guard",
+        "name_de": "Schildlos",
+        "description_en": "Ensures all moves used by and against the Pokémon hit.",
+        "description_de": "Stellt sicher das Attacken die von dem oder gegen das Pokémon eingesetzt werden treffen."
+    },
+    {
+        "ability_id": 100,
+        "api_name": "stall",
+        "name_en": "Stall",
+        "name_de": "Zeitspiel",
+        "description_en": "Makes the Pokémon move last within its move's priority bracket.",
+        "description_de": "Lässt das Pokémon als letztes angreifen innerhalb des Prioritätsspielraums der Attacken."
+    },
+    {
+        "ability_id": 101,
+        "api_name": "technician",
+        "name_en": "Technician",
+        "name_de": "Techniker",
+        "description_en": "Strengthens moves of 60 base power or less to 1.5× their power.",
+        "description_de": "Verstärkt Attacken mit einer Basisstärke von höchstens 60 um den Faktor 1,5."
+    },
+    {
+        "ability_id": 102,
+        "api_name": "leaf-guard",
+        "name_en": "Leaf Guard",
+        "name_de": "Floraschild",
+        "description_en": "Protects against major status ailments during strong sunlight.",
+        "description_de": "Schützt das Pokémon bei Sonnenschein vor Statusproblemen."
+    },
+    {
+        "ability_id": 103,
+        "api_name": "klutz",
+        "name_en": "Klutz",
+        "name_de": "Tollpatsch",
+        "description_en": "Prevents the Pokémon from using its held item in battle.",
+        "description_de": "Verhindert, dass das Pokémon ein getragenes Item im Kampf einsetzt."
+    },
+    {
+        "ability_id": 104,
+        "api_name": "mold-breaker",
+        "name_en": "Mold Breaker",
+        "name_de": "Überbrückung",
+        "description_en": "Bypasses targets' abilities if they could hinder or prevent a move.",
+        "description_de": "Umgeht die gegnerische Fähigkeit, wenn sie eine Attacke verhindern kann."
+    },
+    {
+        "ability_id": 105,
+        "api_name": "super-luck",
+        "name_en": "Super Luck",
+        "name_de": "Glückspilz",
+        "description_en": "Raises moves' critical hit rates one stage.",
+        "description_de": "Erhöht die kritische Trefferrate um 1 Stufe."
+    },
+    {
+        "ability_id": 106,
+        "api_name": "aftermath",
+        "name_en": "Aftermath",
+        "name_de": "Finalschlag",
+        "description_en": "Damages the attacker for 1/4 its max HP when knocked out by a contact move.",
+        "description_de": "Schadet dem Angreifer mit 1/4 seiner maximalen KP, wenn das Pokémon von einer Attacke mit Kontakt besiegt wird."
+    },
+    {
+        "ability_id": 107,
+        "api_name": "anticipation",
+        "name_en": "Anticipation",
+        "name_de": "Vorahnung",
+        "description_en": "Notifies all trainers upon entering battle if an opponent has a super-effective move, Self-Destruct, Explosion, or a one-hit KO move.",
+        "description_de": "Benachrichtigt alle Trainer im Kampf, wenn ein Gegner eine sehr effektive Attacke, Finale, Explosion oder eine K.-o.-Attacke hat."
+    },
+    {
+        "ability_id": 108,
+        "api_name": "forewarn",
+        "name_en": "Forewarn",
+        "name_de": "Vorwarnung",
+        "description_en": "Reveals the opponents' strongest move upon entering battle.",
+        "description_de": "Enthüllt die stärkste Attacke des Gegners beim Betreten des Kampfes."
+    },
+    {
+        "ability_id": 109,
+        "api_name": "unaware",
+        "name_en": "Unaware",
+        "name_de": "Unkenntnis",
+        "description_en": "Ignores other Pokémon's stat modifiers for damage and accuracy calculation.",
+        "description_de": "Ignoriert die Statusveränderung der Pokémon bei der Schadens- und Genauigkeitsberechnung."
+    },
+    {
+        "ability_id": 110,
+        "api_name": "tinted-lens",
+        "name_en": "Tinted Lens",
+        "name_de": "Aufwertung",
+        "description_en": "Doubles damage inflicted with not-very-effective moves.",
+        "description_de": "Verdoppelt den durch nicht sehr effektiven Attacken verursachten Schaden."
+    },
+    {
+        "ability_id": 111,
+        "api_name": "filter",
+        "name_en": "Filter",
+        "name_de": "Filter",
+        "description_en": "Decreases damage taken from super-effective moves by 1/4.",
+        "description_de": "Reduziert den durch sehr effektive Attacken verursachten Schaden um 1/4."
+    },
+    {
+        "ability_id": 112,
+        "api_name": "slow-start",
+        "name_en": "Slow Start",
+        "name_de": "Saumselig",
+        "description_en": "Halves Attack and Speed for five turns upon entering battle.",
+        "description_de": "Halbiert den Angriff und die Initiative 5 Runden lang nach Betreten des Kampfes."
+    },
+    {
+        "ability_id": 113,
+        "api_name": "scrappy",
+        "name_en": "Scrappy",
+        "name_de": "Rauflust",
+        "description_en": "Lets the Pokémon's Normal and Fighting moves hit Ghost Pokémon.",
+        "description_de": "Lässt die Normal und Kampf-Attacken des Pokémons Geist Pokémon treffen."
+    },
+    {
+        "ability_id": 114,
+        "api_name": "storm-drain",
+        "name_en": "Storm Drain",
+        "name_de": "Sturmsog",
+        "description_en": "Redirects single-target Water moves to this Pokémon where possible. Absorbs Water moves, raising Special Attack one stage.",
+        "description_de": "Leitet Wasser-Attacken auf dieses Pokémon um. Absorbiert Wasser-Attacken und erhöht den Spezialangriff um 1 Stufe."
+    },
+    {
+        "ability_id": 115,
+        "api_name": "ice-body",
+        "name_en": "Ice Body",
+        "name_de": "Eishaut",
+        "description_en": "Heals for 1/16 max HP after each turn during hail. Protects against hail damage.",
+        "description_de": "Regeneriert bei Schnee am Ende jeder Runde 1/16 der maximalen KP."
+    },
+    {
+        "ability_id": 116,
+        "api_name": "solid-rock",
+        "name_en": "Solid Rock",
+        "name_de": "Felskern",
+        "description_en": "Decreases damage taken from super-effective moves by 1/4.",
+        "description_de": "Reduziert den durch sehr effektive Attacken verursachten Schaden um 1/4."
+    },
+    {
+        "ability_id": 117,
+        "api_name": "snow-warning",
+        "name_en": "Snow Warning",
+        "name_de": "Schneeschauer",
+        "description_en": "Summons hail that lasts indefinitely upon entering battle.",
+        "description_de": "Erzeugt beim Einwechseln für 5 Runden Schnee."
+    },
+    {
+        "ability_id": 118,
+        "api_name": "honey-gather",
+        "name_en": "Honey Gather",
+        "name_de": "Honigmaul",
+        "description_en": "The Pokémon may pick up Honey after battle.",
+        "description_de": "Das Pokémon hebt nach dem Kampf gelegentlich Honig auf."
+    },
+    {
+        "ability_id": 119,
+        "api_name": "frisk",
+        "name_en": "Frisk",
+        "name_de": "Schnüffler",
+        "description_en": "Reveals an opponent's held item upon entering battle.",
+        "description_de": "Enthüllt bei Kampfantritt das getragene Item des Gegners."
+    },
+    {
+        "ability_id": 120,
+        "api_name": "reckless",
+        "name_en": "Reckless",
+        "name_de": "Achtlos",
+        "description_en": "Strengthens recoil moves to 1.2× their power.",
+        "description_de": "Verstärkt Rückstoßattacken um 20 %."
+    },
+    {
+        "ability_id": 121,
+        "api_name": "multitype",
+        "name_en": "Multitype",
+        "name_de": "Variabilität",
+        "description_en": "Changes Arceus's type and form to match its held Plate.",
+        "description_de": "Ändert Arceus Typ und Form entsprechend der Tafel die es hält."
+    },
+    {
+        "ability_id": 122,
+        "api_name": "flower-gift",
+        "name_en": "Flower Gift",
+        "name_de": "Pflanzengabe",
+        "description_en": "Increases friendly Pokémon's Attack and Special Defense to 1.5× during strong sunlight.",
+        "description_de": "Erhöht Angriff und Spezialverteidigung von Partnern um 50 % während starkem Sonnenlicht."
+    },
+    {
+        "ability_id": 123,
+        "api_name": "bad-dreams",
+        "name_en": "Bad Dreams",
+        "name_de": "Alptraum",
+        "description_en": "Damages sleeping opponents for 1/8 their max HP after each turn.",
+        "description_de": "Fügt schlafenden Gegnern jede Runde 1/8 ihrer maximalen KP Schaden zu."
+    },
+    {
+        "ability_id": 124,
+        "api_name": "pickpocket",
+        "name_en": "Pickpocket",
+        "name_de": "Langfinger",
+        "description_en": "Steals attacking Pokémon's held items on contact.",
+        "description_de": "Stiehlt angreifenden Pokémon bei Kontakt das Item."
+    },
+    {
+        "ability_id": 125,
+        "api_name": "sheer-force",
+        "name_en": "Sheer Force",
+        "name_de": "Rohe Gewalt",
+        "description_en": "Strengthens moves with extra effects to 1.3× their power, but prevents their extra effects.",
+        "description_de": "Verstärkt Attacken mit Zusatzeffekt um 30 %, verhindert aber den Zusatzeffekt."
+    },
+    {
+        "ability_id": 126,
+        "api_name": "contrary",
+        "name_en": "Contrary",
+        "name_de": "Umkehrung",
+        "description_en": "Inverts stat changes.",
+        "description_de": "Invertiert Statuswertänderungen."
+    },
+    {
+        "ability_id": 127,
+        "api_name": "unnerve",
+        "name_en": "Unnerve",
+        "name_de": "Anspannung",
+        "description_en": "Prevents opposing Pokémon from eating held Berries.",
+        "description_de": "Hindert Gegner daran Beeren zu essen."
+    },
+    {
+        "ability_id": 128,
+        "api_name": "defiant",
+        "name_en": "Defiant",
+        "name_de": "Siegeswille",
+        "description_en": "Raises Attack two stages upon having any stat lowered.",
+        "description_de": "Erhöht den Angriff um 2 Stufen wenn ein Statuswert gesenkt wird."
+    },
+    {
+        "ability_id": 129,
+        "api_name": "defeatist",
+        "name_en": "Defeatist",
+        "name_de": "Schwächling",
+        "description_en": "Halves Attack and Special Attack at 50% max HP or less.",
+        "description_de": "Halbiert Angriff und Spezialangriff wenn nur 50 % oder weniger der maximalen KP übrig sind."
+    },
+    {
+        "ability_id": 130,
+        "api_name": "cursed-body",
+        "name_en": "Cursed Body",
+        "name_de": "Tastfluch",
+        "description_en": "Has a 30% chance of Disabling any move that hits the Pokémon.",
+        "description_de": "30 % Chance Attacken zu blockieren von denen das Pokémon getroffen wurde."
+    },
+    {
+        "ability_id": 131,
+        "api_name": "healer",
+        "name_en": "Healer",
+        "name_de": "Heilherz",
+        "description_en": "Has a 30% chance of curing each adjacent ally of any major status ailment after each turn.",
+        "description_de": "Heilt am Ende jeder Runde mit einer Chance von 30 % das Statusproblem eines angrenzenden Mitstreiters."
+    },
+    {
+        "ability_id": 132,
+        "api_name": "friend-guard",
+        "name_en": "Friend Guard",
+        "name_de": "Freundeshut",
+        "description_en": "Decreases all direct damage taken by friendly Pokémon to 0.75×.",
+        "description_de": "Verringert den Schaden, den Mitstreiter durch Attacken erleiden, um 25 %."
+    },
+    {
+        "ability_id": 133,
+        "api_name": "weak-armor",
+        "name_en": "Weak Armor",
+        "name_de": "Bruchrüstung",
+        "description_en": "Raises Speed and lowers Defense by one stage each upon being hit by a physical move.",
+        "description_de": "Erhöht die Initiative und senkt die Verteidigung um eine Stufe, wenn es von einer physischen Attacke getroffen wird."
+    },
+    {
+        "ability_id": 134,
+        "api_name": "heavy-metal",
+        "name_en": "Heavy Metal",
+        "name_de": "Schwermetall",
+        "description_en": "Doubles the Pokémon's weight.",
+        "description_de": "Verdoppelt das Gewicht des Pokémon."
+    },
+    {
+        "ability_id": 135,
+        "api_name": "light-metal",
+        "name_en": "Light Metal",
+        "name_de": "Leichtmetall",
+        "description_en": "Halves the Pokémon's weight.",
+        "description_de": "Halbiert das Gewicht des Pokémon."
+    },
+    {
+        "ability_id": 136,
+        "api_name": "multiscale",
+        "name_en": "Multiscale",
+        "name_de": "Multischuppe",
+        "description_en": "Halves damage taken from full HP.",
+        "description_de": "Halbiert den erlittenen Schaden bei vollen KP."
+    },
+    {
+        "ability_id": 137,
+        "api_name": "toxic-boost",
+        "name_en": "Toxic Boost",
+        "name_de": "Giftwahn",
+        "description_en": "Increases Attack to 1.5× when poisoned.",
+        "description_de": "Erhöht den Angriff um 50 %, wenn das Pokémon vergiftet ist."
+    },
+    {
+        "ability_id": 138,
+        "api_name": "flare-boost",
+        "name_en": "Flare Boost",
+        "name_de": "Hitzewahn",
+        "description_en": "Increases Special Attack to 1.5× when burned.",
+        "description_de": "Erhöht den Spezialangriff um 50 %, wenn das Pokémon brennt."
+    },
+    {
+        "ability_id": 139,
+        "api_name": "harvest",
+        "name_en": "Harvest",
+        "name_de": "Reiche Ernte",
+        "description_en": "Has a 50% chance of restoring a used Berry after each turn if the Pokémon has held no items in the meantime.",
+        "description_de": "50 % Chance nach jeder Runde eine verbrauchte Beere wiederherzustellen, wenn in der Zwischenzeit kein anderes Item erlangt wurde."
+    },
+    {
+        "ability_id": 140,
+        "api_name": "telepathy",
+        "name_en": "Telepathy",
+        "name_de": "Telepathie",
+        "description_en": "Protects against friendly Pokémon's damaging moves.",
+        "description_de": "Schützt vor Attacken von Partner die Schaden anrichten."
+    },
+    {
+        "ability_id": 141,
+        "api_name": "moody",
+        "name_en": "Moody",
+        "name_de": "Gefühlswippe",
+        "description_en": "Raises a random stat two stages and lowers another one stage after each turn.",
+        "description_de": "Erhöht einen zufälligen Statuswert um 2 Stufen und senkt einen anderen um 1 Stufe nach jeder Runde."
+    },
+    {
+        "ability_id": 142,
+        "api_name": "overcoat",
+        "name_en": "Overcoat",
+        "name_de": "Partikelschutz",
+        "description_en": "Protects against damage from weather.",
+        "description_de": "Schützt vor Schäden durch Wetter."
+    },
+    {
+        "ability_id": 143,
+        "api_name": "poison-touch",
+        "name_en": "Poison Touch",
+        "name_de": "Giftgriff",
+        "description_en": "Has a 30% chance of poisoning target Pokémon upon contact.",
+        "description_de": "30 % Chance, den Gegner bei Kontakt zu vergiften."
+    },
+    {
+        "ability_id": 144,
+        "api_name": "regenerator",
+        "name_en": "Regenerator",
+        "name_de": "Belebekraft",
+        "description_en": "Heals for 1/3 max HP upon switching out.",
+        "description_de": "Heilt beim Auswechseln 1/3 der maximalen KP."
+    },
+    {
+        "ability_id": 145,
+        "api_name": "big-pecks",
+        "name_en": "Big Pecks",
+        "name_de": "Brustbieter",
+        "description_en": "Protects against Defense drops.",
+        "description_de": "Schützt vor dem Absenken der Verteidigung."
+    },
+    {
+        "ability_id": 146,
+        "api_name": "sand-rush",
+        "name_en": "Sand Rush",
+        "name_de": "Sandscharrer",
+        "description_en": "Doubles Speed during a sandstorm. Protects against sandstorm damage.",
+        "description_de": "Verdoppelt im Sandsturm die Initiative."
+    },
+    {
+        "ability_id": 147,
+        "api_name": "wonder-skin",
+        "name_en": "Wonder Skin",
+        "name_de": "Wunderhaut",
+        "description_en": "Lowers incoming non-damaging moves' base accuracy to exactly 50%.",
+        "description_de": "Verringert die Genauigkeit von ankommenden Attacken ohne Schaden auf 50 %."
+    },
+    {
+        "ability_id": 148,
+        "api_name": "analytic",
+        "name_en": "Analytic",
+        "name_de": "Analyse",
+        "description_en": "Strengthens moves to 1.3× their power when moving last.",
+        "description_de": "Verstärkt Attacken um 30 %, wenn das Pokémon als Letztes agiert."
+    },
+    {
+        "ability_id": 149,
+        "api_name": "illusion",
+        "name_en": "Illusion",
+        "name_de": "Trugbild",
+        "description_en": "Takes the appearance of the last conscious party Pokémon upon being sent out until hit by a damaging move.",
+        "description_de": "Nimmt beim Betreten des Kampfes die Form des letzten Teampokémon das nicht besiegt ist an und behält diese bis es zum ersten Mal getroffen wird."
+    },
+    {
+        "ability_id": 150,
+        "api_name": "imposter",
+        "name_en": "Imposter",
+        "name_de": "Doppelgänger",
+        "description_en": "Transforms upon entering battle.",
+        "description_de": "Verwandelt sich beim Betreten des Kampfes in den Gegner."
+    },
+    {
+        "ability_id": 151,
+        "api_name": "infiltrator",
+        "name_en": "Infiltrator",
+        "name_de": "Schwebedurch",
+        "description_en": "Bypasses Light Screen, Reflect, and Safeguard.",
+        "description_de": "Umgeht Lichtschild, Reflektor und Bodyguard."
+    },
+    {
+        "ability_id": 152,
+        "api_name": "mummy",
+        "name_en": "Mummy",
+        "name_de": "Mumie",
+        "description_en": "Changes attacking Pokémon's abilities to Mummy on contact.",
+        "description_de": "Ändert bei Kontakt die Fähigkeit von Angreifern in Mumie."
+    },
+    {
+        "ability_id": 153,
+        "api_name": "moxie",
+        "name_en": "Moxie",
+        "name_de": "Hochmut",
+        "description_en": "Raises Attack one stage upon KOing a Pokémon.",
+        "description_de": "Erhöht den Angriff um 1 Stufe, wenn es einen Gegner besiegt."
+    },
+    {
+        "ability_id": 154,
+        "api_name": "justified",
+        "name_en": "Justified",
+        "name_de": "Redlichkeit",
+        "description_en": "Raises Attack one stage upon taking damage from a Dark move.",
+        "description_de": "Erhöht den Angriff um 1 Stufe, wenn es von Unlicht-Attacken getroffen wird."
+    },
+    {
+        "ability_id": 155,
+        "api_name": "rattled",
+        "name_en": "Rattled",
+        "name_de": "Hasenfuß",
+        "description_en": "Raises Speed one stage upon being hit by a Dark, Ghost, or Bug move.",
+        "description_de": "Erhöht die Initiative um 1 Stufe, wenn es von Unlicht, Geist oder Käfer-Attacken getroffen wird."
+    },
+    {
+        "ability_id": 156,
+        "api_name": "magic-bounce",
+        "name_en": "Magic Bounce",
+        "name_de": "Magiespiegel",
+        "description_en": "Reflects most non-damaging moves back at their user.",
+        "description_de": "Reflektiert die meisten Attacken ohne Schaden zum Angreifer zurück."
+    },
+    {
+        "ability_id": 157,
+        "api_name": "sap-sipper",
+        "name_en": "Sap Sipper",
+        "name_de": "Vegetarier",
+        "description_en": "Absorbs Grass moves, raising Attack one stage.",
+        "description_de": "Absorbiert Pflanze-Attacken und erhöht dabei den Angriff um 1 Stufe."
+    },
+    {
+        "ability_id": 158,
+        "api_name": "prankster",
+        "name_en": "Prankster",
+        "name_de": "Strolch",
+        "description_en": "Raises non-damaging moves' priority by one stage.",
+        "description_de": "Erhöht die Priorität von Attacken ohne Schaden um 1 Stufe."
+    },
+    {
+        "ability_id": 159,
+        "api_name": "sand-force",
+        "name_en": "Sand Force",
+        "name_de": "Sandgewalt",
+        "description_en": "Strengthens Rock, Ground, and Steel moves to 1.3× their power during a sandstorm. Protects against sandstorm damage.",
+        "description_de": "Verstärkt Gestein, Boden und Stahl-Attacken um 30 % während eines Sandsturms. Schützt vor Schäden durch Sandstürme."
+    },
+    {
+        "ability_id": 160,
+        "api_name": "iron-barbs",
+        "name_en": "Iron Barbs",
+        "name_de": "Eisenstachel",
+        "description_en": "Damages attacking Pokémon for 1/8 their max HP on contact.",
+        "description_de": "Angreifer erleiden bei Kontakt 1/8 ihrer maximalen KP Schaden."
+    },
+    {
+        "ability_id": 161,
+        "api_name": "zen-mode",
+        "name_en": "Zen Mode",
+        "name_de": "Trance-Modus",
+        "description_en": "Changes Darmanitan's form after each turn depending on its HP: Zen Mode below 50% max HP, and Standard Mode otherwise.",
+        "description_de": "Ändert jede Runde die Form von Flampivian abhängig von seinen KP: Zen Modus bei weniger als 50 % der maximalen KP, ansonsten Standard Modus."
+    },
+    {
+        "ability_id": 162,
+        "api_name": "victory-star",
+        "name_en": "Victory Star",
+        "name_de": "Triumphstern",
+        "description_en": "Increases moves' accuracy to 1.1× for friendly Pokémon.",
+        "description_de": "Erhöht die Genauigkeit von Partnern um 10 %."
+    },
+    {
+        "ability_id": 163,
+        "api_name": "turboblaze",
+        "name_en": "Turboblaze",
+        "name_de": "Turbobrand",
+        "description_en": "Bypasses targets' abilities if they could hinder or prevent moves.",
+        "description_de": "Umgeht die gegnerische Fähigkeit, wenn sie eine Attacke verhindern kann."
+    },
+    {
+        "ability_id": 164,
+        "api_name": "teravolt",
+        "name_en": "Teravolt",
+        "name_de": "Teravolt",
+        "description_en": "Bypasses targets' abilities if they could hinder or prevent moves.",
+        "description_de": "Umgeht die gegnerische Fähigkeit, wenn sie eine Attacke verhindern kann."
+    },
+    {
+        "ability_id": 165,
+        "api_name": "aroma-veil",
+        "name_en": "Aroma Veil",
+        "name_de": "Dufthülle",
+        "description_en": "Protects allies against moves that affect their mental state.",
+        "description_de": "Schützt Verbündete vor mentalen Attacken."
+    },
+    {
+        "ability_id": 166,
+        "api_name": "flower-veil",
+        "name_en": "Flower Veil",
+        "name_de": "Blütenhülle",
+        "description_en": "Protects friendly Grass Pokémon from having their stats lowered by other Pokémon.",
+        "description_de": "Schützt verbündete Pflanzen-Pokémon vor negativen Statuswertveränderungen."
+    },
+    {
+        "ability_id": 167,
+        "api_name": "cheek-pouch",
+        "name_en": "Cheek Pouch",
+        "name_de": "Backentaschen",
+        "description_en": "Restores HP upon eating a Berry, in addition to the Berry's effect.",
+        "description_de": "Stellt zusätzlich zum eigentlichen Effekt einer Beere zusätzliche KP wieder her."
+    },
+    {
+        "ability_id": 168,
+        "api_name": "protean",
+        "name_en": "Protean",
+        "name_de": "Wandlungskunst",
+        "description_en": "Changes the bearer's type to match each move it uses.",
+        "description_de": "Ändert den Typ des Anwenders in den der Attacke die er einsetzt."
+    },
+    {
+        "ability_id": 169,
+        "api_name": "fur-coat",
+        "name_en": "Fur Coat",
+        "name_de": "Fellkleid",
+        "description_en": "Halves damage from physical attacks.",
+        "description_de": "Halbiert den Schaden von physischen Attacken."
+    },
+    {
+        "ability_id": 170,
+        "api_name": "magician",
+        "name_en": "Magician",
+        "name_de": "Zauberer",
+        "description_en": "Steals the target's held item when the bearer uses a damaging move.",
+        "description_de": "Stiehlt angreifenden Pokémon das Item wenn es von einer Attacke die Schaden verursacht getroffen wird."
+    },
+    {
+        "ability_id": 171,
+        "api_name": "bulletproof",
+        "name_en": "Bulletproof",
+        "name_de": "Kugelsicher",
+        "description_en": "Protects against bullet, ball, and bomb-based moves.",
+        "description_de": "Schützt gegen Kugel-, Ball- und Bombenbasierte Attacken."
+    },
+    {
+        "ability_id": 172,
+        "api_name": "competitive",
+        "name_en": "Competitive",
+        "name_de": "Unbeugsamkeit",
+        "description_en": "Raises Special Attack by two stages upon having any stat lowered.",
+        "description_de": "Erhöht den Spezialangriff um 2 Stufen wenn ein Statuswert gesenkt wird."
+    },
+    {
+        "ability_id": 173,
+        "api_name": "strong-jaw",
+        "name_en": "Strong Jaw",
+        "name_de": "Titankiefer",
+        "description_en": "Strengthens biting moves to 1.5× their power.",
+        "description_de": "Verstärkt Bissattacken um 50 %."
+    },
+    {
+        "ability_id": 174,
+        "api_name": "refrigerate",
+        "name_en": "Refrigerate",
+        "name_de": "Frostschicht",
+        "description_en": "Turns the bearer's Normal moves into Ice moves and strengthens them to 1.3× their power.",
+        "description_de": "Normal-Attacken werden zu Eis-Attacken und um den Faktor 1,2 verstärkt."
+    },
+    {
+        "ability_id": 175,
+        "api_name": "sweet-veil",
+        "name_en": "Sweet Veil",
+        "name_de": "Zuckerhülle",
+        "description_en": "Prevents friendly Pokémon from sleeping.",
+        "description_de": "Hindert Partner am einschlafen."
+    },
+    {
+        "ability_id": 176,
+        "api_name": "stance-change",
+        "name_en": "Stance Change",
+        "name_de": "Taktikwechsel",
+        "description_en": "Changes Aegislash to Blade Forme before using a damaging move, or Shield Forme before using King’s Shield.",
+        "description_de": "Wechselt die Form von Aegislash zur Klingenform, wenn eine Attacke mit Schaden eingesetzt wird, oder zur Schildform, wenn Königsschild eingesetzt wird."
+    },
+    {
+        "ability_id": 177,
+        "api_name": "gale-wings",
+        "name_en": "Gale Wings",
+        "name_de": "Orkanschwingen",
+        "description_en": "Raises Flying moves' priority by one stage.",
+        "description_de": "Erhöht die Priorität von Flug-Attacken um 1 Stufe."
+    },
+    {
+        "ability_id": 178,
+        "api_name": "mega-launcher",
+        "name_en": "Mega Launcher",
+        "name_de": "Megawumme",
+        "description_en": "Strengthens aura and pulse moves to 1.5× their power.",
+        "description_de": "Verstärkt Aura- und Pulsattacken um 50 %."
+    },
+    {
+        "ability_id": 179,
+        "api_name": "grass-pelt",
+        "name_en": "Grass Pelt",
+        "name_de": "Pflanzenpelz",
+        "description_en": "Boosts Defense while Grassy Terrain is in effect.",
+        "description_de": "Erhöht die Verteidigung um 50 % während dem Effekt von Grasfeld."
+    },
+    {
+        "ability_id": 180,
+        "api_name": "symbiosis",
+        "name_en": "Symbiosis",
+        "name_de": "Symbiose",
+        "description_en": "Passes the bearer's held item to an ally when the ally uses up its item.",
+        "description_de": "Gibt das eigene Item an einen Verbündeten weiter, wenn dieser seins benutzt hat."
+    },
+    {
+        "ability_id": 181,
+        "api_name": "tough-claws",
+        "name_en": "Tough Claws",
+        "name_de": "Krallenwucht",
+        "description_en": "Strengthens moves that make contact to 1.33× their power.",
+        "description_de": "Verstärkt Kontaktattacken um den Faktor 1,3."
+    },
+    {
+        "ability_id": 182,
+        "api_name": "pixilate",
+        "name_en": "Pixilate",
+        "name_de": "Feenschicht",
+        "description_en": "Turns the bearer's Normal moves into Fairy moves and strengthens them to 1.3× their power.",
+        "description_de": "Normal-Attacken werden zu Feen-Attacken und um den Faktor 1,2 verstärkt."
+    },
+    {
+        "ability_id": 183,
+        "api_name": "gooey",
+        "name_en": "Gooey",
+        "name_de": "Viskosität",
+        "description_en": "Lowers attacking Pokémon's Speed by one stage on contact.",
+        "description_de": "Senkt bei Kontakt die Initiative des Angreifers um 1 Stufe."
+    },
+    {
+        "ability_id": 184,
+        "api_name": "aerilate",
+        "name_en": "Aerilate",
+        "name_de": "Zenithaut",
+        "description_en": "Turns the bearer's Normal moves into Flying moves and strengthens them to 1.3× their power.",
+        "description_de": "Normal-Attacken werden zu Flug-Attacken und um den Faktor 1,2 verstärkt."
+    },
+    {
+        "ability_id": 185,
+        "api_name": "parental-bond",
+        "name_en": "Parental Bond",
+        "name_de": "Familienbande",
+        "description_en": "Lets the bearer hit twice with damaging moves. The second hit has half power.",
+        "description_de": "Lässt geeignete Einzelziel-Attacken zweimal treffen; der zweite Treffer verursacht 25 % des normalen Schadens."
+    },
+    {
+        "ability_id": 186,
+        "api_name": "dark-aura",
+        "name_en": "Dark Aura",
+        "name_de": "Dunkelaura",
+        "description_en": "Strengthens Dark moves to 1.33× their power for all friendly and opposing Pokémon.",
+        "description_de": "Verstärkt Unlicht-Attacken aller Pokémon im Kampf um 33 %."
+    },
+    {
+        "ability_id": 187,
+        "api_name": "fairy-aura",
+        "name_en": "Fairy Aura",
+        "name_de": "Feenaura",
+        "description_en": "Strengthens Fairy moves to 1.33× their power for all friendly and opposing Pokémon.",
+        "description_de": "Verstärkt Fee-Attacken aller Pokémon im Kampf um 33 %."
+    },
+    {
+        "ability_id": 188,
+        "api_name": "aura-break",
+        "name_en": "Aura Break",
+        "name_de": "Aura-Umkehr",
+        "description_en": "Makes Dark Aura and Fairy Aura weaken moves of their respective types.",
+        "description_de": "Schwächt die von Dunkelaura und Feenaura gestärkten Attacken."
+    },
+    {
+        "ability_id": 189,
+        "api_name": "primordial-sea",
+        "name_en": "Primordial Sea",
+        "name_de": "Urmeer",
+        "description_en": "Creates heavy rain, which has all the properties of Rain Dance, cannot be replaced, and causes damaging Fire moves to fail.",
+        "description_de": "Ändert beim Betreten des Kampfes das Wetter in heftigen Regen und verhindert Feuer-Attacken."
+    },
+    {
+        "ability_id": 190,
+        "api_name": "desolate-land",
+        "name_en": "Desolate Land",
+        "name_de": "Endland",
+        "description_en": "Creates extremely harsh sunlight, which has all the properties of Sunny Day, cannot be replaced, and causes damaging Water moves to fail.",
+        "description_de": "Ändert beim Betreten des Kampfes das Wetter in sehr starkes Sonnenlicht und verhindert Wasser-Attacken."
+    },
+    {
+        "ability_id": 191,
+        "api_name": "delta-stream",
+        "name_en": "Delta Stream",
+        "name_de": "Delta-Wind",
+        "description_en": "Creates a mysterious air current, which cannot be replaced and causes moves to never be super effective against Flying Pokémon.",
+        "description_de": "Ändert beim Betreten des Kampfes das Wetter in Windströmungen und hebt Typenvorteile gegenüber Flug-Attacken auf."
+    },
+    {
+        "ability_id": 192,
+        "api_name": "stamina",
+        "name_en": "Stamina",
+        "name_de": "Zähigkeit",
+        "description_en": "Raises this Pokémon's Defense by one stage when it takes damage from a move.",
+        "description_de": "Wird es von einer Attacke getroffen, steigt seine Verteidigung."
+    },
+    {
+        "ability_id": 193,
+        "api_name": "wimp-out",
+        "name_en": "Wimp Out",
+        "name_de": "Reißaus",
+        "description_en": "This Pokémon automatically switches out when its HP drops below half.",
+        "description_de": "Fallen seine KP auf die Hälfte des Maximalwerts oder weniger, zieht es sich ängstlich zurück."
+    },
+    {
+        "ability_id": 194,
+        "api_name": "emergency-exit",
+        "name_en": "Emergency Exit",
+        "name_de": "Rückzug",
+        "description_en": "This Pokémon automatically switches out when its HP drops below half.",
+        "description_de": "Fallen seine KP auf die Hälfte des Maximalwerts oder weniger, bringt es sich in Sicherheit."
+    },
+    {
+        "ability_id": 195,
+        "api_name": "water-compaction",
+        "name_en": "Water Compaction",
+        "name_de": "Verklumpen",
+        "description_en": "Raises this Pokémon's Defense by two stages when it's hit by a Water move.",
+        "description_de": "Wird es von einer Wasser-Attacke getroffen, steigt seine Verteidigung stark."
+    },
+    {
+        "ability_id": 196,
+        "api_name": "merciless",
+        "name_en": "Merciless",
+        "name_de": "Quälerei",
+        "description_en": "This Pokémon's moves critical hit against poisoned targets.",
+        "description_de": "Sorgt bei Angriffen auf vergiftete Ziele für Volltreffergarantie."
+    },
+    {
+        "ability_id": 197,
+        "api_name": "shields-down",
+        "name_en": "Shields Down",
+        "name_de": "Limitschild",
+        "description_en": "Transforms this Minior between Core Form and Meteor Form. Prevents major status ailments and drowsiness while in Meteor Form.",
+        "description_de": "Fallen seine KP auf die Hälfte des Maximalwerts oder weniger, zerbricht die Panzerung des Pokémon und es wird aggressiver."
+    },
+    {
+        "ability_id": 198,
+        "api_name": "stakeout",
+        "name_en": "Stakeout",
+        "name_de": "Beschattung",
+        "description_en": "This Pokémon's moves have double power against Pokémon that switched in this turn.",
+        "description_de": "Verdoppelt den Schaden gegen ein Ziel in der Runde, in der es eingewechselt wurde."
+    },
+    {
+        "ability_id": 199,
+        "api_name": "water-bubble",
+        "name_en": "Water Bubble",
+        "name_de": "Wasserblase",
+        "description_en": "Halves damage from Fire moves, doubles damage of Water moves, and prevents burns.",
+        "description_de": "Feuer-Attacken fügen dem Pokémon weniger Schaden zu. Verhindert Verbrennungen."
+    },
+    {
+        "ability_id": 200,
+        "api_name": "steelworker",
+        "name_en": "Steelworker",
+        "name_de": "Stahlprofi",
+        "description_en": "This Pokémon's Steel moves have 1.5× power.",
+        "description_de": "Verstärkt Stahl-Attacken um den Faktor 1,5."
+    },
+    {
+        "ability_id": 201,
+        "api_name": "berserk",
+        "name_en": "Berserk",
+        "name_de": "Wutausbruch",
+        "description_en": "Raises this Pokémon's Special Attack by one stage every time its HP drops below half.",
+        "description_de": "Fallen seine KP nach einem Angriff auf die Hälfte des Maximalwerts oder weniger, steigt sein Spezial-Angriff."
+    },
+    {
+        "ability_id": 202,
+        "api_name": "slush-rush",
+        "name_en": "Slush Rush",
+        "name_de": "Schneescharrer",
+        "description_en": "During Hail, this Pokémon has double Speed.",
+        "description_de": "Verdoppelt bei Schnee die Initiative."
+    },
+    {
+        "ability_id": 203,
+        "api_name": "long-reach",
+        "name_en": "Long Reach",
+        "name_de": "Langstrecke",
+        "description_en": "This Pokémon's moves do not make contact.",
+        "description_de": "Ermöglicht dem Pokémon den Einsatz aller seiner Attacken, ohne das Ziel dabei direkt zu berühren."
+    },
+    {
+        "ability_id": 204,
+        "api_name": "liquid-voice",
+        "name_en": "Liquid Voice",
+        "name_de": "Plätscherstimme",
+        "description_en": "Sound-based moves become Water-type.",
+        "description_de": "Bewirkt, dass alle Lärm-Attacken des Pokémon den Typ Wasser annehmen."
+    },
+    {
+        "ability_id": 205,
+        "api_name": "triage",
+        "name_en": "Triage",
+        "name_de": "Heilwandel",
+        "description_en": "This Pokémon's healing moves have their priority increased by 3.",
+        "description_de": "Ermöglicht einen Erstschlag mit Attacken, welche die KP des Anwenders direkt regenerieren."
+    },
+    {
+        "ability_id": 206,
+        "api_name": "galvanize",
+        "name_en": "Galvanize",
+        "name_de": "Elektrohaut",
+        "description_en": "This Pokémon's Normal moves are Electric and have their power increased to 1.2×.",
+        "description_de": "Normal-Attacken werden zu Elektro-Attacken und um den Faktor 1,2 verstärkt."
+    },
+    {
+        "ability_id": 207,
+        "api_name": "surge-surfer",
+        "name_en": "Surge Surfer",
+        "name_de": "Surf-Schweif",
+        "description_en": "Doubles this Pokémon's Speed on Electric Terrain.",
+        "description_de": "Verdoppelt die Initiative, wenn zuvor ein Elektrofeld erzeugt wurde."
+    },
+    {
+        "ability_id": 208,
+        "api_name": "schooling",
+        "name_en": "Schooling",
+        "name_de": "Fischschwarm",
+        "description_en": "Wishiwashi becomes Schooling Form when its HP is 25% or higher.",
+        "description_de": "Verfügt es über einen hohen KP-Wert, wird es zu einem Schwarm und gewinnt an Stärke. Ist der KP-Wert niedrig, löst sich der Schwarm wieder auf."
+    },
+    {
+        "ability_id": 209,
+        "api_name": "disguise",
+        "name_en": "Disguise",
+        "name_de": "Kostümspuk",
+        "description_en": "Prevents the first instance of battle damage.",
+        "description_de": "Kann ein Mal pro Kampf mit seinem gruseligen Kostüm einen Angriff abwehren."
+    },
+    {
+        "ability_id": 210,
+        "api_name": "battle-bond",
+        "name_en": "Battle Bond",
+        "name_de": "Freundschaftsakt",
+        "description_en": "Transforms this Pokémon into Ash-Greninja after fainting an opponent. Water Shuriken's power is 20 and always hits three times.",
+        "description_de": "Besiegt es ein Ziel, vertieft dies die Freundschaft zu seinem Trainer, wodurch es die Ash-Form annimmt und sein Wasser-Shuriken stärker wird."
+    },
+    {
+        "ability_id": 211,
+        "api_name": "power-construct",
+        "name_en": "Power Construct",
+        "name_de": "Scharwandel",
+        "description_en": "Transforms 10% or 50% Zygarde into Complete Forme when its HP is below 50%.",
+        "description_de": "Fallen seine KP auf die Hälfte des Maximalwerts oder weniger, eilen ihm weitere Zellen zu Hilfe und es nimmt die Optimumform an."
+    },
+    {
+        "ability_id": 212,
+        "api_name": "corrosion",
+        "name_en": "Corrosion",
+        "name_de": "Korrosion",
+        "description_en": "This Pokémon can inflict poison on Poison and Steel Pokémon.",
+        "description_de": "Kann selbst Pokémon vom Typ Stahl oder Gift vergiften."
+    },
+    {
+        "ability_id": 213,
+        "api_name": "comatose",
+        "name_en": "Comatose",
+        "name_de": "Dauerschlaf",
+        "description_en": "This Pokémon always acts as though it were Asleep.",
+        "description_de": "Das Pokémon befindet sich ununterbrochen im Halbschlaf und wacht nie vollständig auf. Es kann jedoch im Schlaf angreifen."
+    },
+    {
+        "ability_id": 214,
+        "api_name": "queenly-majesty",
+        "name_en": "Queenly Majesty",
+        "name_de": "Majestät",
+        "description_en": "Opposing Pokémon cannot use priority attacks.",
+        "description_de": "Schüchtert Gegner ein und hindert sie so daran, Erstschlag-Attacken gegen es einzusetzen."
+    },
+    {
+        "ability_id": 215,
+        "api_name": "innards-out",
+        "name_en": "Innards Out",
+        "name_de": "Magenkrempler",
+        "description_en": "When this Pokémon faints from an opponent's move, that opponent takes damage equal to the HP this Pokémon had remaining.",
+        "description_de": "Wird es durch eine Attacke besiegt, fügt es dem Angreifer Schaden in Höhe des KP-Werts zu, den es besaß, bevor es kampfunfähig wurde."
+    },
+    {
+        "ability_id": 216,
+        "api_name": "dancer",
+        "name_en": "Dancer",
+        "name_de": "Tänzer",
+        "description_en": "Whenever another Pokémon uses a dance move, this Pokémon will use the same move immediately afterwards.",
+        "description_de": "Kann direkt im Anschluss an die Tanz-Attacke eines anderen Pokémon ebenfalls eine solche einsetzen."
+    },
+    {
+        "ability_id": 217,
+        "api_name": "battery",
+        "name_en": "Battery",
+        "name_de": "Batterie",
+        "description_en": "Ally Pokémon's moves have their power increased to 1.3×.",
+        "description_de": "Verstärkt die Spezial-Attacken von Mitstreitern um den Faktor 1,3."
+    },
+    {
+        "ability_id": 218,
+        "api_name": "fluffy",
+        "name_en": "Fluffy",
+        "name_de": "Flauschigkeit",
+        "description_en": "Damage from contact moves is halved. Damage from Fire moves is doubled.",
+        "description_de": "Halbiert den Schaden, den es durch direkte Attacken nimmt, aber verdoppelt dafür den durch Feuer-Attacken erlittenen Schaden."
+    },
+    {
+        "ability_id": 219,
+        "api_name": "dazzling",
+        "name_en": "Dazzling",
+        "name_de": "Buntkörper",
+        "description_en": "Opposing Pokémon cannot use priority attacks.",
+        "description_de": "Überrascht Gegner und hindert sie so daran, Erstschlag-Attacken gegen es einzusetzen."
+    },
+    {
+        "ability_id": 220,
+        "api_name": "soul-heart",
+        "name_en": "Soul-Heart",
+        "name_de": "Seelenherz",
+        "description_en": "This Pokémon's Special Attack rises by one stage every time any Pokémon faints.",
+        "description_de": "Erhöht jedes Mal, wenn ein Pokémon besiegt wird, den eigenen Spezial-Angriff."
+    },
+    {
+        "ability_id": 221,
+        "api_name": "tangling-hair",
+        "name_en": "Tangling Hair",
+        "name_de": "Lockenkopf",
+        "description_en": "When this Pokémon takes regular damage from a contact move, the attacking Pokémon's Speed lowers by one stage.",
+        "description_de": "Senkt bei Berührung im Zuge eines Angriffs die Initiative des Angreifers."
+    },
+    {
+        "ability_id": 222,
+        "api_name": "receiver",
+        "name_en": "Receiver",
+        "name_de": "Receiver",
+        "description_en": "When an ally faints, this Pokémon gains its Ability.",
+        "description_de": "Wird einer seiner Mitstreiter besiegt, erhält es dessen Fähigkeit."
+    },
+    {
+        "ability_id": 223,
+        "api_name": "power-of-alchemy",
+        "name_en": "Power of Alchemy",
+        "name_de": "Chemiekraft",
+        "description_en": "When an ally faints, this Pokémon gains its Ability.",
+        "description_de": "Wechselt seine Fähigkeit zu der eines kampfunfähig gewordenen Mitstreiters."
+    },
+    {
+        "ability_id": 224,
+        "api_name": "beast-boost",
+        "name_en": "Beast Boost",
+        "name_de": "Bestien-Boost",
+        "description_en": "Raises this Pokémon's highest stat by one stage when it faints another Pokémon.",
+        "description_de": "Erhöht in jeder Runde, in der es ein anderes Pokémon besiegt, seinen höchsten Statuswert."
+    },
+    {
+        "ability_id": 225,
+        "api_name": "rks-system",
+        "name_en": "RKS System",
+        "name_de": "Alpha-System",
+        "description_en": "Changes this Pokémon's type to match its held Memory.",
+        "description_de": "Das Pokémon passt seinen Typ der getragenen Disc an."
+    },
+    {
+        "ability_id": 226,
+        "api_name": "electric-surge",
+        "name_en": "Electric Surge",
+        "name_de": "Elektro-Erzeuger",
+        "description_en": "When this Pokémon enters battle, it changes the terrain to Electric Terrain.",
+        "description_de": "Erzeugt bei Kampfantritt ein Elektrofeld."
+    },
+    {
+        "ability_id": 227,
+        "api_name": "psychic-surge",
+        "name_en": "Psychic Surge",
+        "name_de": "Psycho-Erzeuger",
+        "description_en": "When this Pokémon enters battle, it changes the terrain to Psychic Terrain.",
+        "description_de": "Erzeugt bei Kampfantritt ein Psychofeld."
+    },
+    {
+        "ability_id": 228,
+        "api_name": "misty-surge",
+        "name_en": "Misty Surge",
+        "name_de": "Nebel-Erzeuger",
+        "description_en": "When this Pokémon enters battle, it changes the terrain to Misty Terrain.",
+        "description_de": "Erzeugt bei Kampfantritt ein Nebelfeld."
+    },
+    {
+        "ability_id": 229,
+        "api_name": "grassy-surge",
+        "name_en": "Grassy Surge",
+        "name_de": "Gras-Erzeuger",
+        "description_en": "When this Pokémon enters battle, it changes the terrain to Grassy Terrain.",
+        "description_de": "Erzeugt bei Kampfantritt ein Grasfeld."
+    },
+    {
+        "ability_id": 230,
+        "api_name": "full-metal-body",
+        "name_en": "Full Metal Body",
+        "name_de": "Metallprotektor",
+        "description_en": "Other Pokémon cannot lower this Pokémon's stats.",
+        "description_de": "Verhindert das Senken der Statuswerte durch Attacken und Fähigkeiten von Angreifern."
+    },
+    {
+        "ability_id": 231,
+        "api_name": "shadow-shield",
+        "name_en": "Shadow Shield",
+        "name_de": "Phantomschutz",
+        "description_en": "When this Pokémon has full HP, regular damage from moves is halved.",
+        "description_de": "Verringert den erlittenen Schaden bei vollen KP."
+    },
+    {
+        "ability_id": 232,
+        "api_name": "prism-armor",
+        "name_en": "Prism Armor",
+        "name_de": "Prismarüstung",
+        "description_en": "Reduces super-effective damage to 0.75×.",
+        "description_de": "Reduziert die Stärke von sehr effektiven Attacken und verringert damit den Schaden, den das Pokémon durch sie erleidet."
+    },
+    {
+        "ability_id": 233,
+        "api_name": "neuroforce",
+        "name_en": "Neuroforce",
+        "name_de": "Zerebralmacht",
+        "description_en": "Increases super-effective damage dealt to 1.25×.",
+        "description_de": "Verstärkt sehr effektive Attacken um den Faktor 1,25."
+    },
+    {
+        "ability_id": 234,
+        "api_name": "intrepid-sword",
+        "name_en": "Intrepid Sword",
+        "name_de": "Kühnes Schwert",
+        "description_en": "Boosts Attack in battle.",
+        "description_de": "Erhöht bei Kampfantritt den Angriff."
+    },
+    {
+        "ability_id": 235,
+        "api_name": "dauntless-shield",
+        "name_en": "Dauntless Shield",
+        "name_de": "Wackerer Schild",
+        "description_en": "Boosts Defense in battle.",
+        "description_de": "Erhöht bei Kampfantritt die Verteidigung."
+    },
+    {
+        "ability_id": 236,
+        "api_name": "libero",
+        "name_en": "Libero",
+        "name_de": "Libero",
+        "description_en": "Libero changes the Pokémon's type to that of its previously used attack.",
+        "description_de": "Das Pokémon nimmt bei Einsatz einer Attacke deren Typ an."
+    },
+    {
+        "ability_id": 237,
+        "api_name": "ball-fetch",
+        "name_en": "Ball Fetch",
+        "name_de": "Apport",
+        "description_en": "If the Pokémon is not holding an item, it will fetch the Poké Ball from the first failed throw of the battle.",
+        "description_de": "Trägt das Pokémon kein Item bei sich, hebt es den Ball aus dem ersten gescheiterten Fangversuch des Kampfes wieder auf."
+    },
+    {
+        "ability_id": 238,
+        "api_name": "cotton-down",
+        "name_en": "Cotton Down",
+        "name_de": "Wollflaum",
+        "description_en": "When Ignores moves and abilities that draw in moves.",
+        "description_de": "Wird es von einem Angriff getroffen, verstreut es Teile seines Wollflaums, wodurch die Initiative aller anderen Pokémon sinkt."
+    },
+    {
+        "ability_id": 239,
+        "api_name": "propeller-tail",
+        "name_en": "Propeller Tail",
+        "name_de": "Schraubflosse",
+        "description_en": "Ignores moves and abilities that draw in moves.",
+        "description_de": "Ignoriert die Effekte von Fähigkeiten und Attacken anderer Pokémon, die Attacken auf sich lenken."
+    },
+    {
+        "ability_id": 240,
+        "api_name": "mirror-armor",
+        "name_en": "Mirror Armor",
+        "name_de": "Spiegelrüstung",
+        "description_en": "Reflects any stat-lowering effects.",
+        "description_de": "Lenkt ausschließlich Effekte, welche die Statuswerte des Pokémon senken würden, auf den Angreifer um."
+    },
+    {
+        "ability_id": 241,
+        "api_name": "gulp-missile",
+        "name_en": "Gulp Missile",
+        "name_de": "Würggeschoss",
+        "description_en": "If a Cramorant with Gulp Missile uses Surf or Dive, it catches prey and changes its form depending on its remaining HP.",
+        "description_de": "Wenn das Pokémon Surfer oder Taucher einsetzt, fängt es sich dabei Beute. Erleidet es anschließend Schaden, greift es an, indem es die Beute wieder ausspuckt."
+    },
+    {
+        "ability_id": 242,
+        "api_name": "stalwart",
+        "name_en": "Stalwart",
+        "name_de": "Stahlrückgrat",
+        "description_en": "Ignores moves and abilities that draw in moves.",
+        "description_de": "Ignoriert die Effekte von Fähigkeiten und Attacken anderer Pokémon, die Attacken auf sich lenken."
+    },
+    {
+        "ability_id": 243,
+        "api_name": "steam-engine",
+        "name_en": "Steam Engine",
+        "name_de": "Dampfantrieb",
+        "description_en": "Boosts the Speed stat drastically when the Pokémon is hit by a Fire- or Water-type move.",
+        "description_de": "Wird es von einer Wasser- oder Feuer-Attacke getroffen, steigt seine Initiative drastisch."
+    },
+    {
+        "ability_id": 244,
+        "api_name": "punk-rock",
+        "name_en": "Punk Rock",
+        "name_de": "Punk Rock",
+        "description_en": "Boosts sound-based moves and halves damage from the same moves.",
+        "description_de": "Erhöht die Stärke von eigenen Lärm-Attacken und halbiert den Schaden, den das Pokémon selbst durch Lärm-Attacken erleidet."
+    },
+    {
+        "ability_id": 245,
+        "api_name": "sand-spit",
+        "name_en": "Sand Spit",
+        "name_de": "Sandspeier",
+        "description_en": "Creates a sandstorm when hit by an attack.",
+        "description_de": "Löst einen Sandsturm aus, wenn das Pokémon von einer Attacke erfasst wird."
+    },
+    {
+        "ability_id": 246,
+        "api_name": "ice-scales",
+        "name_en": "Ice Scales",
+        "name_de": "Eisflügelstaub",
+        "description_en": "Halves damage from Special moves.",
+        "description_de": "Halbiert mithilfe von schützendem Eisflügelstaub den Schaden, den das Pokémon durch Spezial-Attacken erleidet."
+    },
+    {
+        "ability_id": 247,
+        "api_name": "ripen",
+        "name_en": "Ripen",
+        "name_de": "Heranreifen",
+        "description_en": "Doubles the effect of berries.",
+        "description_de": "Verdoppelt den Effekt von Beeren, indem es sie heranreifen lässt."
+    },
+    {
+        "ability_id": 248,
+        "api_name": "ice-face",
+        "name_en": "Ice Face",
+        "name_de": "Tiefkühlkopf",
+        "description_en": "The Pokémon’s ice head can take a physical attack as a substitute, but the attack also changes the Pokémon’s appearance. The ice will be restored when it snows.",
+        "description_de": "Der Eisblock um seinen Kopf blockt eine physische Attacke ab. Dies bewirkt jedoch einen Formwechsel. Durch Hagel wird der Eisblock wiederhergestellt."
+    },
+    {
+        "ability_id": 249,
+        "api_name": "power-spot",
+        "name_en": "Power Spot",
+        "name_de": "Kraftquelle",
+        "description_en": "Just being next to the Pokémon powers up moves.",
+        "description_de": "Verstärkt die Attacken von Mitstreitern um den Faktor 1,3."
+    },
+    {
+        "ability_id": 250,
+        "api_name": "mimicry",
+        "name_en": "Mimicry",
+        "name_de": "Mimese",
+        "description_en": "Changes type depending on the terrain.",
+        "description_de": "Der Typ des Pokémon ändert sich in Abhängigkeit vom Zustand des Feldes."
+    },
+    {
+        "ability_id": 251,
+        "api_name": "screen-cleaner",
+        "name_en": "Screen Cleaner",
+        "name_de": "Hemmungslos",
+        "description_en": "Nullifies effects of Light Screen, Reflect, and Aurora Veil.",
+        "description_de": "Hebt bei Kampfantritt die Wirkung von Lichtschild, Reflektor und Auroraschleier auf Mitstreiter- und Gegnerseite auf."
+    },
+    {
+        "ability_id": 252,
+        "api_name": "steely-spirit",
+        "name_en": "Steely Spirit",
+        "name_de": "Stählerner Wille",
+        "description_en": "Powers up ally Pokémon's Steel-type moves.",
+        "description_de": "Verstärkt Stahl-Attacken auf der eigenen Seite um den Faktor 1,5."
+    },
+    {
+        "ability_id": 253,
+        "api_name": "perish-body",
+        "name_en": "Perish Body",
+        "name_de": "Unheilskörper",
+        "description_en": "When hit by a move that makes direct contact, the Pokémon and the attacker will faint after three turns unless they switch out of battle.",
+        "description_de": "Erleidet es einen Treffer von einer direkten Attacke, wird es zusammen mit dem Angreifer nach drei Runden besiegt. Rettung ist durch Austausch möglich."
+    },
+    {
+        "ability_id": 254,
+        "api_name": "wandering-spirit",
+        "name_en": "Wandering Spirit",
+        "name_de": "Rastlose Seele",
+        "description_en": "Swaps abilities with opponents on contact.",
+        "description_de": "Wird das Pokémon von einer direkten Attacke getroffen, tauscht es seine Fähigkeit mit der des Angreifers."
+    },
+    {
+        "ability_id": 255,
+        "api_name": "gorilla-tactics",
+        "name_en": "Gorilla Tactics",
+        "name_de": "Affenfokus",
+        "description_en": "Boosts the Pokémon's Attack stat but only allows the use of the first selected move.",
+        "description_de": "Erhöht den Angriff, aber nur die zuerst gewählte Attacke kann eingesetzt werden."
+    },
+    {
+        "ability_id": 256,
+        "api_name": "neutralizing-gas",
+        "name_en": "Neutralizing Gas",
+        "name_de": "Reaktionsgas",
+        "description_en": "Neutralizes abilities of all Pokémon in battle.",
+        "description_de": "Solange ein Pokémon mit der Fähigkeit Reaktionsgas am Kampf beteiligt ist, werden die Fähigkeiten aller anderen Pokémon unterdrückt oder aufgehoben."
+    },
+    {
+        "ability_id": 257,
+        "api_name": "pastel-veil",
+        "name_en": "Pastel Veil",
+        "name_de": "Pastellhülle",
+        "description_en": "Prevents the Pokémon and its allies from being poisoned.",
+        "description_de": "Schützt das Pokémon und seine Mitstreiter vor Vergiftung."
+    },
+    {
+        "ability_id": 258,
+        "api_name": "hunger-switch",
+        "name_en": "Hunger Switch",
+        "name_de": "Heißhunger",
+        "description_en": "Causes Morpeko to change its form each turn, alternating between Full Belly Mode and Hangry Mode",
+        "description_de": "Das Pokémon ändert zum Ende jeder Runde seine Form und wechselt somit zwischen dem Pappsatt- und dem Kohldampfmuster."
+    },
+    {
+        "ability_id": 259,
+        "api_name": "quick-draw",
+        "name_en": "Quick Draw",
+        "name_de": "Schnellschuss",
+        "description_en": "Enables the Pokémon to move first occasionally.",
+        "description_de": "Ermöglicht dem Pokémon gelegentlich den Erstschlag."
+    },
+    {
+        "ability_id": 260,
+        "api_name": "unseen-fist",
+        "name_en": "Unseen Fist",
+        "name_de": "Verborgene Faust",
+        "description_en": "Contact moves can strike through Protect/Detect.",
+        "description_de": "Wenn das Pokémon eine direkte Attacke einsetzt, trifft diese auch dann, wenn sich das Ziel selbst schützt."
+    },
+    {
+        "ability_id": 261,
+        "api_name": "curious-medicine",
+        "name_en": "Curious Medicine",
+        "name_de": "Kuriose Arznei",
+        "description_en": "Resets all stat changes upon entering battlefield.",
+        "description_de": "Das Pokémon versprüht bei Kampfantritt Arznei aus seiner Muschel, die alle Statusveränderungen auf der Mitstreiterseite aufhebt."
+    },
+    {
+        "ability_id": 262,
+        "api_name": "transistor",
+        "name_en": "Transistor",
+        "name_de": "Transistor",
+        "description_en": "Powers up Electric-type moves.",
+        "description_de": "Verstärkt Elektro-Attacken um den Faktor 1,3."
+    },
+    {
+        "ability_id": 263,
+        "api_name": "dragons-maw",
+        "name_en": "Dragon’s Maw",
+        "name_de": "Drachenkiefer",
+        "description_en": "Powers up Dragon-type moves.",
+        "description_de": "Erhöht die Stärke von Drachen-Attacken."
+    },
+    {
+        "ability_id": 264,
+        "api_name": "chilling-neigh",
+        "name_en": "Chilling Neigh",
+        "name_de": "Helles Wiehern",
+        "description_en": "Boosts Attack after knocking out a Pokémon.",
+        "description_de": "Besiegt es ein Pokémon, stößt es ein frostiges Wiehern aus und erhöht damit seinen Angriff."
+    },
+    {
+        "ability_id": 265,
+        "api_name": "grim-neigh",
+        "name_en": "Grim Neigh",
+        "name_de": "Dunkles Wiehern",
+        "description_en": "Boosts Special Attack after knocking out a Pokémon.",
+        "description_de": "Besiegt es ein Pokémon, stößt es ein furchteinflößendes Wiehern aus und erhöht damit seinen Spezial-Angriff."
+    },
+    {
+        "ability_id": 266,
+        "api_name": "as-one-glastrier",
+        "name_en": "As One",
+        "name_de": "Reitgespann",
+        "description_en": "Combines the effects of Unnerve and Chilling Neigh.",
+        "description_de": "Das Pokémon verfügt sowohl über Coronospas Fähigkeit Anspannung als auch über Polaross’ Fähigkeit Helles Wiehern."
+    },
+    {
+        "ability_id": 267,
+        "api_name": "as-one-spectrier",
+        "name_en": "As One",
+        "name_de": "Reitgespann",
+        "description_en": "Combines the effects of Unnerve and Grim Neigh.",
+        "description_de": "Das Pokémon verfügt sowohl über Coronospas Fähigkeit Anspannung als auch über Phantoross’ Fähigkeit Dunkles Wiehern."
+    },
+    {
+        "ability_id": 268,
+        "api_name": "lingering-aroma",
+        "name_en": "Lingering Aroma",
+        "name_de": "Duftschwade",
+        "description_en": "Contact changes the attacker's Ability to Lingering Aroma.",
+        "description_de": "Bei Kontakt wird die Fähigkeit des Angreifers zu Duftschwade."
+    },
+    {
+        "ability_id": 269,
+        "api_name": "seed-sower",
+        "name_en": "Seed Sower",
+        "name_de": "Streusaat",
+        "description_en": "Turns the ground into Grassy Terrain when the Pokémon is hit by an attack.",
+        "description_de": "Wird das Pokémon von einer Attacke getroffen, erzeugt es ein Grasfeld."
+    },
+    {
+        "ability_id": 270,
+        "api_name": "thermal-exchange",
+        "name_en": "Thermal Exchange",
+        "name_de": "Thermowandel",
+        "description_en": "Raises Attack when hit by a Fire-type move. Cannot be burned.",
+        "description_de": "Erhöht den Angriff, wenn das Pokémon von einer Feuer-Attacke getroffen wird. Außerdem kann es nicht verbrannt werden."
+    },
+    {
+        "ability_id": 271,
+        "api_name": "anger-shell",
+        "name_en": "Anger Shell",
+        "name_de": "Wutpanzer",
+        "description_en": "When the Pokémon's HP drops below half, Anger Shell lowers its Defense and Special Defense but its Attack, Special Attack and Speed are raised.",
+        "description_de": "Fallen die KP unter die Hälfte, sinken Verteidigung und Spezial-Verteidigung, während Angriff, Spezial-Angriff und Initiative steigen."
+    },
+    {
+        "ability_id": 272,
+        "api_name": "purifying-salt",
+        "name_en": "Purifying Salt",
+        "name_de": "Läutersalz",
+        "description_en": "Protects from status conditions and halves damage from Ghost-type moves.",
+        "description_de": "Schützt vor Statusproblemen und halbiert den Schaden durch Geist-Attacken."
+    },
+    {
+        "ability_id": 273,
+        "api_name": "well-baked-body",
+        "name_en": "Well-Baked Body",
+        "name_de": "Knusperkruste",
+        "description_en": "Immune to Fire-type moves, and Defense is sharply boosted.",
+        "description_de": "Verleiht Immunität gegen Feuer-Attacken und erhöht die Verteidigung stark, wenn das Pokémon von einer solchen Attacke getroffen wird."
+    },
+    {
+        "ability_id": 274,
+        "api_name": "wind-rider",
+        "name_en": "Wind Rider",
+        "name_de": "Windreiter",
+        "description_en": "Gives immunity to wind moves, and causes the Pokémon's Attack to increase by one stage when hit by one.",
+        "description_de": "Verleiht Immunität gegen Wind-Attacken und erhöht den Angriff um eine Stufe, wenn das Pokémon von einer solchen Attacke getroffen wird."
+    },
+    {
+        "ability_id": 275,
+        "api_name": "guard-dog",
+        "name_en": "Guard Dog",
+        "name_de": "Wachhund",
+        "description_en": "Boosts Attack if intimidated, and prevents being forced to switch out.",
+        "description_de": "Erhöht den Angriff, wenn das Pokémon eingeschüchtert wird, und verhindert, dass es zum Auswechseln gezwungen wird."
+    },
+    {
+        "ability_id": 276,
+        "api_name": "rocky-payload",
+        "name_en": "Rocky Payload",
+        "name_de": "Steinträger",
+        "description_en": "Powers up Rock-type moves.",
+        "description_de": "Verstärkt Gesteins-Attacken um den Faktor 1,5."
+    },
+    {
+        "ability_id": 277,
+        "api_name": "wind-power",
+        "name_en": "Wind Power",
+        "name_de": "Windkraft",
+        "description_en": "When hit by a wind move, the power of the next Electric-type move it uses is doubled.",
+        "description_de": "Wird das Pokémon von einer Wind-Attacke getroffen, verdoppelt sich die Stärke seiner nächsten Elektro-Attacke."
+    },
+    {
+        "ability_id": 278,
+        "api_name": "zero-to-hero",
+        "name_en": "Zero to Hero",
+        "name_de": "Superwechsel",
+        "description_en": "Transforms into its Hero Form when switching out.",
+        "description_de": "Beim Auswechseln wechselt das Pokémon in seine Heldenform."
+    },
+    {
+        "ability_id": 279,
+        "api_name": "commander",
+        "name_en": "Commander",
+        "name_de": "Kommandant",
+        "description_en": "Goes inside the mouth of an ally Dondozo if one is on the field.",
+        "description_de": "Befindet sich ein verbündetes Heerashai auf dem Feld, springt das Pokémon in dessen Maul."
+    },
+    {
+        "ability_id": 280,
+        "api_name": "electromorphosis",
+        "name_en": "Electromorphosis",
+        "name_de": "Dynamo",
+        "description_en": "When hit by an attack, the power of the next Electric-type move it uses is doubled.",
+        "description_de": "Wird das Pokémon von einer Attacke getroffen, verdoppelt sich die Stärke seiner nächsten Elektro-Attacke."
+    },
+    {
+        "ability_id": 281,
+        "api_name": "protosynthesis",
+        "name_en": "Protosynthesis",
+        "name_de": "Paläosynthese",
+        "description_en": "Raises highest stat in harsh sunlight, or if holding Booster Energy.",
+        "description_de": "Erhöht bei starkem Sonnenlicht oder durch eine getragene Energiekapsel den höchsten Statuswert."
+    },
+    {
+        "ability_id": 282,
+        "api_name": "quark-drive",
+        "name_en": "Quark Drive",
+        "name_de": "Quantenantrieb",
+        "description_en": "Raises highest stat on Electric Terrain, or if holding Booster Energy.",
+        "description_de": "Erhöht im Elektrofeld oder durch eine getragene Energiekapsel den höchsten Statuswert."
+    },
+    {
+        "ability_id": 283,
+        "api_name": "good-as-gold",
+        "name_en": "Good as Gold",
+        "name_de": "Goldkörper",
+        "description_en": "Gives immunity to status moves.",
+        "description_de": "Verleiht Immunität gegen Status-Attacken."
+    },
+    {
+        "ability_id": 284,
+        "api_name": "vessel-of-ruin",
+        "name_en": "Vessel of Ruin",
+        "name_de": "Unheilsgefäß",
+        "description_en": "Lowers Special Attack of all Pokémon except itself.",
+        "description_de": "Senkt den Spezial-Angriff aller Pokémon außer dem eigenen."
+    },
+    {
+        "ability_id": 285,
+        "api_name": "sword-of-ruin",
+        "name_en": "Sword of Ruin",
+        "name_de": "Unheilsschwert",
+        "description_en": "Lowers Defense of all Pokémon except itself.",
+        "description_de": "Senkt die Verteidigung aller Pokémon außer dem eigenen."
+    },
+    {
+        "ability_id": 286,
+        "api_name": "tablets-of-ruin",
+        "name_en": "Tablets of Ruin",
+        "name_de": "Unheilstafeln",
+        "description_en": "Lowers Attack of all Pokémon except itself.",
+        "description_de": "Senkt den Angriff aller Pokémon außer dem eigenen."
+    },
+    {
+        "ability_id": 287,
+        "api_name": "beads-of-ruin",
+        "name_en": "Beads of Ruin",
+        "name_de": "Unheilsjuwelen",
+        "description_en": "Lowers Special Defense of all Pokémon except itself.",
+        "description_de": "Senkt die Spezial-Verteidigung aller Pokémon außer dem eigenen."
+    },
+    {
+        "ability_id": 288,
+        "api_name": "orichalcum-pulse",
+        "name_en": "Orichalcum Pulse",
+        "name_de": "Orichalkum-Puls",
+        "description_en": "Turns the sunlight harsh when entering battle, and boosts Attack while active.",
+        "description_de": "Erzeugt beim Kampfantritt starkes Sonnenlicht und erhöht den Angriff, solange es anhält."
+    },
+    {
+        "ability_id": 289,
+        "api_name": "hadron-engine",
+        "name_en": "Hadron Engine",
+        "name_de": "Hadronen-Motor",
+        "description_en": "Creates an Electric Terrain when entering battle, and boosts Special Attack while active.",
+        "description_de": "Erzeugt beim Kampfantritt ein Elektrofeld und erhöht den Spezial-Angriff, solange es besteht."
+    },
+    {
+        "ability_id": 290,
+        "api_name": "opportunist",
+        "name_en": "Opportunist",
+        "name_de": "Profiteur",
+        "description_en": "Copies stat boosts by the opponent.",
+        "description_de": "Kopiert Statuswerterhöhungen des Gegners."
+    },
+    {
+        "ability_id": 291,
+        "api_name": "cud-chew",
+        "name_en": "Cud Chew",
+        "name_de": "Wiederkäuer",
+        "description_en": "Causes the Pokémon to reuse an already consumed Berry at the end of the next turn.",
+        "description_de": "Bewirkt, dass das Pokémon eine bereits verzehrte Beere am Ende der nächsten Runde erneut einsetzt."
+    },
+    {
+        "ability_id": 292,
+        "api_name": "sharpness",
+        "name_en": "Sharpness",
+        "name_de": "Scharfkantig",
+        "description_en": "Powers up slicing moves.",
+        "description_de": "Verstärkt Schnitt-Attacken um den Faktor 1,5."
+    },
+    {
+        "ability_id": 293,
+        "api_name": "supreme-overlord",
+        "name_en": "Supreme Overlord",
+        "name_de": "Feldherr",
+        "description_en": "Attack and Special Attack are boosted for each party Pokémon that has been defeated.",
+        "description_de": "Verstärkt Attacken für jedes bereits besiegte Pokémon im eigenen Team um 10 %, höchstens jedoch um 50 %."
+    },
+    {
+        "ability_id": 294,
+        "api_name": "costar",
+        "name_en": "Costar",
+        "name_de": "Synchronauftritt",
+        "description_en": "Copies ally's stat changes on entering battle.",
+        "description_de": "Kopiert beim Kampfantritt die Statuswertveränderungen des Mitstreiters."
+    },
+    {
+        "ability_id": 295,
+        "api_name": "toxic-debris",
+        "name_en": "Toxic Debris",
+        "name_de": "Giftbelag",
+        "description_en": "Scatters poison spikes at the feet of the opposing team when the Pokémon takes damage from physical moves.",
+        "description_de": "Verstreut Giftspitzen auf der gegnerischen Seite, wenn das Pokémon durch eine physische Attacke Schaden erleidet."
+    },
+    {
+        "ability_id": 296,
+        "api_name": "armor-tail",
+        "name_en": "Armor Tail",
+        "name_de": "Schweifrüstung",
+        "description_en": "Prevents the opponent from using any moves that have priority, such as Quick Attack.",
+        "description_de": "Hindert Gegner daran, Attacken mit erhöhter Priorität wie Ruckzuckhieb einzusetzen."
+    },
+    {
+        "ability_id": 297,
+        "api_name": "earth-eater",
+        "name_en": "Earth Eater",
+        "name_de": "Bodenschmaus",
+        "description_en": "Restores HP when hit by a Ground-type move.",
+        "description_de": "Stellt KP wieder her, wenn das Pokémon von einer Boden-Attacke getroffen wird."
+    },
+    {
+        "ability_id": 298,
+        "api_name": "mycelium-might",
+        "name_en": "Mycelium Might",
+        "name_de": "Myzelienkraft",
+        "description_en": "Status moves go last, but are not affected by the opponent's ability.",
+        "description_de": "Status-Attacken werden zuletzt ausgeführt, bleiben dafür aber von der Fähigkeit des Gegners unbeeinflusst."
+    },
+    {
+        "ability_id": 299,
+        "api_name": "minds-eye",
+        "name_en": "Mind’s Eye",
+        "name_de": "Geistiges Auge",
+        "description_en": "The Pokémon ignores changes to opponents' evasiveness, its accuracy can't be lowered, and it can hit Ghost types with Normal- and Fighting-type moves.",
+        "description_de": "Ignoriert Änderungen am gegnerischen Ausweichwert, verhindert das Senken der eigenen Genauigkeit und lässt Normal- sowie Kampf-Attacken Geist-Pokémon treffen."
+    },
+    {
+        "ability_id": 300,
+        "api_name": "supersweet-syrup",
+        "name_en": "Supersweet Syrup",
+        "name_de": "Süßer Nektar",
+        "description_en": "Once per battle, when a Pokémon with Supersweet Syrup enters the battle, it lowers the evasion stat of all adjacent opponents by one stage.",
+        "description_de": "Senkt beim ersten Kampfantritt den Ausweichwert aller angrenzenden Gegner um eine Stufe."
+    },
+    {
+        "ability_id": 301,
+        "api_name": "hospitality",
+        "name_en": "Hospitality",
+        "name_de": "Gastlichkeit",
+        "description_en": "When a Pokémon with Hospitality enters a battle, it restores HP for an ally by 25%.",
+        "description_de": "Stellt beim Kampfantritt 25 % der maximalen KP eines Mitstreiters wieder her."
+    },
+    {
+        "ability_id": 302,
+        "api_name": "toxic-chain",
+        "name_en": "Toxic Chain",
+        "name_de": "Giftkette",
+        "description_en": "May cause bad poisoning when the Pokémon hits an opponent with a move.",
+        "description_de": "Attacken des Pokémon können den getroffenen Gegner schwer vergiften."
+    },
+    {
+        "ability_id": 303,
+        "api_name": "embody-aspect",
+        "name_en": "Embody Aspect",
+        "name_de": "Erinnerungskraft",
+        "description_en": "Embody Aspect boosts a particular stat, depending on the form of a Terastallized Ogerpon",
+        "description_de": "Erhöht abhängig von der Form eines terakristallisierten Ogerpon einen bestimmten Statuswert."
+    },
+    {
+        "ability_id": 304,
+        "api_name": "tera-shift",
+        "name_en": "Tera Shift",
+        "name_de": "Tera-Wandel",
+        "description_en": "When Terapagos enters the battle, it turns into its Terastal Form until the end of the battle.",
+        "description_de": "Beim Kampfantritt wechselt Terapagos bis zum Kampfende in seine Terakristall-Form."
+    },
+    {
+        "ability_id": 305,
+        "api_name": "tera-shell",
+        "name_en": "Tera Shell",
+        "name_de": "Tera-Panzer",
+        "description_en": "All damage-dealing moves that hit the Pokémon when its HP is full will not be very effective.",
+        "description_de": "Schadensattacken, die das Pokémon bei vollen KP treffen, sind nicht sehr effektiv."
+    },
+    {
+        "ability_id": 306,
+        "api_name": "teraform-zero",
+        "name_en": "Teraform Zero",
+        "name_de": "Teraforming Null",
+        "description_en": "As soon as Terapagos assumes its Stellar Form, it will immediately neutralize weather and terrain effects.",
+        "description_de": "Sobald Terapagos seine Stellarform annimmt, neutralisiert es sofort Wetter- und Feldeffekte."
+    },
+    {
+        "ability_id": 307,
+        "api_name": "poison-puppeteer",
+        "name_en": "Poison Puppeteer",
+        "name_de": "Giftpuppenspiel",
+        "description_en": "Pokémon poisoned by Pecharunt's moves will also become confused.",
+        "description_de": "Pokémon, die durch Attacken von Infamomo vergiftet werden, werden zusätzlich verwirrt."
+    },
+    {
+        "ability_id": 308,
+        "api_name": "piercing-drill",
+        "name_en": "Piercing Drill",
+        "name_de": "Stichbohrer",
+        "description_en": "When the Pokémon uses contact moves, it can hit even targets that are protecting themselves, dealing 1/4 of the damage that the move would otherwise deal. Everything aside from the target's protective effects is still triggered.",
+        "description_de": "Setzt das Pokémon eine Kontaktattacke ein, trifft sie auch Ziele, die sich selbst schützen, und fügt ihnen 1/4 des eigentlichen Schadens zu. Alle anderen Effekte werden trotzdem ausgelöst."
+    },
+    {
+        "ability_id": 309,
+        "api_name": "dragonize",
+        "name_en": "Dragonize",
+        "name_de": "Drachenschicht",
+        "description_en": "The Pokémon's Normal-type moves become Dragon-type moves and their power is boosted by 20%.",
+        "description_de": "Normal-Attacken des Pokémon nehmen den Typ Drache an und ihre Stärke wird um 20 % erhöht."
+    },
+    {
+        "ability_id": 310,
+        "api_name": "mega-sol",
+        "name_en": "Mega Sol",
+        "name_de": "Mega-Solarladung",
+        "description_en": "The Pokémon can use its moves as if the weather were harsh sunlight.",
+        "description_de": "Das Pokémon kann Attacken wie bei Sonnenschein einsetzen, auch wenn nicht das Wetter Sonnenschein herrscht."
+    },
+    {
+        "ability_id": 311,
+        "api_name": "spicy-spray",
+        "name_en": "Spicy Spray",
+        "name_de": "Chilispritzer",
+        "description_en": "When the Pokémon takes damage from a move, it burns the attacker.",
+        "description_de": "Erleidet das Pokémon durch eine Attacke Schaden, erleidet der Angreifer Verbrennungen."
+    },
+    {
+        "ability_id": 312,
+        "api_name": "eelevate",
+        "name_en": "Eelevate",
+        "name_de": "Emporwindung",
+        "description_en": "The Pokémon floats off the ground, making it immune to Ground-type moves, as well as the Spikes, Toxic Spikes, and Sticky Web statuses. When the Pokémon knocks out a target with an attack, its highest stat is boosted by 1 stage.",
+        "description_de": "Das Pokémon schwebt über dem Boden und ist dadurch immun gegen Boden-Attacken, Stachler, Giftspitzen und Klebenetz. Besiegt es ein Pokémon, steigt sein höchster Statuswert um eine Stufe."
+    },
+    {
+        "ability_id": 313,
+        "api_name": "fire-mane",
+        "name_en": "Fire Mane",
+        "name_de": "Flammenmähne",
+        "description_en": "Boosts the power of the Pokémon's Fire-type moves by 50%.",
+        "description_de": "Erhöht den Schaden von Feuer-Attacken um 50 %."
+    }
+]
