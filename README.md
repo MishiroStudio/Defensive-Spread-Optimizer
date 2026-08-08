@@ -34,9 +34,9 @@ This helps create a balanced defensive spread instead of investing only in physi
 Pre-built downloads are available for:
 
 - **macOS** — tested
-- **Windows** — available, but not yet tested on a physical Windows system
-
-The Windows version should currently be considered experimental. Feedback and test reports are welcome.
+- **Windows** — tested
+- **Web** - tested
+- **PWA App** - tested on iOS
 
 Download the latest version from the [Releases](../../releases) page.
 
