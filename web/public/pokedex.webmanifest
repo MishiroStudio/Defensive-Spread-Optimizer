@@ -1,0 +1,30 @@
+{
+  "id": "/Defensive-Spread-Optimizer/pokedex/",
+  "name": "Cordy's Lab Pokédex",
+  "short_name": "Mishiro Dex",
+  "description": "The Pokédex for VGC players.",
+  "start_url": "/Defensive-Spread-Optimizer/pokedex/",
+  "scope": "/Defensive-Spread-Optimizer/pokedex/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#f28c28",
+  "icons": [
+    {
+      "src": "icons/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

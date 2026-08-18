@@ -29,19 +29,6 @@ const projectDirectory = resolve(
   '..',
 )
 
-const sourceDirectory = resolve(
-  projectDirectory,
-  'assets',
-  'sprites',
-)
-
-const destinationDirectory = resolve(
-  webDirectory,
-  'public',
-  'assets',
-  'sprites',
-)
-
 async function fileNeedsCopy(
   sourceFile,
   destinationFile,
@@ -122,12 +109,30 @@ async function synchronizeDirectory(
   return copiedFiles
 }
 
-const copiedFiles =
-  await synchronizeDirectory(
-    sourceDirectory,
-    destinationDirectory,
+const assetDirectories = [
+  {
+    source: resolve(projectDirectory, 'assets', 'sprites'),
+    destination: resolve(webDirectory, 'public', 'assets', 'sprites'),
+  },
+  {
+    source: resolve(projectDirectory, 'assets', 'types'),
+    destination: resolve(webDirectory, 'public', 'assets', 'types'),
+  },
+  {
+    source: resolve(projectDirectory, 'assets', 'move_categories'),
+    destination: resolve(webDirectory, 'public', 'assets', 'move-categories'),
+  },
+]
+
+let copiedFiles = 0
+
+for (const directory of assetDirectories) {
+  copiedFiles += await synchronizeDirectory(
+    directory.source,
+    directory.destination,
   )
+}
 
 console.log(
-  `${copiedFiles} Pokémon sprites synchronized.`,
+  `${copiedFiles} web assets synchronized.`,
 )

@@ -16,32 +16,32 @@ const projectDirectory = resolve(
   '..',
 )
 
-const sourceFile = resolve(
-  projectDirectory,
-  'data',
-  'pokemon.json',
-)
-
 const destinationDirectory = resolve(
   webDirectory,
   'public',
   'data',
 )
 
-const destinationFile = resolve(
-  destinationDirectory,
+const dataFiles = [
   'pokemon.json',
-)
+  'pokemon_v2.json',
+  'moves.json',
+  'learnsets.json',
+  'abilities.json',
+  'regulations.json',
+]
 
 await mkdir(destinationDirectory, {
   recursive: true,
 })
 
-await copyFile(
-  sourceFile,
-  destinationFile,
-)
+for (const fileName of dataFiles) {
+  await copyFile(
+    resolve(projectDirectory, 'data', fileName),
+    resolve(destinationDirectory, fileName),
+  )
+}
 
 console.log(
-  'Pokémon data synchronized.',
+  `${dataFiles.length} data files synchronized.`,
 )

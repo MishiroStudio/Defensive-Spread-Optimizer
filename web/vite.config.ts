@@ -1,65 +1,56 @@
+import { fileURLToPath, URL } from 'node:url'
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/Defensive-Spread-Optimizer/',
+
+  build: {
+    rollupOptions: {
+      input: {
+        optimizer: fileURLToPath(
+          new URL('./index.html', import.meta.url),
+        ),
+        pokedex: fileURLToPath(
+          new URL('./pokedex/index.html', import.meta.url),
+        ),
+      },
+    },
+  },
+
   plugins: [
     react(),
 
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false,
+      manifest: false,
 
       includeAssets: [
+        'favicon.svg',
         'icons/apple-touch-icon.png',
+        'icons/pwa-192x192.png',
+        'icons/pwa-512x512.png',
         'assets/sprites/missingno.png',
-        'data/pokemon.json',
       ],
-
-      manifest: {
-        id: '/Defensive-Spread-Optimizer/',
-        name: 'Defensive Spread Optimizer',
-        short_name: 'Spread Optimizer',
-        description:
-          'Find the bulkiest defensive spread for your Pokémon.',
-
-        start_url: '/Defensive-Spread-Optimizer/',
-        scope: '/Defensive-Spread-Optimizer/',
-
-        display: 'standalone',
-        orientation: 'portrait',
-
-        background_color: '#f8fafc',
-        theme_color: '#f28c28',
-
-        icons: [
-          {
-            src: 'icons/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'icons/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: 'icons/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
 
       workbox: {
         globPatterns: [
-          '**/*.{js,css,html,ico,svg,png,woff2,json}',
+          '**/*.{js,css,html,ico,svg,png,woff2,json,webmanifest}',
         ],
 
         globIgnores: [
           'assets/sprites/home/**',
         ],
+
+        maximumFileSizeToCacheInBytes:
+          5 * 1024 * 1024,
+
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
 
         runtimeCaching: [
           {
@@ -69,7 +60,7 @@ export default defineConfig({
             handler: 'CacheFirst',
 
             options: {
-              cacheName: 'pokemon-sprites',
+              cacheName: 'pokemon-home-sprites',
 
               expiration: {
                 maxEntries: 500,
