@@ -1,4 +1,4 @@
-"""MISHIRO Pokédex UI — version 71, based on version 70.
+"""MISHIRO Pokédex UI — version 72, based on version 71.
 
 The visual language mirrors the Defensive Spread Optimizer: a narrow vertical
 layout, orange wordmark, muted subtitle, compact section headings, and an
@@ -6,7 +6,7 @@ automatic light/dark theme that follows the operating system.
 
 Run from the project root with:
 
-    python3 apps/pokedex/ui_mobile_v71.py
+    python3 apps/pokedex/ui_mobile_v72.py
 """
 
 from __future__ import annotations
@@ -3815,6 +3815,29 @@ class MainWindow(QWidget):
                 if int(value) not in self._move_ids_for_form(form):
                     return False
         return True
+
+    def _reset_result_sort(self) -> None:
+        """Return result sorting to National Dex order and remove the arrow."""
+        self.result_sort_column = None
+        self.result_sort_order = Qt.SortOrder.DescendingOrder
+
+        if not hasattr(self, "filter_results_tree"):
+            return
+
+        tree = self.filter_results_tree
+        header = tree.header()
+        header.setSortIndicatorShown(False)
+        if isinstance(header, ResultHeaderView):
+            header.set_result_sort(None)
+
+        if tree.topLevelItemCount():
+            tree.setUpdatesEnabled(False)
+            try:
+                # Column 0 carries the invisible National-Dex + form sort key.
+                tree.sortItems(0, Qt.SortOrder.AscendingOrder)
+            finally:
+                tree.setUpdatesEnabled(True)
+                tree.viewport().update()
 
     def _sort_filter_results_by_column(self, column: int) -> None:
         """Cycle stat sorting without rebuilding hundreds of result widgets."""
