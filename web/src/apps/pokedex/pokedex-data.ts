@@ -149,7 +149,16 @@ export interface ScopeEntities {
 
 export const ORANGE = "#F28C28";
 export const MAX_STAT_POINTS = 32;
+export const MAX_TOTAL_STAT_POINTS = 66;
 export const STAT_ORDER: StatKey[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+
+export function statTotal(stats: Record<StatKey, number>): number {
+  return STAT_ORDER.reduce((total, stat) => total + stats[stat], 0);
+}
+
+export function defensiveBulk(stats: Record<StatKey, number>): number {
+  return stats.hp + stats.def + stats.spd;
+}
 export const TYPE_ORDER = [
   "normal",
   "grass",
@@ -222,19 +231,19 @@ export const TYPE_NAMES: Record<Language, Record<string, string>> = {
 export const STAT_NAMES: Record<Language, Record<StatKey, string>> = {
   de: {
     hp: "KP",
-    atk: "Angriff",
-    def: "Verteidigung",
-    spa: "Sp.-Angriff",
-    spd: "Sp.-Verteidigung",
-    spe: "Initiative",
+    atk: "Angr",
+    def: "Vert",
+    spa: "SpA",
+    spd: "SpV",
+    spe: "Init",
   },
   en: {
     hp: "HP",
-    atk: "Attack",
-    def: "Defense",
-    spa: "Sp. Attack",
-    spd: "Sp. Defense",
-    spe: "Speed",
+    atk: "Atk",
+    def: "Def",
+    spa: "SpA",
+    spd: "SpD",
+    spe: "Spe",
   },
 };
 

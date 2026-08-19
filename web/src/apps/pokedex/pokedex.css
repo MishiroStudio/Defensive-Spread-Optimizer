@@ -451,7 +451,7 @@ select:focus-visible {
 
 .desktop-results-table table {
   width: 100%;
-  min-width: 820px;
+  min-width: 860px;
   border-collapse: collapse;
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
@@ -483,8 +483,8 @@ select:focus-visible {
   font-weight: 800;
 }
 
-.desktop-results-table th:nth-last-child(-n + 7),
-.desktop-results-table td:nth-last-child(-n + 7) {
+.desktop-results-table th:nth-last-child(-n + 8),
+.desktop-results-table td:nth-last-child(-n + 8) {
   text-align: center;
 }
 
@@ -1234,10 +1234,10 @@ select:focus-visible {
 
   .result-card {
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px;
     width: 100%;
-    padding: 11px;
+    padding: 9px 10px;
     border: 1px solid var(--border);
     border-radius: 13px;
     background: var(--surface);
@@ -1250,8 +1250,21 @@ select:focus-visible {
   }
 
   .result-card .result-sprite {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .result-card-visual {
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .result-card-visual .result-type-icons {
+    justify-content: center;
+    gap: 2px;
   }
 
   .result-card-main,
@@ -1262,7 +1275,7 @@ select:focus-visible {
   .result-card-main {
     min-width: 0;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
   }
 
   .result-card-title {
@@ -1297,9 +1310,9 @@ select:focus-visible {
 
   .result-stats {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 3px;
-    margin-top: 3px;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 2px;
+    margin-top: 1px;
     font-size: 0.72rem;
     font-variant-numeric: tabular-nums;
     text-align: center;
@@ -1491,7 +1504,7 @@ select:focus-visible {
   }
 
   .result-stats {
-    gap: 1px;
+    gap: 0;
   }
 }
 
@@ -1505,5 +1518,466 @@ select:focus-visible {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile detail layout update */
+.identity-card {
+  grid-template-columns: 190px minmax(0, 1fr) minmax(160px, 0.85fr);
+  align-items: start;
+}
+
+.identity-name,
+.identity-abilities {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.identity-name > h2 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: clamp(1.7rem, 5vw, 2.35rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.identity-abilities > h3 {
+  margin: 0 0 7px;
+  font-size: 0.98rem;
+}
+
+@media (max-width: 760px) {
+  .identity-card {
+    grid-template-columns: 145px minmax(0, 1fr) minmax(130px, 0.8fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 540px) {
+  .identity-card {
+    grid-template-columns: 100px minmax(0, 1fr) minmax(96px, 0.8fr);
+    gap: 10px;
+    padding: 16px 13px;
+  }
+
+  .sprite-stage {
+    width: 98px;
+    height: 98px;
+  }
+
+  .detail-sprite {
+    width: 96px;
+    height: 96px;
+  }
+
+  .back-button {
+    font-size: 0.95rem;
+  }
+
+  .shiny-control {
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+
+  .shiny-control input {
+    width: 17px;
+    height: 17px;
+  }
+
+  .dex-label {
+    font-size: 0.88rem;
+  }
+
+  .identity-name > h2 {
+    font-size: 1.55rem;
+  }
+
+  .other-name {
+    font-size: 0.9rem;
+  }
+
+  .type-chip {
+    padding: 5px 8px;
+    font-size: 0.74rem;
+  }
+
+  .identity-abilities > h3 {
+    margin-bottom: 8px;
+    font-size: 0.92rem;
+  }
+
+  .ability-buttons button {
+    max-width: 100%;
+    padding: 7px 9px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+  }
+
+  .ability-description h3 {
+    font-size: 1.05rem;
+  }
+
+  .ability-description p {
+    font-size: 0.94rem;
+  }
+
+  .detail-section-heading h2,
+  .moves-card > h2 {
+    font-size: 1.16rem;
+  }
+
+  .segmented-control button {
+    padding-block: 7px;
+    font-size: 0.82rem;
+  }
+
+  .stat-table {
+    overflow-x: visible;
+    font-size: 0.88rem;
+  }
+
+  .stat-table-header,
+  .stat-row {
+    grid-template-columns: minmax(42px, 1fr) 36px 14px 46px 14px minmax(58px, 0.8fr);
+    min-width: 0;
+    width: 100%;
+  }
+
+  .custom-stat-table .stat-table-header,
+  .custom-stat-table .stat-row {
+    grid-template-columns: minmax(34px, 1fr) 30px 10px 36px minmax(68px, 110px) 54px;
+    min-width: 0;
+  }
+
+  .stat-table-header {
+    min-height: 42px;
+    padding-inline: 6px;
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+
+  .stat-row {
+    min-height: 49px;
+    padding-inline: 6px;
+  }
+
+  .stat-row strong {
+    font-size: 0.95rem;
+  }
+
+  .stat-name {
+    font-size: 0.85rem;
+  }
+
+  .stat-slider {
+    grid-template-columns: minmax(0, 1fr) 26px;
+    gap: 4px;
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  .stat-slider input {
+    min-width: 0;
+  }
+
+  .stat-slider output {
+    font-size: 0.78rem;
+  }
+
+  .nature-buttons {
+    gap: 3px;
+  }
+
+  .nature-buttons button {
+    width: 25px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+
+  .move-search input,
+  .move-tools select {
+    font-size: 0.84rem;
+  }
+
+  .moves-table,
+  .move-row {
+    font-size: 0.8rem;
+  }
+
+  .move-table-header,
+  .move-type-row strong {
+    font-size: 0.7rem;
+  }
+
+  .move-description p {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .identity-card {
+    grid-template-columns: 82px minmax(0, 1fr) minmax(82px, 0.78fr);
+    gap: 7px;
+  }
+
+  .sprite-stage {
+    width: 80px;
+    height: 80px;
+  }
+
+  .detail-sprite {
+    width: 78px;
+    height: 78px;
+  }
+
+  .shiny-control {
+    font-size: 0.78rem;
+  }
+}
+
+/* Mobile detail sizing v3: keep the page and every card at viewport width. */
+.app-shell {
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+.pokedex-card {
+  width: min(100%, 940px);
+  max-width: 940px;
+  min-width: 0;
+  justify-self: center;
+}
+
+.detail-view,
+.identity-card,
+.stats-card,
+.moves-card,
+.stat-table,
+.moves-table,
+.move-tools {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.stat-table-header,
+.stat-row {
+  grid-template-columns: minmax(0, 1.2fr) 52px 24px 66px 24px minmax(0, 1fr);
+  min-width: 0;
+}
+
+.custom-stat-table .stat-table-header,
+.custom-stat-table .stat-row {
+  grid-template-columns: minmax(0, 1.1fr) 48px 22px 60px minmax(0, 2.4fr) 82px;
+  min-width: 0;
+}
+
+.stat-slider .stat-points-input {
+  box-sizing: border-box;
+  width: 38px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 2px;
+  border: 1px solid var(--control-border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  appearance: textfield;
+}
+
+.stat-slider .stat-points-input::-webkit-inner-spin-button,
+.stat-slider .stat-points-input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.stat-slider .stat-points-input:focus {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  outline-offset: 1px;
+}
+
+.stat-total-row {
+  background: var(--surface-soft);
+  font-weight: 800;
+}
+
+.stat-total-row .stat-name,
+.points-total {
+  color: var(--text);
+}
+
+.points-total.over-budget {
+  color: var(--danger);
+}
+
+@media (max-width: 760px) {
+  .pokedex-card {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .stat-table {
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .stat-table-header,
+  .stat-row {
+    grid-template-columns: 44px 34px 10px 44px 10px minmax(52px, 1fr);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .custom-stat-table .stat-table-header,
+  .custom-stat-table .stat-row {
+    grid-template-columns: 44px 34px 10px 44px minmax(100px, 1fr) 68px;
+    min-width: 0;
+  }
+
+  .stat-slider {
+    grid-template-columns: minmax(0, 1fr) 38px;
+    gap: 5px;
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  .stat-slider input[type="range"] {
+    min-width: 0;
+  }
+
+  .stat-row strong,
+  .stat-slider .stat-points-input {
+    font-size: 0.95rem;
+  }
+
+  .stat-slider .stat-points-input {
+    width: 38px;
+  }
+
+  .custom-stat-table .nature-buttons {
+    margin-left: 6px;
+  }
+
+  .moves-table {
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .move-tools {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .move-search {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .move-search input,
+  .move-tools select {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .move-table-header,
+  .move-row {
+    grid-template-columns: minmax(108px, 138px) 38px 52px 48px 34px minmax(24px, 1fr);
+    width: 100%;
+    min-width: 0;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+
+  .move-table-header > span,
+  .move-row > span {
+    min-width: 0;
+  }
+
+  .move-table-header > span:not(:first-child) {
+    overflow: hidden;
+    font-size: 0.66rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .move-table-header {
+    min-height: 38px;
+    font-size: 0.72rem;
+  }
+
+  .move-type-row,
+  .move-description {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .move-name-cell {
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .move-name-cell > span {
+    min-width: 0;
+  }
+
+  .category-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .move-type-row {
+    padding: 7px 10px;
+  }
+
+  .move-type-row strong {
+    font-size: 0.84rem;
+  }
+
+  .move-type-row strong::before {
+    width: 20px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .stat-table-header,
+  .stat-row {
+    grid-template-columns: 38px 30px 6px 38px 6px minmax(44px, 1fr);
+  }
+
+  .custom-stat-table .stat-table-header,
+  .custom-stat-table .stat-row {
+    grid-template-columns: 38px 30px 6px 38px minmax(80px, 1fr) 58px;
+  }
+
+  .stat-slider {
+    grid-template-columns: minmax(0, 1fr) 34px;
+    gap: 4px;
+  }
+
+  .stat-slider .stat-points-input {
+    width: 34px;
+  }
+
+  .custom-stat-table .nature-buttons {
+    margin-left: 4px;
+  }
+
+  .move-table-header,
+  .move-row {
+    grid-template-columns: minmax(92px, 124px) 33px 44px 42px 28px minmax(18px, 1fr);
+    padding-right: 3px;
+    padding-left: 3px;
   }
 }

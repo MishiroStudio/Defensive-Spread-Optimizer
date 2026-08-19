@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateStat, matchRank, normalize } from "./pokedex-data";
+import {
+  MAX_TOTAL_STAT_POINTS,
+  calculateStat,
+  defensiveBulk,
+  matchRank,
+  normalize,
+  statTotal,
+} from "./pokedex-data";
 
 describe("Pokédex data helpers", () => {
   it("ranks exact, prefix, and substring matches in that order", () => {
@@ -18,5 +25,13 @@ describe("Pokédex data helpers", () => {
     expect(calculateStat("hp", 100, 0, 1)).toBe(175);
     expect(calculateStat("atk", 100, 0, 1)).toBe(120);
     expect(calculateStat("atk", 100, 0, 1.1)).toBe(132);
+  });
+
+  it("calculates BST, defensive bulk, and the shared point budget", () => {
+    const stats = { hp: 80, atk: 82, def: 83, spa: 100, spd: 100, spe: 80 };
+
+    expect(statTotal(stats)).toBe(525);
+    expect(defensiveBulk(stats)).toBe(263);
+    expect(MAX_TOTAL_STAT_POINTS).toBe(66);
   });
 });

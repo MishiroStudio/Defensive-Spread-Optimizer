@@ -17,6 +17,7 @@ import {
   CATEGORY_ICON_FILES,
   CATEGORY_NAMES,
   MAX_STAT_POINTS,
+  MAX_TOTAL_STAT_POINTS,
   PokedexIndex,
   RUBRIC_NAMES,
   RUBRIC_ORDER,
@@ -32,6 +33,7 @@ import {
   matchRank,
   moveDisplayPp,
   moveMatchesRubric,
+  statTotal,
 } from "./pokedex-data";
 import { publicPath } from "./public-path";
 
@@ -56,6 +58,7 @@ const COPY = {
     value: "Wert",
     points: "EVs",
     nature: "Wesen",
+    total: "Total",
     moves: "Attacken",
     moveSearch: "Attacke suchen …",
     filters: "Filter:",
@@ -90,6 +93,7 @@ const COPY = {
     value: "Value",
     points: "EVs",
     nature: "Nature",
+    total: "Total",
     moves: "Moves",
     moveSearch: "Search move …",
     filters: "Filter:",
@@ -203,6 +207,18 @@ function StatsPanel({ form, language }: { form: PokemonForm; language: Language 
   const neutralValues = calculateAllStats(form.base_stats, neutralPoints, neutralNatures);
   const natureValues = calculateAllStats(form.base_stats, neutralPoints, fixedNature);
   const customValues = calculateAllStats(form.base_stats, points, natures);
+  const baseTotal = statTotal(form.base_stats);
+  const neutralTotal = statTotal(neutralValues);
+  const natureTotal = statTotal(natureValues);
+  const customTotal = statTotal(customValues);
+  const pointsTotal = statTotal(points);
+
+  function updatePoints(stat: StatKey, value: number) {
+    const nextValue = Number.isFinite(value)
+      ? Math.max(0, Math.min(MAX_STAT_POINTS, Math.round(value)))
+      : 0;
+    setPoints((current) => ({ ...current, [stat]: nextValue }));
+  }
 
   function toggleNature(stat: StatKey, modifier: 0.9 | 1.1) {
     if (stat === "hp") return;
@@ -259,6 +275,14 @@ function StatsPanel({ form, language }: { form: PokemonForm; language: Language 
               <strong>{natureValues[stat]}</strong>
             </div>
           ))}
+          <div className="stat-row stat-total-row">
+            <span className="stat-name">{text.total}</span>
+            <span>{baseTotal}</span>
+            <span className="stat-arrow">→</span>
+            <strong>{neutralTotal}</strong>
+            <span className="stat-arrow">→</span>
+            <strong>{natureTotal}</strong>
+          </div>
         </div>
       ) : (
         <div className="stat-table custom-stat-table">
@@ -276,20 +300,28 @@ function StatsPanel({ form, language }: { form: PokemonForm; language: Language 
               <span>{form.base_stats[stat]}</span>
               <span className="stat-arrow">→</span>
               <strong>{customValues[stat]}</strong>
-              <label className="stat-slider">
-                <span className="sr-only">{STAT_NAMES[language][stat]} {text.points}</span>
+              <div className="stat-slider">
                 <input
                   type="range"
+                  aria-label={`${STAT_NAMES[language][stat]} ${text.points}`}
                   min="0"
                   max={MAX_STAT_POINTS}
                   value={points[stat]}
-                  onChange={(event) => setPoints((current) => ({
-                    ...current,
-                    [stat]: Number(event.target.value),
-                  }))}
+                  onChange={(event) => updatePoints(stat, Number(event.target.value))}
                 />
-                <output>{points[stat]}</output>
-              </label>
+                <input
+                  className="stat-points-input"
+                  type="number"
+                  inputMode="numeric"
+                  aria-label={`${STAT_NAMES[language][stat]} ${text.points}`}
+                  min="0"
+                  max={MAX_STAT_POINTS}
+                  step="1"
+                  value={points[stat]}
+                  onFocus={(event) => event.currentTarget.select()}
+                  onChange={(event) => updatePoints(stat, event.currentTarget.valueAsNumber)}
+                />
+              </div>
               <div className="nature-buttons">
                 <button
                   type="button"
@@ -308,6 +340,19 @@ function StatsPanel({ form, language }: { form: PokemonForm; language: Language 
               </div>
             </div>
           ))}
+          <div className="stat-row stat-total-row">
+            <span className="stat-name">{text.total}</span>
+            <span>{baseTotal}</span>
+            <span className="stat-arrow">→</span>
+            <strong>{customTotal}</strong>
+            <strong
+              className={`points-total${pointsTotal > MAX_TOTAL_STAT_POINTS ? " over-budget" : ""}`}
+              aria-live="polite"
+            >
+              {pointsTotal}/{MAX_TOTAL_STAT_POINTS}
+            </strong>
+            <span aria-hidden="true" />
+          </div>
         </div>
       )}
     </section>
@@ -641,13 +686,15 @@ export default function PokemonDetails({
             <span>{text.shiny}</span>
           </label>
         </div>
-        <div className="identity-details">
+        <div className="identity-name">
           <p className="dex-label">{text.dex} #{String(form.national_dex).padStart(4, "0")}</p>
           <h2>{localizedName(form, language)}</h2>
           {form.name_de !== form.name_en && (
             <p className="other-name">{localizedName(form, language === "de" ? "en" : "de")}</p>
           )}
           <TypeChips types={form.types} language={language} />
+        </div>
+        <div className="identity-abilities">
           <h3>{text.abilities}</h3>
           <div className="ability-buttons">
             {form.abilities.map((reference) => {

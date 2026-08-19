@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -15,15 +16,17 @@ import {
   STAT_NAMES,
   STAT_ORDER,
   TYPE_NAMES,
+  defensiveBulk,
   loadPokedexBundle,
   localizedName,
   matchRank,
+  statTotal,
 } from "./pokedex-data";
 import PokemonDetails from "./pokedex-detail";
 import { publicPath } from "./public-path";
 
 type SearchKind = "pokemon" | FilterKind;
-type SortKey = StatKey | "bst" | null;
+type SortKey = StatKey | "bulk" | "bst" | null;
 type SortDirection = "asc" | "desc";
 
 interface SearchSuggestion {
@@ -40,7 +43,7 @@ const COPY = {
     switchLanguage: "English",
     search: "Suche",
     searchIn: "Suche in",
-    placeholder: "Pokémon, Typ, Fähigkeit oder Attacke eingeben …",
+    placeholder: "Pokémon, Typ, Fähigkeit, Attacke …",
     noMatch: "Kein passender Suchbegriff gefunden.",
     pokemon: "Pokémon",
     type: "Typ",
@@ -57,6 +60,7 @@ const COPY = {
     loadMore: "Mehr Pokémon anzeigen",
     sort: "Sortieren",
     dexOrder: "Nationaldex",
+    bulk: "Bulk",
     bst: "BST",
     ascending: "Aufsteigend",
     descending: "Absteigend",
@@ -71,7 +75,7 @@ const COPY = {
     switchLanguage: "Deutsch",
     search: "Search",
     searchIn: "Search in",
-    placeholder: "Enter Pokémon, type, ability, or move …",
+    placeholder: "Pokémon, type, ability, move …",
     noMatch: "No matching search term found.",
     pokemon: "Pokémon",
     type: "Type",
@@ -88,6 +92,7 @@ const COPY = {
     loadMore: "Show more Pokémon",
     sort: "Sort",
     dexOrder: "National Dex",
+    bulk: "Bulk",
     bst: "BST",
     ascending: "Ascending",
     descending: "Descending",
@@ -138,7 +143,11 @@ function CompactSprite({ form }: { form: PokemonForm }) {
 }
 
 function bst(form: PokemonForm): number {
-  return STAT_ORDER.reduce((total, stat) => total + form.base_stats[stat], 0);
+  return statTotal(form.base_stats);
+}
+
+function bulk(form: PokemonForm): number {
+  return defensiveBulk(form.base_stats);
 }
 
 function AppHeader({
@@ -295,8 +304,16 @@ export default function PokedexApp() {
     const filtered = scopeForms.filter((form) => index.formMatchesFilters(form, filters));
     if (!sortKey) return filtered;
     return filtered.toSorted((left, right) => {
-      const leftValue = sortKey === "bst" ? bst(left) : left.base_stats[sortKey];
-      const rightValue = sortKey === "bst" ? bst(right) : right.base_stats[sortKey];
+      const leftValue = sortKey === "bst"
+        ? bst(left)
+        : sortKey === "bulk"
+          ? bulk(left)
+          : left.base_stats[sortKey];
+      const rightValue = sortKey === "bst"
+        ? bst(right)
+        : sortKey === "bulk"
+          ? bulk(right)
+          : right.base_stats[sortKey];
       const delta = leftValue - rightValue;
       return sortDirection === "asc" ? delta : -delta;
     });
@@ -416,7 +433,12 @@ export default function PokedexApp() {
                 }}
               >
                 {index.regulationChoices().map((choice) => (
-                  <option key={choice.id} value={choice.id}>{choice.name}</option>
+                  <Fragment key={choice.id}>
+                    <option value={choice.id}>{choice.name}</option>
+                    {choice.id === "national_dex" && (
+                      <option value="__regulation_separator" disabled>──────────────</option>
+                    )}
+                  </Fragment>
                 ))}
               </select>
             </label>
@@ -488,9 +510,6 @@ export default function PokedexApp() {
                             onClick={() => chooseSuggestion(suggestion)}
                           >
                             <span>{suggestion.label}</span>
-                            {suggestion.kind === "pokemon" && (
-                              <small>#{String((suggestion.value as PokemonForm).national_dex).padStart(4, "0")}</small>
-                            )}
                           </button>
                         );
                       })}
@@ -561,6 +580,7 @@ export default function PokedexApp() {
                   >
                     <option value="">{text.dexOrder}</option>
                     {STAT_ORDER.map((stat) => <option key={stat} value={stat}>{STAT_NAMES[language][stat]}</option>)}
+                    <option value="bulk">{text.bulk}</option>
                     <option value="bst">BST</option>
                   </select>
                 </label>
@@ -600,6 +620,11 @@ export default function PokedexApp() {
                           </th>
                         ))}
                         <th>
+                          <button type="button" onClick={() => cycleSort("bulk")}>
+                            {text.bulk}{sortKey === "bulk" ? (sortDirection === "desc" ? " ↓" : " ↑") : ""}
+                          </button>
+                        </th>
+                        <th>
                           <button type="button" onClick={() => cycleSort("bst")}>
                             BST{sortKey === "bst" ? (sortDirection === "desc" ? " ↓" : " ↑") : ""}
                           </button>
@@ -619,6 +644,7 @@ export default function PokedexApp() {
                           <td><div className="result-type-icons">{form.types.map((type) => <TypeIcon key={type} type={type} />)}</div></td>
                           <td>{form.abilities.map((ability) => localizedName(index.abilityFor(ability), language)).join(", ") || "–"}</td>
                           {STAT_ORDER.map((stat) => <td key={stat}>{form.base_stats[stat]}</td>)}
+                          <td>{bulk(form)}</td>
                           <td>{bst(form)}</td>
                         </tr>
                       ))}
@@ -639,13 +665,17 @@ export default function PokedexApp() {
                         names: [form.name_de, form.name_en, form.api_name],
                       })}
                     >
-                      <CompactSprite form={form} />
+                      <span className="result-card-visual">
+                        <CompactSprite form={form} />
+                        <span className="result-type-icons">
+                          {form.types.map((type) => <TypeIcon key={type} type={type} />)}
+                        </span>
+                      </span>
                       <span className="result-card-main">
                         <span className="result-card-title">
                           <strong>{localizedName(form, language)}</strong>
                           <small>#{String(form.national_dex).padStart(4, "0")}</small>
                         </span>
-                        <span className="result-type-icons">{form.types.map((type) => <TypeIcon key={type} type={type} />)}</span>
                         <span className="result-abilities">
                           {form.abilities.map((ability) => localizedName(index.abilityFor(ability), language)).join(" · ") || "–"}
                         </span>
@@ -653,6 +683,7 @@ export default function PokedexApp() {
                           {STAT_ORDER.map((stat) => (
                             <span key={stat}><small>{STAT_NAMES[language][stat]}</small>{form.base_stats[stat]}</span>
                           ))}
+                          <span><small>{text.bulk}</small>{bulk(form)}</span>
                           <span><small>BST</small>{bst(form)}</span>
                         </span>
                       </span>
