@@ -1,3 +1,4 @@
+// build-smoke.mjs — Pokédex/Optimizer V10
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -22,10 +23,26 @@ assert.match(optimizerHtml, /Defensive Spread Optimizer/)
 assert.match(pokedexHtml, /Cordy's Lab Pokédex/)
 assert.match(optimizerHtml, /manifest\.webmanifest/)
 assert.match(pokedexHtml, /pokedex\.webmanifest/)
+assert.match(optimizerHtml, /optimizer-apple-touch-icon\.png/)
+assert.match(pokedexHtml, /pokedex-apple-touch-icon\.png/)
 
 assert.equal(optimizerManifest.id, '/Defensive-Spread-Optimizer/')
 assert.equal(pokedexManifest.id, '/Defensive-Spread-Optimizer/pokedex/')
 assert.notEqual(optimizerManifest.id, pokedexManifest.id)
+assert.equal(optimizerManifest.icons[0].src, 'icons/optimizer-192x192.png')
+assert.equal(pokedexManifest.icons[0].src, 'icons/pokedex-192x192.png')
+assert.notEqual(optimizerManifest.icons[0].src, pokedexManifest.icons[0].src)
+
+for (const icon of [
+  'optimizer-apple-touch-icon.png',
+  'optimizer-192x192.png',
+  'optimizer-512x512.png',
+  'pokedex-apple-touch-icon.png',
+  'pokedex-192x192.png',
+  'pokedex-512x512.png',
+]) {
+  await readFile(resolve(dist, 'icons', icon))
+}
 
 const listSprites = await readdir(
   resolve(dist, 'assets', 'sprites', 'list', 'normal'),

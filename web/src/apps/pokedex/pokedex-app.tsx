@@ -1,4 +1,4 @@
-// pokedex-app.tsx — Pokédex V9
+// pokedex-app.tsx — Pokédex V10
 import {
   useEffect,
   useLayoutEffect,

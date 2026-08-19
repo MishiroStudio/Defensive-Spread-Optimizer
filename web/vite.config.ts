@@ -1,3 +1,4 @@
+// vite.config.ts — Pokédex/Optimizer V10
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -30,9 +31,12 @@ export default defineConfig({
 
       includeAssets: [
         'favicon.svg',
-        'icons/apple-touch-icon.png',
-        'icons/pwa-192x192.png',
-        'icons/pwa-512x512.png',
+        'icons/optimizer-apple-touch-icon.png',
+        'icons/optimizer-192x192.png',
+        'icons/optimizer-512x512.png',
+        'icons/pokedex-apple-touch-icon.png',
+        'icons/pokedex-192x192.png',
+        'icons/pokedex-512x512.png',
         'assets/sprites/missingno.png',
       ],
 

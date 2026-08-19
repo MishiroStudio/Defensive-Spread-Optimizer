@@ -1,4 +1,4 @@
-// pokedex-detail.tsx — Pokédex V9
+// pokedex-detail.tsx — Pokédex V10
 import {
   type CSSProperties,
   useEffect,

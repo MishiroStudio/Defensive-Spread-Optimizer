@@ -1,4 +1,4 @@
-/* pokedex.css — Pokédex V9 */
+/* pokedex.css — Pokédex V10 */
 :root {
   --page-start: #eef2ff;
   --page-middle: #f8fafc;
@@ -2214,7 +2214,8 @@ select:focus-visible {
   }
 
   .global-search input,
-  .move-search input {
+  .move-search input,
+  .stat-slider .stat-points-input {
     font-size: 16px;
   }
 

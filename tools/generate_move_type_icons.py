@@ -1,4 +1,4 @@
-# tools/generate_move_type_icons.py — Pokédex V9
+# tools/generate_move_type_icons.py — Pokédex V10
 """Generate transparent, type-coloured move icons from the original type tiles."""
 
 from __future__ import annotations

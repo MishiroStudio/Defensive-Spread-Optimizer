@@ -1,4 +1,4 @@
-// sync-sprites.mjs — Pokédex V9
+// sync-sprites.mjs — Pokédex V10
 import {
   copyFile,
   mkdir,

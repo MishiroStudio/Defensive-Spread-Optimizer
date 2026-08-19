@@ -1,4 +1,4 @@
-// pokedex-data.ts — Pokédex V9
+// pokedex-data.ts — Pokédex V10
 import { publicPath } from "./public-path";
 
 export type Language = "de" | "en";
@@ -7,6 +7,7 @@ export type MoveCategory = "physical" | "special" | "status";
 export type FilterKind = "type" | "ability" | "move";
 export type MoveRubric =
   | "priority"
+  | "contact"
   | "punch"
   | "sound"
   | "dance"
@@ -267,6 +268,7 @@ export const CATEGORY_ICON_FILES: Record<MoveCategory, string> = {
 
 export const RUBRIC_ORDER: MoveRubric[] = [
   "priority",
+  "contact",
   "punch",
   "sound",
   "dance",
@@ -284,6 +286,7 @@ export const RUBRIC_ORDER: MoveRubric[] = [
 export const RUBRIC_NAMES: Record<Language, Record<MoveRubric, string>> = {
   de: {
     priority: "Priorität",
+    contact: "Kontakt",
     punch: "Hieb",
     sound: "Geräusch",
     dance: "Tanz",
@@ -299,6 +302,7 @@ export const RUBRIC_NAMES: Record<Language, Record<MoveRubric, string>> = {
   },
   en: {
     priority: "Priority",
+    contact: "Contact",
     punch: "Punch",
     sound: "Sound",
     dance: "Dance",

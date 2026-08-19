@@ -1,12 +1,15 @@
-// pokedex-data.test.ts — Pokédex V9
+// pokedex-data.test.ts — Pokédex V10
 import { describe, expect, it } from "vitest";
 
 import {
+  type Move,
   type PokemonForm,
   MAX_TOTAL_STAT_POINTS,
+  RUBRIC_ORDER,
   calculateStat,
   defensiveBulk,
   matchRank,
+  moveMatchesRubric,
   normalize,
   relatedMegaForms,
   statTotal,
@@ -60,5 +63,14 @@ describe("Pokédex data helpers", () => {
     expect(statTotal(stats)).toBe(525);
     expect(defensiveBulk(stats)).toBe(263);
     expect(MAX_TOTAL_STAT_POINTS).toBe(66);
+  });
+
+  it("filters contact moves through the move property supplied by the dataset", () => {
+    const contactMove = { properties: ["contact"] } as Move;
+    const rangedMove = { properties: ["pulse"] } as Move;
+
+    expect(moveMatchesRubric(contactMove, "contact")).toBe(true);
+    expect(moveMatchesRubric(rangedMove, "contact")).toBe(false);
+    expect(RUBRIC_ORDER.slice(0, 2)).toEqual(["priority", "contact"]);
   });
 });
