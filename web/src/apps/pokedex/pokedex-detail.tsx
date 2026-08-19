@@ -1,3 +1,4 @@
+// pokedex-detail.tsx — Pokédex V9
 import {
   type CSSProperties,
   useEffect,
@@ -34,6 +35,7 @@ import {
   moveDisplayPp,
   moveMatchesRubric,
   statTotal,
+  toggleNatureModifier,
 } from "./pokedex-data";
 import { publicPath } from "./public-path";
 
@@ -43,6 +45,7 @@ type SearchState = "learned" | "not-learned" | "not-found" | null;
 const COPY = {
   de: {
     back: "← Zurück zu den Ergebnissen",
+    forms: "Formen",
     dex: "Nationaldex",
     shiny: "Shiny",
     noSprite: "Kein Sprite verfügbar",
@@ -56,7 +59,7 @@ const COPY = {
     maxNature: "Max +Wesen",
     custom: "Individuell",
     value: "Wert",
-    points: "EVs",
+    points: "Stat Punkte",
     nature: "Wesen",
     total: "Total",
     moves: "Attacken",
@@ -78,6 +81,7 @@ const COPY = {
   },
   en: {
     back: "← Back to results",
+    forms: "Forms",
     dex: "National Dex",
     shiny: "Shiny",
     noSprite: "No sprite available",
@@ -91,7 +95,7 @@ const COPY = {
     maxNature: "Max +Nature",
     custom: "Custom",
     value: "Value",
-    points: "EVs",
+    points: "Stat Points",
     nature: "Nature",
     total: "Total",
     moves: "Moves",
@@ -117,13 +121,15 @@ function emptyNumbers(value: number): Record<StatKey, number> {
   return Object.fromEntries(STAT_ORDER.map((stat) => [stat, value])) as Record<StatKey, number>;
 }
 
-function TypeIcon({ type, size = 22 }: { type: string; size?: number }) {
+function MoveTypeIcon({ type, size = 22 }: { type: string; size?: number }) {
+  const typeName = TYPE_NAMES.en[type] ?? type;
+
   return (
     <img
-      className="type-icon"
-      src={publicPath(`assets/types/${type}.png`)}
-      alt=""
-      title={TYPE_NAMES.en[type] ?? type}
+      className="type-icon move-type-icon"
+      src={publicPath(`assets/move-types/${type}.png`)}
+      alt={typeName}
+      title={typeName}
       width={size}
       height={size}
     />
@@ -222,18 +228,7 @@ function StatsPanel({ form, language }: { form: PokemonForm; language: Language 
 
   function toggleNature(stat: StatKey, modifier: 0.9 | 1.1) {
     if (stat === "hp") return;
-    setNatures((current) => {
-      const next = { ...current };
-      if (current[stat] === modifier) {
-        next[stat] = 1;
-        return next;
-      }
-      for (const key of STAT_ORDER) {
-        if (next[key] === modifier) next[key] = 1;
-      }
-      next[stat] = modifier;
-      return next;
-    });
+    setNatures((current) => toggleNatureModifier(current, stat, modifier));
   }
 
   return (
@@ -345,12 +340,14 @@ function StatsPanel({ form, language }: { form: PokemonForm; language: Language 
             <span>{baseTotal}</span>
             <span className="stat-arrow">→</span>
             <strong>{customTotal}</strong>
-            <strong
-              className={`points-total${pointsTotal > MAX_TOTAL_STAT_POINTS ? " over-budget" : ""}`}
-              aria-live="polite"
-            >
-              {pointsTotal}/{MAX_TOTAL_STAT_POINTS}
-            </strong>
+            <span className="points-total-cell">
+              <strong
+                className={`points-total${pointsTotal > MAX_TOTAL_STAT_POINTS ? " over-budget" : ""}`}
+                aria-live="polite"
+              >
+                {pointsTotal}/{MAX_TOTAL_STAT_POINTS}
+              </strong>
+            </span>
             <span aria-hidden="true" />
           </div>
         </div>
@@ -506,7 +503,7 @@ function MovesPanel({ index, form, language }: {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => runMoveSearch(move)}
                 >
-                  <TypeIcon type={move.type} size={18} />
+                  <MoveTypeIcon type={move.type} size={18} />
                   <span>{localizedName(move, language)}</span>
                 </button>
               ))}
@@ -591,7 +588,7 @@ function MovesPanel({ index, form, language }: {
               <button
                 type="button"
                 className="move-type-row"
-                style={{ backgroundColor: TYPE_COLORS[group.type] ?? "#94A3B8" }}
+                style={{ "--move-type-color": TYPE_COLORS[group.type] ?? "#94A3B8" } as CSSProperties}
                 aria-expanded={expanded}
                 onClick={() => toggleType(group.type)}
               >
@@ -622,7 +619,7 @@ function MovesPanel({ index, form, language }: {
                           })}
                         >
                           <span className="move-name-cell">
-                            <TypeIcon type={move.type} />
+                            <MoveTypeIcon type={move.type} />
                             <span>{localizedName(move, language)}</span>
                           </span>
                           <span><CategoryIcon category={move.category} language={language} /></span>
@@ -655,11 +652,13 @@ export default function PokemonDetails({
   form,
   language,
   onBack,
+  onSelectForm,
 }: {
   index: PokedexIndex;
   form: PokemonForm;
   language: Language;
   onBack: () => void;
+  onSelectForm: (form: PokemonForm) => void;
 }) {
   const text = COPY[language];
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
@@ -667,10 +666,27 @@ export default function PokemonDetails({
   const selectedAbilityRecord = selectedAbility
     ? index.abilitiesByApiName.get(selectedAbility)
     : undefined;
+  const relatedForms = index.relatedMegaForms(form);
 
   return (
     <section className="detail-view">
-      <button className="back-button" type="button" onClick={onBack}>{text.back}</button>
+      <div className="detail-navigation">
+        <button className="back-button" type="button" onClick={onBack}>{text.back}</button>
+        {relatedForms.length > 0 && (
+          <nav className="mega-form-links" aria-label={text.forms}>
+            <span>{text.forms}:</span>
+            {relatedForms.map((relatedForm) => (
+              <button
+                type="button"
+                key={relatedForm.pokemon_id}
+                onClick={() => onSelectForm(relatedForm)}
+              >
+                {localizedName(relatedForm, language)}
+              </button>
+            ))}
+          </nav>
+        )}
+      </div>
       <section className="identity-card">
         <div className="sprite-column">
           <div className="sprite-stage">
@@ -686,15 +702,13 @@ export default function PokemonDetails({
             <span>{text.shiny}</span>
           </label>
         </div>
-        <div className="identity-name">
+        <div className="identity-details">
           <p className="dex-label">{text.dex} #{String(form.national_dex).padStart(4, "0")}</p>
           <h2>{localizedName(form, language)}</h2>
           {form.name_de !== form.name_en && (
             <p className="other-name">{localizedName(form, language === "de" ? "en" : "de")}</p>
           )}
           <TypeChips types={form.types} language={language} />
-        </div>
-        <div className="identity-abilities">
           <h3>{text.abilities}</h3>
           <div className="ability-buttons">
             {form.abilities.map((reference) => {

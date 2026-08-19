@@ -1,6 +1,7 @@
+// pokedex-app.tsx — Pokédex V9
 import {
-  Fragment,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -59,7 +60,8 @@ const COPY = {
     back: "← Zurück zu den Ergebnissen",
     loadMore: "Mehr Pokémon anzeigen",
     sort: "Sortieren",
-    dexOrder: "Nationaldex",
+    dexOrder: "Dex Nummer",
+    previousRegulations: "Frühere Regulationen",
     bulk: "Bulk",
     bst: "BST",
     ascending: "Aufsteigend",
@@ -91,7 +93,8 @@ const COPY = {
     back: "← Back to results",
     loadMore: "Show more Pokémon",
     sort: "Sort",
-    dexOrder: "National Dex",
+    dexOrder: "Dex Number",
+    previousRegulations: "Previous regulations",
     bulk: "Bulk",
     bst: "BST",
     ascending: "Ascending",
@@ -180,13 +183,14 @@ export default function PokedexApp() {
   const [language, setLanguage] = useState<Language>("de");
   const [regulation, setRegulation] = useState("");
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
-  const [activeSuggestion, setActiveSuggestion] = useState(0);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const [searchFeedback, setSearchFeedback] = useState("");
   const [filters, setFilters] = useState<ActiveFilter[]>([]);
   const [selectedForm, setSelectedForm] = useState<PokemonForm | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [visibleCount, setVisibleCount] = useState(RESULT_PAGE_SIZE);
   const [loadError, setLoadError] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -218,6 +222,18 @@ export default function PokedexApp() {
     }, 0);
     return () => window.clearTimeout(restoreLanguage);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!selectedForm) return;
+    const scrollToTop = () => {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    };
+    scrollToTop();
+    const frame = window.requestAnimationFrame(scrollToTop);
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedForm]);
 
   const text = COPY[language];
   const scopeForms = useMemo(
@@ -301,8 +317,22 @@ export default function PokedexApp() {
 
   const results = useMemo(() => {
     if (!index) return [];
-    const filtered = scopeForms.filter((form) => index.formMatchesFilters(form, filters));
-    if (!sortKey) return filtered;
+    const normalizedSubmittedQuery = submittedQuery.trim();
+    const numericDexQuery = /^\d+$/.test(normalizedSubmittedQuery)
+      ? Number(normalizedSubmittedQuery)
+      : null;
+    const filtered = scopeForms.filter((form) => (
+      index.formMatchesFilters(form, filters)
+      && (
+        !normalizedSubmittedQuery
+        || (numericDexQuery !== null
+          ? form.national_dex === numericDexQuery
+          : matchRank(normalizedSubmittedQuery, [form.api_name, form.name_de, form.name_en]) !== null)
+      )
+    ));
+    if (!sortKey) {
+      return sortDirection === "asc" ? filtered : [...filtered].reverse();
+    }
     return filtered.toSorted((left, right) => {
       const leftValue = sortKey === "bst"
         ? bst(left)
@@ -317,7 +347,7 @@ export default function PokedexApp() {
       const delta = leftValue - rightValue;
       return sortDirection === "asc" ? delta : -delta;
     });
-  }, [filters, index, scopeForms, sortDirection, sortKey]);
+  }, [filters, index, scopeForms, sortDirection, sortKey, submittedQuery]);
 
   function filterLabel(filter: ActiveFilter): string {
     if (!index) return String(filter.value);
@@ -334,12 +364,12 @@ export default function PokedexApp() {
 
   function chooseSuggestion(suggestion: SearchSuggestion) {
     setSearchFeedback("");
+    setSubmittedQuery("");
     if (suggestion.kind === "pokemon") {
       const form = suggestion.value as PokemonForm;
       setSelectedForm(form);
       setQuery(localizedName(form, language));
       setInputFocused(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     const nextFilter: ActiveFilter = {
@@ -359,12 +389,24 @@ export default function PokedexApp() {
   }
 
   function submitSearch() {
-    const suggestion = suggestions[activeSuggestion] ?? suggestions[0];
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+    const selectedSuggestion = activeSuggestion >= 0
+      ? suggestions[activeSuggestion]
+      : undefined;
+    const exactSuggestion = suggestions.find((suggestion) => (
+      matchRank(trimmedQuery, suggestion.names) === 0
+    ));
+    const suggestion = selectedSuggestion ?? exactSuggestion;
     if (suggestion) {
       chooseSuggestion(suggestion);
-    } else if (query.trim()) {
-      setSearchFeedback(text.noMatch);
+      return;
     }
+    setSubmittedQuery(trimmedQuery);
+    setSelectedForm(null);
+    setInputFocused(false);
+    setVisibleCount(RESULT_PAGE_SIZE);
+    setSearchFeedback("");
   }
 
   function cycleSort(nextKey: Exclude<SortKey, null>) {
@@ -376,7 +418,7 @@ export default function PokedexApp() {
       setSortDirection("asc");
     } else {
       setSortKey(null);
-      setSortDirection("desc");
+      setSortDirection("asc");
     }
   }
 
@@ -409,6 +451,13 @@ export default function PokedexApp() {
       .slice(0, groupIndex)
       .reduce((total, previous) => total + previous.items.length, 0),
   }));
+  const regulationChoices = index.regulationChoices();
+  const featuredRegulations = regulationChoices.filter((choice) => (
+    choice.id === index.currentRegulationId || choice.id === "national_dex"
+  ));
+  const previousRegulations = regulationChoices.filter((choice) => (
+    choice.id !== index.currentRegulationId && choice.id !== "national_dex"
+  ));
 
   return (
     <main className="app-shell">
@@ -432,14 +481,16 @@ export default function PokedexApp() {
                   setSearchFeedback("");
                 }}
               >
-                {index.regulationChoices().map((choice) => (
-                  <Fragment key={choice.id}>
-                    <option value={choice.id}>{choice.name}</option>
-                    {choice.id === "national_dex" && (
-                      <option value="__regulation_separator" disabled>──────────────</option>
-                    )}
-                  </Fragment>
+                {featuredRegulations.map((choice) => (
+                  <option key={choice.id} value={choice.id}>{choice.name}</option>
                 ))}
+                {previousRegulations.length > 0 && (
+                  <optgroup label={text.previousRegulations}>
+                    {previousRegulations.map((choice) => (
+                      <option key={choice.id} value={choice.id}>{choice.name}</option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </label>
           </div>
@@ -455,16 +506,19 @@ export default function PokedexApp() {
               onBlur={() => window.setTimeout(() => setInputFocused(false), 120)}
               onChange={(event) => {
                 setQuery(event.target.value);
+                setSubmittedQuery("");
                 setSearchFeedback("");
-                setActiveSuggestion(0);
+                setActiveSuggestion(-1);
               }}
               onKeyDown={(event) => {
                 if (event.key === "ArrowDown" && suggestions.length) {
                   event.preventDefault();
-                  setActiveSuggestion((current) => (current + 1) % suggestions.length);
+                  setActiveSuggestion((current) => current < 0 ? 0 : (current + 1) % suggestions.length);
                 } else if (event.key === "ArrowUp" && suggestions.length) {
                   event.preventDefault();
-                  setActiveSuggestion((current) => (current - 1 + suggestions.length) % suggestions.length);
+                  setActiveSuggestion((current) => current < 0
+                    ? suggestions.length - 1
+                    : (current - 1 + suggestions.length) % suggestions.length);
                 } else if (event.key === "Enter") {
                   event.preventDefault();
                   submitSearch();
@@ -484,6 +538,7 @@ export default function PokedexApp() {
                 aria-label={language === "de" ? "Suche leeren" : "Clear search"}
                 onClick={() => {
                   setQuery("");
+                  setSubmittedQuery("");
                   setSearchFeedback("");
                   setSelectedForm(null);
                   searchRef.current?.focus();
@@ -562,6 +617,12 @@ export default function PokedexApp() {
             onBack={() => {
               setSelectedForm(null);
               setQuery("");
+              setSubmittedQuery("");
+            }}
+            onSelectForm={(form) => {
+              setSelectedForm(form);
+              setQuery(localizedName(form, language));
+              setSubmittedQuery("");
             }}
           />
         ) : (
@@ -574,7 +635,9 @@ export default function PokedexApp() {
                   <select
                     value={sortKey ?? ""}
                     onChange={(event) => {
-                      setSortKey((event.target.value || null) as SortKey);
+                      const nextKey = (event.target.value || null) as SortKey;
+                      setSortKey(nextKey);
+                      setSortDirection(nextKey ? "desc" : "asc");
                       setVisibleCount(RESULT_PAGE_SIZE);
                     }}
                   >
@@ -584,18 +647,16 @@ export default function PokedexApp() {
                     <option value="bst">BST</option>
                   </select>
                 </label>
-                {sortKey && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSortDirection((current) => current === "desc" ? "asc" : "desc");
-                      setVisibleCount(RESULT_PAGE_SIZE);
-                    }}
-                  >
-                    {sortDirection === "desc" ? "↓" : "↑"}
-                    <span className="sr-only">{sortDirection === "desc" ? text.descending : text.ascending}</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSortDirection((current) => current === "desc" ? "asc" : "desc");
+                    setVisibleCount(RESULT_PAGE_SIZE);
+                  }}
+                >
+                  {sortDirection === "desc" ? "↓" : "↑"}
+                  <span className="sr-only">{sortDirection === "desc" ? text.descending : text.ascending}</span>
+                </button>
               </div>
             </div>
 

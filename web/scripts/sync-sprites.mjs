@@ -1,3 +1,4 @@
+// sync-sprites.mjs — Pokédex V9
 import {
   copyFile,
   mkdir,
@@ -117,6 +118,10 @@ const assetDirectories = [
   {
     source: resolve(projectDirectory, 'assets', 'types'),
     destination: resolve(webDirectory, 'public', 'assets', 'types'),
+  },
+  {
+    source: resolve(projectDirectory, 'assets', 'move-types'),
+    destination: resolve(webDirectory, 'public', 'assets', 'move-types'),
   },
   {
     source: resolve(projectDirectory, 'assets', 'move_categories'),

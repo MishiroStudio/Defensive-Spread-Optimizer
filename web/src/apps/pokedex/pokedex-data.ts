@@ -1,3 +1,4 @@
+// pokedex-data.ts — Pokédex V9
 import { publicPath } from "./public-path";
 
 export type Language = "de" | "en";
@@ -396,11 +397,37 @@ export function calculateStat(
   points = 0,
   nature = 1,
 ): number {
+  // Shedinja/Ninjatom is the only Pokémon with base HP 1 and always has 1 HP.
+  if (stat === "hp" && base === 1) return 1;
   if (stat === "hp") {
     return Math.floor((2 * base + 31) / 2) + 60 + points;
   }
   const neutral = Math.floor((2 * base + 31) / 2) + 5 + points;
   return Math.floor(neutral * nature);
+}
+
+export function toggleNatureModifier(
+  current: Record<StatKey, number>,
+  stat: StatKey,
+  modifier: 0.9 | 1.1,
+): Record<StatKey, number> {
+  return {
+    ...current,
+    [stat]: current[stat] === modifier ? 1 : modifier,
+  };
+}
+
+export function relatedMegaForms(
+  current: PokemonForm,
+  speciesForms: PokemonForm[],
+): PokemonForm[] {
+  const baseForm = speciesForms.find((form) => form.is_default);
+  const megaForms = speciesForms.filter((form) => /-mega(?:-|$)/.test(form.api_name));
+  const currentIsPartOfMegaFamily = current.is_default
+    || /-mega(?:-|$)/.test(current.api_name);
+
+  if (!baseForm || megaForms.length === 0 || !currentIsPartOfMegaFamily) return [];
+  return [baseForm, ...megaForms].filter((form) => form.pokemon_id !== current.pokemon_id);
 }
 
 export function calculateAllStats(
@@ -867,6 +894,10 @@ export class PokedexIndex {
   formInRegulation(form: PokemonForm, regulationId: string): boolean {
     if (regulationId === "national_dex") return true;
     return this.regulationsById.get(regulationId)?.pokemon_ids.includes(form.pokemon_id) ?? false;
+  }
+
+  relatedMegaForms(form: PokemonForm): PokemonForm[] {
+    return relatedMegaForms(form, this.formsBySpeciesId.get(form.national_dex) ?? []);
   }
 
   abilityFor(reference: PokemonAbility): AbilityRecord | PokemonAbility {
