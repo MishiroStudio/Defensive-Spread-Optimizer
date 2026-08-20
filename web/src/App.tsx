@@ -305,11 +305,6 @@ function App() {
     [pokemonList, selectedPokemonName],
   )
 
-  const isShiny = useMemo(() => (
-    selectedPokemon !== null
-    && Math.floor(Math.random() * SHINY_ODDS) === 0
-  ), [selectedPokemon])
-
   const selectedPokemonSprite = useMemo(() => {
     if (selectedPokemon === null) {
       return null
