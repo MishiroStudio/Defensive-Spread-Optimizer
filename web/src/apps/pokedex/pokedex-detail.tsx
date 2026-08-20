@@ -1,7 +1,7 @@
+// pokedex-detail.tsx — Pokédex V10
 import {
   type CSSProperties,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -45,6 +45,7 @@ type SearchState = "learned" | "not-learned" | "not-found" | null;
 const COPY = {
   de: {
     back: "← Zurück zu den Ergebnissen",
+    forms: "Formen",
     dex: "Nationaldex",
     shiny: "Shiny",
     noSprite: "Kein Sprite verfügbar",
@@ -80,6 +81,7 @@ const COPY = {
   },
   en: {
     back: "← Back to results",
+    forms: "Forms",
     dex: "National Dex",
     shiny: "Shiny",
     noSprite: "No sprite available",
@@ -120,44 +122,17 @@ function emptyNumbers(value: number): Record<StatKey, number> {
 }
 
 function MoveTypeIcon({ type, size = 22 }: { type: string; size?: number }) {
-  const filterId = `move-type-${useId().replaceAll(":", "")}`;
   const typeName = TYPE_NAMES.en[type] ?? type;
 
   return (
-    <svg
+    <img
       className="type-icon move-type-icon"
+      src={publicPath(`assets/move-types/${type}.png`)}
+      alt={typeName}
+      title={typeName}
       width={size}
       height={size}
-      viewBox="0 0 60 60"
-      role="img"
-      aria-label={typeName}
-    >
-      <title>{typeName}</title>
-      <defs>
-        <filter
-          id={filterId}
-          x="0"
-          y="0"
-          width="60"
-          height="60"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
-          <feColorMatrix in="SourceGraphic" type="luminanceToAlpha" result="luminance" />
-          <feComponentTransfer in="luminance" result="glyph">
-            <feFuncA type="table" tableValues="0 0 0 0 0 0 0 0 0 0 0.5 1" />
-          </feComponentTransfer>
-          <feFlood floodColor={TYPE_COLORS[type] ?? "#94A3B8"} result="typeColor" />
-          <feComposite in="typeColor" in2="glyph" operator="in" />
-        </filter>
-      </defs>
-      <image
-        href={publicPath(`assets/types/${type}.png`)}
-        width="60"
-        height="60"
-        filter={`url(#${filterId})`}
-      />
-    </svg>
+    />
   );
 }
 
@@ -677,11 +652,13 @@ export default function PokemonDetails({
   form,
   language,
   onBack,
+  onSelectForm,
 }: {
   index: PokedexIndex;
   form: PokemonForm;
   language: Language;
   onBack: () => void;
+  onSelectForm: (form: PokemonForm) => void;
 }) {
   const text = COPY[language];
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
@@ -689,10 +666,27 @@ export default function PokemonDetails({
   const selectedAbilityRecord = selectedAbility
     ? index.abilitiesByApiName.get(selectedAbility)
     : undefined;
+  const relatedForms = index.relatedMegaForms(form);
 
   return (
     <section className="detail-view">
-      <button className="back-button" type="button" onClick={onBack}>{text.back}</button>
+      <div className="detail-navigation">
+        <button className="back-button" type="button" onClick={onBack}>{text.back}</button>
+        {relatedForms.length > 0 && (
+          <nav className="mega-form-links" aria-label={text.forms}>
+            <span>{text.forms}:</span>
+            {relatedForms.map((relatedForm) => (
+              <button
+                type="button"
+                key={relatedForm.pokemon_id}
+                onClick={() => onSelectForm(relatedForm)}
+              >
+                {localizedName(relatedForm, language)}
+              </button>
+            ))}
+          </nav>
+        )}
+      </div>
       <section className="identity-card">
         <div className="sprite-column">
           <div className="sprite-stage">

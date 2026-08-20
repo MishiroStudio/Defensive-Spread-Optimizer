@@ -23,6 +23,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run Python tests
+        run: python -m unittest discover -s tests -v
+
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
@@ -34,9 +42,9 @@ jobs:
         working-directory: web
         run: npm ci
 
-      - name: Build PWA
+      - name: Verify and build PWA
         working-directory: web
-        run: npm run build
+        run: npm run verify
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

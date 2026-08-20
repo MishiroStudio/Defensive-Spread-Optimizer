@@ -103,6 +103,22 @@ function normalizePokemonName(name: string): string {
   return name.trim().toLocaleLowerCase()
 }
 
+function findPokemonByName(
+  pokemonList: Pokemon[],
+  name: string,
+): Pokemon | null {
+  const normalizedName = normalizePokemonName(name)
+
+  if (normalizedName === '') {
+    return null
+  }
+
+  return pokemonList.find((pokemon) => (
+    normalizePokemonName(pokemon.name_en) === normalizedName
+    || normalizePokemonName(pokemon.name_de) === normalizedName
+  )) ?? null
+}
+
 function getNatureDirection(
   result: BestDefensiveSpread,
   stat: NatureStat,
@@ -247,6 +263,7 @@ function App() {
   const [result, setResult] = useState<BestDefensiveSpread | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isShiny, setIsShiny] = useState(false)
 
   useEffect(() => {
     let isCancelled = false
@@ -280,19 +297,13 @@ function App() {
     }
   }, [])
 
-  const selectedPokemon = useMemo(() => {
-    const normalizedSelectedName =
-      normalizePokemonName(selectedPokemonName)
-
-    if (normalizedSelectedName === '') {
-      return null
-    }
-
-    return pokemonList.find((pokemon) => (
-      normalizePokemonName(pokemon.name_en) === normalizedSelectedName
-      || normalizePokemonName(pokemon.name_de) === normalizedSelectedName
-    )) ?? null
-  }, [pokemonList, selectedPokemonName])
+  const selectedPokemon = useMemo(
+    () => findPokemonByName(
+      pokemonList,
+      selectedPokemonName,
+    ),
+    [pokemonList, selectedPokemonName],
+  )
 
   const isShiny = useMemo(() => (
     selectedPokemon !== null
@@ -341,7 +352,17 @@ function App() {
   function handlePokemonChange(
     value: string,
   ): void {
+    const nextPokemon = findPokemonByName(
+      pokemonList,
+      value,
+    )
+
+    const shouldUseShinySprite =
+      nextPokemon !== null
+      && Math.floor(Math.random() * SHINY_ODDS) === 0
+
     setSelectedPokemonName(value)
+    setIsShiny(shouldUseShinySprite)
     invalidateResult()
   }
 
