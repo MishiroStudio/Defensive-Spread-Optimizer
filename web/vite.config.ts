@@ -30,7 +30,6 @@ export default defineConfig({
       manifest: false,
 
       includeAssets: [
-        'favicon.svg',
         'icons/optimizer-apple-touch-icon.png',
         'icons/optimizer-192x192.png',
         'icons/optimizer-512x512.png',

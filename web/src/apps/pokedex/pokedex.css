@@ -1,4 +1,3 @@
-/* pokedex.css — Pokédex V10 */
 :root {
   --page-start: #eef2ff;
   --page-middle: #f8fafc;
@@ -2038,50 +2037,6 @@ select:focus-visible {
   white-space: nowrap;
 }
 
-.detail-navigation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  margin-bottom: 14px;
-}
-
-.detail-navigation .back-button {
-  margin-bottom: 0;
-}
-
-.mega-form-links {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 5px 10px;
-  min-width: 0;
-}
-
-.mega-form-links > span {
-  color: var(--text-muted);
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.mega-form-links button {
-  padding: 3px 0;
-  border: 0;
-  background: transparent;
-  color: var(--accent);
-  font-size: 0.8rem;
-  font-weight: 750;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-.mega-form-links button:hover {
-  color: color-mix(in srgb, var(--accent) 78%, var(--text));
-}
-
 .move-type-icon {
   overflow: visible;
   background: transparent;
@@ -2179,7 +2134,7 @@ select:focus-visible {
 
   .move-table-header,
   .move-row {
-    grid-template-columns: minmax(132px, 180px) 34px 46px 42px 30px minmax(18px, 1fr);
+    grid-template-columns: minmax(112px, 146px) 38px 52px 48px 34px minmax(24px, 1fr);
   }
 
   .move-table-header {
@@ -2203,19 +2158,8 @@ select:focus-visible {
 }
 
 @media (max-width: 540px) {
-  .detail-navigation {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .mega-form-links {
-    justify-content: flex-start;
-  }
-
   .global-search input,
-  .move-search input,
-  .stat-slider .stat-points-input {
+  .move-search input {
     font-size: 16px;
   }
 
@@ -2256,7 +2200,7 @@ select:focus-visible {
 
   .move-table-header,
   .move-row {
-    grid-template-columns: minmax(112px, 160px) 30px 40px 38px 26px minmax(16px, 1fr);
+    grid-template-columns: minmax(96px, 138px) 33px 44px 42px 28px minmax(20px, 1fr);
   }
 
   .move-type-row {
