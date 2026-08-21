@@ -1,7 +1,6 @@
 from random import randrange
 
 from PySide6.QtGui import QPixmap
-
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -17,10 +16,9 @@ from PySide6.QtWidgets import (
 )
 
 from PySide6.QtCore import Qt
-
 from shared.paths import PROJECT_ROOT
-
 from .database import get_pokemon, load_pokemon
+from .optimizer import find_best_defensive_spread
 
 def resource_path(relative_path):
     """Return a resource path in source and PyInstaller builds."""
@@ -475,8 +473,6 @@ class MainWindow(QWidget):
         self.spe_input.setMaximum(min(32, 66 - atk - spa))
 
     def optimize(self):
-        from database import get_pokemon
-        from optimizer import find_best_defensive_spread
 
         pokemon_name = self.pokemon_input.text()
         pokemon = get_pokemon(pokemon_name)

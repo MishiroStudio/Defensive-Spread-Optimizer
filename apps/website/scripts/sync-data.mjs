@@ -24,7 +24,6 @@ const destinationDirectory = resolve(
 )
 
 const dataFiles = [
-  'pokemon.json',
   'pokemon_v2.json',
   'moves.json',
   'learnsets.json',

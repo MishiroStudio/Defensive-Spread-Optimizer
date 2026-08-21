@@ -2,10 +2,8 @@
 
 Version 4: curated form names and explicit cosmetic-form retention.
 
-This importer deliberately writes ``data/pokemon_v2.json`` so the existing
-Defensive Spread Optimizer can keep using the legacy ``data/pokemon.json``.
-Evolution links are stored on species entries so the Pokédex can include moves
-inherited from pre-evolutions without a separate evolution data file.
+This importer writes the shared nested Pokémon dataset used by all
+Cordy's Lab applications.
 """
 
 from __future__ import annotations
