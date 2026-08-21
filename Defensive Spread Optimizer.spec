@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['src/app.py'],
+    ['apps/desktop/tools/defensive_spread_optimizer/app.py'],
     pathex=[],
     binaries=[],
     datas=[

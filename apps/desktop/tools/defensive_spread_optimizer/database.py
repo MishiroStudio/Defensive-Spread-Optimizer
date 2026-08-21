@@ -1,14 +1,6 @@
 import json
-import sys
-from pathlib import Path
 
-
-if getattr(sys, "frozen", False):
-    BASE_DIR = Path(__file__).resolve().parent
-else:
-    BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATA_DIR = BASE_DIR / "data"
+from shared.paths import DATA_DIR
 
 
 def load_pokemon():

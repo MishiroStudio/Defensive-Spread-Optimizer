@@ -1,4 +1,4 @@
-"""MISHIRO Pokédex UI — version 72, based on version 71.
+"""apps/desktop/tools/pokedex/ui.py — version 73, based on version 72.
 
 The visual language mirrors the Defensive Spread Optimizer: a narrow vertical
 layout, orange wordmark, muted subtitle, compact section headings, and an
@@ -6,7 +6,7 @@ automatic light/dark theme that follows the operating system.
 
 Run from the project root with:
 
-    python3 apps/pokedex/ui_mobile_v72.py
+    python apps/desktop/tools/pokedex/ui.py
 """
 
 from __future__ import annotations
@@ -58,9 +58,21 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+def _bootstrap_project_root() -> None:
+    """Make the project packages available during direct execution."""
+    for candidate in Path(__file__).resolve().parents:
+        if (
+            (candidate / "apps").is_dir()
+            and (candidate / "shared").is_dir()
+        ):
+            if str(candidate) not in sys.path:
+                sys.path.insert(0, str(candidate))
+            return
+
+    raise RuntimeError("Could not locate the Cordy's Lab project root.")
+
+
+_bootstrap_project_root()
 
 from shared.calculations.stats import (  # noqa: E402
     DECREASED_NATURE,
@@ -69,6 +81,7 @@ from shared.calculations.stats import (  # noqa: E402
     NEUTRAL_NATURE,
     calculate_all_stats,
 )
+from shared.paths import PROJECT_ROOT  # noqa: E402
 
 try:
     from .main import (
@@ -5288,12 +5301,11 @@ class MainWindow(QWidget):
 
 
 def parse_arguments() -> argparse.Namespace:
-    project_root = Path(__file__).resolve().parents[2]
     parser = argparse.ArgumentParser(description="Open the MISHIRO Pokédex UI.")
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=project_root / "data",
+        default=PROJECT_ROOT / "data",
         help=(
             "Directory containing pokemon_v2.json, moves.json, "
             "learnsets.json, regulations.json, and optional abilities.json."
@@ -5311,7 +5323,6 @@ def parse_arguments() -> argparse.Namespace:
 def main() -> int:
     arguments = parse_arguments()
     application = QApplication(sys.argv)
-    project_root = Path(__file__).resolve().parents[2]
 
     try:
         pokedex = PokedexData(arguments.data_dir)
@@ -5321,7 +5332,7 @@ def main() -> int:
 
     window = MainWindow(
         pokedex,
-        project_root,
+        PROJECT_ROOT,
         arguments.language,
         arguments.data_dir,
     )

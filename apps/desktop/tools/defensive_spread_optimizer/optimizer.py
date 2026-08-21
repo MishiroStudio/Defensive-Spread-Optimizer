@@ -1,4 +1,4 @@
-from stats import (
+from .stats import (
     calculate_hp,
     calculate_attack,
     calculate_defense,
@@ -7,9 +7,8 @@ from stats import (
     calculate_speed
 )
 
-from damage import calculate_simple_damage
-from natures import get_natures_by_stat_changes
-
+from .damage import calculate_simple_damage
+from .natures import get_natures_by_stat_changes
 
 VALID_ITEMS = {
     "none",

@@ -1,5 +1,4 @@
-from database import get_pokemon
-
+from .database import get_pokemon
 
 def ask_for_stat_investment(stat_name, remaining):
     while True:

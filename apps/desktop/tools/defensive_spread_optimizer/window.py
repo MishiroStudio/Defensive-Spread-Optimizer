@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from random import randrange
 
 from PySide6.QtGui import QPixmap
@@ -20,20 +18,13 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt
 
-from database import load_pokemon, get_pokemon
+from shared.paths import PROJECT_ROOT
+
+from .database import get_pokemon, load_pokemon
 
 def resource_path(relative_path):
-    """
-    Return the correct resource path during development
-    and inside a PyInstaller application.
-    """
-    if hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / relative_path
-
-    return (
-        Path(__file__).resolve().parent.parent
-        / relative_path
-    )
+    """Return a resource path in source and PyInstaller builds."""
+    return PROJECT_ROOT / relative_path
 
 class MainWindow(QWidget):
 
