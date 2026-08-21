@@ -36,14 +36,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: apps/website/package-lock.json
 
       - name: Install dependencies
-        working-directory: web
+        working-directory: apps/website
         run: npm ci
 
       - name: Verify and build PWA
-        working-directory: web
+        working-directory: apps/website
         run: npm run verify
 
       - name: Configure GitHub Pages
@@ -52,7 +52,7 @@ jobs:
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
         with:
-          path: web/dist
+          path: apps/website/dist
 
   deploy:
     environment:

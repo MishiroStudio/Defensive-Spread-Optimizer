@@ -28,6 +28,7 @@ const webDirectory = resolve(
 const projectDirectory = resolve(
   webDirectory,
   '..',
+  '..',
 )
 
 async function fileNeedsCopy(

@@ -14,6 +14,7 @@ const webDirectory = resolve(
 const projectDirectory = resolve(
   webDirectory,
   '..',
+  '..',
 )
 
 const destinationDirectory = resolve(
