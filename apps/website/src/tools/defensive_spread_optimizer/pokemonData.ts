@@ -1,4 +1,4 @@
-import type { Pokemon } from './types/pokemon'
+import type { Pokemon } from '../../shared/types/pokemon'
 
 export async function loadPokemonData(): Promise<Pokemon[]> {
   const dataUrl = `${import.meta.env.BASE_URL}data/pokemon.json`

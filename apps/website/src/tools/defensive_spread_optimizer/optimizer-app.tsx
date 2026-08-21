@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { PokemonAutocomplete } from './components/PokemonAutocomplete'
-import type { NatureStat } from './natures'
+import { PokemonAutocomplete } from '../../shared/components/PokemonAutocomplete'
+import type { NatureStat } from '../../shared/calculations/natures'
 import {
   findBestDefensiveSpread,
   type BestDefensiveSpread,
   type HeldItem,
 } from './optimizer'
 import { loadPokemonData } from './pokemonData'
-import type { Pokemon } from './types/pokemon'
+import type { Pokemon } from '../../shared/types/pokemon'
 
-import './App.css'
+import './optimizer.css'
 
 const TOTAL_INVESTMENT_POINTS = 66
 const SHINY_ODDS = 2048

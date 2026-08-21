@@ -1,8 +1,8 @@
-import { calculateSimpleDamage } from './damage'
+import { calculateSimpleDamage } from '../../shared/calculations/damage'
 import {
   getNaturesByStatChanges,
   type Nature,
-} from './natures'
+} from '../../shared/calculations/natures'
 import {
   calculateAttack,
   calculateDefense,
@@ -10,7 +10,7 @@ import {
   calculateSpecialAttack,
   calculateSpecialDefense,
   calculateSpeed,
-} from './stats'
+} from '../../shared/calculations/stats'
 
 export type HeldItem =
   | 'none'
