@@ -1,14 +1,5 @@
-from .stats import (
-    calculate_hp,
-    calculate_attack,
-    calculate_defense,
-    calculate_special_attack,
-    calculate_special_defense,
-    calculate_speed
-)
-
-from .damage import calculate_simple_damage
-from .natures import get_natures_by_stat_changes
+from shared.calculations.natures import get_natures_by_stat_changes
+from shared.calculations.stats import calculate_hp, calculate_other_stat
 
 VALID_ITEMS = {
     "none",
@@ -16,6 +7,9 @@ VALID_ITEMS = {
     "assault_vest",
 }
 
+def _calculate_bulk_score(defensive_stat: int) -> float:
+    """Return an inverse score used to compare defensive outcomes."""
+    return 10000 / defensive_stat
 
 def apply_stat_stage(stat: int, stage: int) -> int:
     """
@@ -111,31 +105,31 @@ def find_best_defensive_spread(
                         hp_points
                     )
 
-                    attack = calculate_attack(
+                    attack = calculate_other_stat(
                         pokemon["base_atk"],
                         fixed_atk_points,
                         nature["attack"]
                     )
 
-                    raw_defense = calculate_defense(
+                    raw_defense = calculate_other_stat(
                         pokemon["base_def"],
                         def_points,
                         nature["defense"]
                     )
 
-                    special_attack = calculate_special_attack(
+                    special_attack = calculate_other_stat(
                         pokemon["base_spa"],
                         fixed_spa_points,
                         nature["special_attack"]
                     )
 
-                    raw_special_defense = calculate_special_defense(
+                    raw_special_defense = calculate_other_stat(
                         pokemon["base_spd"],
                         spd_points,
                         nature["special_defense"]
                     )
 
-                    speed = calculate_speed(
+                    speed = calculate_other_stat(
                         pokemon["base_spe"],
                         fixed_spe_points,
                         nature["speed"]
@@ -159,11 +153,11 @@ def find_best_defensive_spread(
                         held_item
                     )
 
-                    physical_damage = calculate_simple_damage(
+                    physical_damage = _calculate_bulk_score(
                         defense
                     )
 
-                    special_damage = calculate_simple_damage(
+                    special_damage = _calculate_bulk_score(
                         special_defense
                     )
 

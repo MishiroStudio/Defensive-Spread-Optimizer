@@ -1,34 +1,17 @@
-"""Console smoke test for the Cordy's Lab Pokédex data.
+"""apps/desktop/tools/pokedex/data.py — Pokédex data layer version 74.
 
-Run this file from the project root after creating these files:
-
-* data/pokemon_v2.json
-* data/moves.json
-* data/learnsets.json
-* data/regulations.json
-
-The console test validates all cross-file links and lets you look up a Pokémon
-or form by German name, English name, PokéAPI name, or National Dex number.
+Load, validate, index, and search the shared Cordy's Lab Pokédex data.
 """
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
-import sys
 import unicodedata
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-
-SOURCE_NAMES = {
-    "champions": "Pokémon Champions",
-    "scarlet-violet": "Scarlet/Violet",
-    "sword-shield": "Sword/Shield",
-    "bdsp": "Brilliant Diamond/Shining Pearl",
-}
 
 REGIONAL_TOKENS = ("alola", "galar", "hisui", "paldea")
 
@@ -69,36 +52,6 @@ STAT_NAMES = {
     },
 }
 
-TEXT = {
-    "de": {
-        "available": "In Pokémon Champions verfügbar",
-        "unavailable": "Noch nicht in Pokémon Champions verfügbar",
-        "source": "Movepool-Quelle",
-        "types": "Typen",
-        "stats": "Basiswerte",
-        "abilities": "Fähigkeiten",
-        "hidden": "versteckt",
-        "moves": "Attacken",
-        "search": "Pokémon suchen (Name, API-Name oder Pokédexnummer)",
-        "not_found": "Kein Pokémon gefunden.",
-        "choose": "Nummer auswählen",
-        "invalid": "Ungültige Auswahl.",
-    },
-    "en": {
-        "available": "Available in Pokémon Champions",
-        "unavailable": "Not yet available in Pokémon Champions",
-        "source": "Learnset source",
-        "types": "Types",
-        "stats": "Base stats",
-        "abilities": "Abilities",
-        "hidden": "hidden",
-        "moves": "Moves",
-        "search": "Search Pokémon (name, API name, or National Dex number)",
-        "not_found": "No Pokémon found.",
-        "choose": "Choose a number",
-        "invalid": "Invalid selection.",
-    },
-}
 
 
 def normalize(value: str) -> str:
@@ -513,183 +466,3 @@ class PokedexData:
             self.moves_by_id[move_id]
             for move_id in sorted(move_ids)
         ]
-
-
-def display_form(
-    pokedex: PokedexData,
-    form: dict[str, Any],
-    language: str,
-    max_moves: int,
-) -> None:
-    t = TEXT[language]
-    learnset = pokedex.learnsets_by_pokemon_id[form["pokemon_id"]]
-    localized_key = f"name_{language}"
-    other_key = "name_en" if language == "de" else "name_de"
-    source = learnset.get("learnset_source")
-    source_name = SOURCE_NAMES.get(source, learnset.get("note") or "—")
-    status = t["available"] if learnset["available_in_champions"] else t["unavailable"]
-
-    print("\n" + "=" * 72)
-    print(
-        f"#{form['national_dex']:04d}  {form[localized_key]} "
-        f"/ {form[other_key]}"
-    )
-    print(f"API: {form['api_name']}  |  Pokémon ID: {form['pokemon_id']}")
-    print(status)
-    print(f"{t['source']}: {source_name}")
-    print(f"{t['types']}: {' / '.join(form['types'])}")
-
-    stats = form["base_stats"]
-    stats_text = "  |  ".join(
-        f"{STAT_NAMES[language][stat]} {stats[stat]}"
-        for stat in ("hp", "atk", "def", "spa", "spd", "spe")
-    )
-    print(f"{t['stats']}: {stats_text}")
-
-    ability_texts = []
-    for ability in form["abilities"]:
-        label = ability[localized_key]
-        if ability.get("is_hidden"):
-            label += f" ({t['hidden']})"
-        ability_texts.append(label)
-    print(f"{t['abilities']}: {', '.join(ability_texts) or '—'}")
-
-    moves = sorted(
-        pokedex.resolved_moves(form["pokemon_id"]),
-        key=lambda move: normalize(str(move[localized_key])),
-    )
-    print(f"\n{t['moves']}: {len(moves)}")
-    shown_moves = moves if max_moves == 0 else moves[:max_moves]
-    for move in shown_moves:
-        power = move.get("power")
-        accuracy = "—" if move.get("always_hits") else move.get("accuracy")
-        print(
-            f"  - {move[localized_key]} / {move[other_key]} "
-            f"[{move['type']}, {move['category']}; "
-            f"Power {power if power is not None else '—'}; "
-            f"Accuracy {accuracy if accuracy is not None else '—'}; "
-            f"PP {move['pp']}]"
-        )
-    if len(shown_moves) < len(moves):
-        print(f"  … {len(moves) - len(shown_moves)} more")
-    print("=" * 72)
-
-
-def choose_match(
-    matches: list[dict[str, Any]],
-    language: str,
-) -> dict[str, Any] | None:
-    if len(matches) == 1:
-        return matches[0]
-
-    name_key = f"name_{language}"
-    for number, form in enumerate(matches, start=1):
-        print(
-            f"  {number:>2}. #{form['national_dex']:04d} "
-            f"{form[name_key]} ({form['api_name']})"
-        )
-
-    try:
-        selection = int(input(f"{TEXT[language]['choose']}: "))
-    except (EOFError, ValueError):
-        return None
-    if not 1 <= selection <= len(matches):
-        return None
-    return matches[selection - 1]
-
-
-def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Validate and search the Cordy's Lab Pokédex data."
-    )
-    parser.add_argument(
-        "query",
-        nargs="?",
-        help="Optional Pokémon name, API name, or National Dex number.",
-    )
-    parser.add_argument(
-        "--language",
-        choices=("de", "en"),
-        default="de",
-        help="Display language (default: de).",
-    )
-    parser.add_argument(
-        "--max-moves",
-        type=int,
-        default=20,
-        help="Maximum displayed moves; use 0 for all (default: 20).",
-    )
-    parser.add_argument(
-        "--data-dir",
-        type=Path,
-        default=Path(__file__).resolve().parents[2] / "data",
-        help="Directory containing the Pokédex JSON files.",
-    )
-    arguments = parser.parse_args()
-    if arguments.max_moves < 0:
-        parser.error("--max-moves cannot be negative.")
-    return arguments
-
-
-def main() -> int:
-    arguments = parse_arguments()
-    try:
-        pokedex = PokedexData(arguments.data_dir)
-    except (FileNotFoundError, OSError, ValueError) as error:
-        print(f"Data error: {error}", file=sys.stderr)
-        return 1
-
-    print("Cordy's Lab Pokédex – console data test")
-    print(
-        f"Loaded and validated: {len(pokedex.pokemon)} species, "
-        f"{len(pokedex.forms)} forms, {len(pokedex.moves)} moves, "
-        f"{pokedex.link_count:,} Pokémon-to-move links."
-    )
-
-    if arguments.query:
-        matches = pokedex.search(arguments.query)
-        if not matches:
-            print(TEXT[arguments.language]["not_found"])
-            return 2
-        selected = choose_match(matches, arguments.language)
-        if selected is None:
-            print(TEXT[arguments.language]["invalid"])
-            return 2
-        display_form(
-            pokedex,
-            selected,
-            arguments.language,
-            arguments.max_moves,
-        )
-        return 0
-
-    while True:
-        try:
-            query = input(
-                f"\n{TEXT[arguments.language]['search']} "
-                "[q = quit]: "
-            ).strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return 0
-
-        if normalize(query) in {"q", "quit", "exit"}:
-            return 0
-        matches = pokedex.search(query)
-        if not matches:
-            print(TEXT[arguments.language]["not_found"])
-            continue
-        selected = choose_match(matches, arguments.language)
-        if selected is None:
-            print(TEXT[arguments.language]["invalid"])
-            continue
-        display_form(
-            pokedex,
-            selected,
-            arguments.language,
-            arguments.max_moves,
-        )
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

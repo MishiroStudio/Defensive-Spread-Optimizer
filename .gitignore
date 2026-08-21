@@ -1,36 +1,32 @@
 # macOS
 .DS_Store
 
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
-# Virtual environment
+# Virtual environments
 .venv/
 venv/
 
-# PyCharm
+# IDEs and editors
 .idea/
+.vscode/
+*.sw?
 
-# PyInstaller
+# Python builds
 build/
 dist/
 *.spec~
 
-# Logs
+# Node and Vite
+node_modules/
+dist-ssr/
+.vite/
+.env
+.env.local
+
+# Logs and generated archives
 *.log
-
-#Sprites
-/public/assets/sprites/
-
-# Web application/
-/node_modules/
-apps/website/node_modules/
-apps/website/dist/
-apps/website/.vite/
-apps/website/.env
-apps/website/.env.local
-
-Defensive Spread Optimizer.spec
-Defensive-Spread-Optimizer-v1.0.0-macOS.zip
-Defensive-Spread-Optimizer-v1.1.0-macOS.zip
+*.zip

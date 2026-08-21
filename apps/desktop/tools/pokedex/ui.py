@@ -1,4 +1,4 @@
-"""apps/desktop/tools/pokedex/ui.py — version 73, based on version 72.
+"""apps/desktop/tools/pokedex/ui.py — version 74, based on version 73.
 
 The visual language mirrors the Defensive Spread Optimizer: a narrow vertical
 layout, orange wordmark, muted subtitle, compact section headings, and an
@@ -83,28 +83,10 @@ from shared.calculations.stats import (  # noqa: E402
 )
 from shared.paths import PROJECT_ROOT  # noqa: E402
 
-try:
-    from .main import (
-        PokedexData,
-        STAT_NAMES,
-        normalize,
-    )
-except ImportError:  # Direct execution: python3 apps/pokedex/ui.py
-    try:
-        from main import (
-            PokedexData,
-            STAT_NAMES,
-            normalize,
-        )
-    except ModuleNotFoundError:
-        # Development fallback for a console main.py still at project root.
-        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-        from main import (
-            PokedexData,
-            STAT_NAMES,
-            normalize,
-        )
-
+if __package__ in (None, ""):
+    from data import PokedexData, STAT_NAMES, normalize
+else:
+    from .data import PokedexData, STAT_NAMES, normalize
 
 COMPLETION_ENTRY_ROLE = int(Qt.ItemDataRole.UserRole) + 20
 COMPLETION_MATCH_ROLE = int(Qt.ItemDataRole.UserRole) + 21
