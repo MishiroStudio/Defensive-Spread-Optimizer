@@ -1,4 +1,4 @@
-"""Cordy's Lab move importer — version 3.
+"""Cordy's Lab move importer — version 4 (import_moves.py).
 
 Build ``data/moves.json`` for the Pokédex from Pokémon Showdown.
 
@@ -26,7 +26,7 @@ report ``German-summary fallbacks`` greater than zero.
 
 Run from the project root with:
 
-    python3 tools/import_moves_v3.py
+    python3 tools/import_moves.py
 
 The normal import writes ``data/moves.json``. A limited test import writes
 ``data/moves_preview.json`` so preview data cannot overwrite the full file.
@@ -37,6 +37,8 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -46,6 +48,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 
@@ -56,6 +59,7 @@ SHOWDOWN_PACKAGE_METADATA_URL = (
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parent.parent
 DATA_DIRECTORY = PROJECT_DIRECTORY / "data"
+REGULATIONS_FILE = DATA_DIRECTORY / "regulations.json"
 OUTPUT_FILE = DATA_DIRECTORY / "moves.json"
 PREVIEW_OUTPUT_FILE = DATA_DIRECTORY / "moves_preview.json"
 
@@ -63,6 +67,32 @@ REQUEST_TIMEOUT_SECONDS = 60
 MAX_REQUEST_ATTEMPTS = 6
 RETRYABLE_HTTP_STATUS_CODES = {429, 500, 502, 503, 504}
 USER_AGENT = "Cordys-Lab-Pokedex/0.2"
+
+SHOWDOWN_REPOSITORY = "smogon/pokemon-showdown"
+SHOWDOWN_GITHUB_CONTENTS_URL = (
+    f"https://api.github.com/repos/{SHOWDOWN_REPOSITORY}/contents"
+)
+SHOWDOWN_RAW_ROOT = (
+    f"https://raw.githubusercontent.com/{SHOWDOWN_REPOSITORY}"
+)
+SHOWDOWN_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+SHOWDOWN_MOD_RE = re.compile(r"^[a-z0-9]+$")
+
+# These are the data-table module names understood by Showdown's Dex loader.
+SHOWDOWN_DATA_MODULES = {
+    "abilities",
+    "conditions",
+    "formats-data",
+    "items",
+    "learnsets",
+    "moves",
+    "natures",
+    "pokedex",
+    "pokemongo",
+    "rulesets",
+    "scripts",
+    "typechart",
+}
 
 
 # First match wins. This is the value priority, not the learnset priority.
@@ -380,9 +410,152 @@ def get_bytes(url: str) -> bytes:
 
 
 @lru_cache(maxsize=None)
-def get_json(url: str) -> dict[str, Any]:
+def get_json(url: str) -> Any:
     """Load and cache one JSON resource."""
     return json.loads(get_bytes(url).decode("utf-8"))
+
+
+def load_showdown_commit(
+    regulations_file: Path = REGULATIONS_FILE,
+) -> str:
+    """Load the exact Showdown commit pinned by import_regulations.py."""
+    if not regulations_file.is_file():
+        raise FileNotFoundError(
+            f"Missing {regulations_file}. Run tools/import_regulations.py "
+            "before importing moves, learnsets or items."
+        )
+    try:
+        regulations = json.loads(regulations_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            f"Invalid JSON in {regulations_file}: {error}"
+        ) from error
+
+    source = regulations.get("source") if isinstance(regulations, dict) else None
+    commit = source.get("commit") if isinstance(source, dict) else None
+    commit = str(commit or "").casefold()
+    if SHOWDOWN_COMMIT_RE.fullmatch(commit) is None:
+        raise RuntimeError(
+            "regulations.json does not contain a valid pinned Pokémon "
+            "Showdown commit. Run tools/import_regulations.py again with "
+            "the updated importer."
+        )
+    return commit
+
+
+def showdown_snapshot_version(npm_version: str, commit: str) -> str:
+    """Return the reproducible version label stored in generated JSON."""
+    if SHOWDOWN_COMMIT_RE.fullmatch(commit) is None:
+        raise ValueError(f"Invalid Pokémon Showdown commit: {commit!r}")
+    return f"npm-{npm_version}+git-{commit}"
+
+
+def _live_mod_file_names(commit: str, mod: str) -> list[str] | None:
+    """Return supported TypeScript data files for a mod at one commit."""
+    if SHOWDOWN_COMMIT_RE.fullmatch(commit) is None:
+        raise ValueError(f"Invalid Pokémon Showdown commit: {commit!r}")
+    if SHOWDOWN_MOD_RE.fullmatch(mod) is None:
+        raise ValueError(f"Invalid Pokémon Showdown mod: {mod!r}")
+
+    url = (
+        f"{SHOWDOWN_GITHUB_CONTENTS_URL}/data/mods/{quote(mod, safe='')}"
+        f"?ref={quote(commit, safe='')}"
+    )
+    try:
+        entries = get_json(url)
+    except HTTPError as error:
+        if error.code == 404:
+            return None
+        raise
+
+    if not isinstance(entries, list):
+        raise RuntimeError(
+            f"GitHub returned an invalid file list for Showdown mod {mod}."
+        )
+
+    file_names = sorted(
+        str(entry.get("name"))
+        for entry in entries
+        if isinstance(entry, dict)
+        and entry.get("type") == "file"
+        and isinstance(entry.get("name"), str)
+        and str(entry["name"]).endswith(".ts")
+        and str(entry["name"])[:-3] in SHOWDOWN_DATA_MODULES
+    )
+    if not file_names:
+        raise RuntimeError(
+            f"Showdown mod {mod} contains no supported data files at "
+            f"commit {commit[:12]}."
+        )
+    return file_names
+
+
+def overlay_live_showdown_mod(
+    showdown_package: Path,
+    commit: str,
+    mod: str,
+) -> bool:
+    """Overlay one commit-pinned live mod onto the compiled npm runtime.
+
+    Node 22.18+ can load erasable TypeScript directly. Tiny CommonJS wrapper
+    files let Showdown's compiled Dex loader consume the exact GitHub sources
+    without building a second, potentially different checkout.
+    """
+    file_names = _live_mod_file_names(commit, mod)
+    if file_names is None:
+        return False
+
+    source_directory = showdown_package / "_cordys_live_mods" / mod
+    runtime_directory = showdown_package / "dist" / "data" / "mods" / mod
+    if runtime_directory.exists():
+        shutil.rmtree(runtime_directory)
+    source_directory.mkdir(parents=True, exist_ok=True)
+    runtime_directory.mkdir(parents=True, exist_ok=True)
+
+    for file_name in file_names:
+        source_file = source_directory / file_name
+        source_url = (
+            f"{SHOWDOWN_RAW_ROOT}/{commit}/data/mods/"
+            f"{quote(mod, safe='')}/{quote(file_name, safe='')}"
+        )
+        source_file.write_bytes(get_bytes(source_url))
+
+        wrapper_file = runtime_directory / f"{Path(file_name).stem}.js"
+        relative_source = os.path.relpath(
+            source_file,
+            start=wrapper_file.parent,
+        ).replace(os.sep, "/")
+        if not relative_source.startswith("."):
+            relative_source = f"./{relative_source}"
+        wrapper_file.write_text(
+            f"module.exports = require({json.dumps(relative_source)});\n",
+            encoding="utf-8",
+        )
+
+    return True
+
+
+def overlay_live_showdown_mods(
+    showdown_package: Path,
+    commit: str,
+    mods: set[str],
+    *,
+    required_mods: set[str] | None = None,
+) -> set[str]:
+    """Overlay available live mods and reject missing required ones."""
+    overlaid: set[str] = set()
+    for mod in sorted(mods):
+        print(f"Loading Showdown mod {mod} at {commit[:12]} …")
+        if overlay_live_showdown_mod(showdown_package, commit, mod):
+            overlaid.add(mod)
+
+    missing = set(required_mods or set()) - overlaid
+    if missing:
+        raise RuntimeError(
+            "The pinned Showdown commit does not contain required mod(s): "
+            + ", ".join(sorted(missing))
+        )
+    return overlaid
 
 
 def get_localized_name(
@@ -697,7 +870,12 @@ def import_moves(
         raise ValueError("--limit must be at least 1.")
 
     node_executable = require_node()
-    tarball, showdown_version = download_showdown_package()
+    showdown_commit = load_showdown_commit()
+    tarball, npm_version = download_showdown_package()
+    showdown_version = showdown_snapshot_version(
+        npm_version,
+        showdown_commit,
+    )
 
     with tempfile.TemporaryDirectory(
         prefix="cordys-showdown-"
@@ -705,6 +883,12 @@ def import_moves(
         showdown_package = extract_showdown_dist(
             tarball,
             Path(temporary_directory),
+        )
+        overlay_live_showdown_mods(
+            showdown_package,
+            showdown_commit,
+            {"champions"},
+            required_mods={"champions"},
         )
         moves = export_moves(
             showdown_package,
@@ -733,6 +917,8 @@ def import_moves(
         move["source"] = {
             "database": "pokemon-showdown",
             "version": showdown_version,
+            "npm_version": npm_version,
+            "commit": showdown_commit,
             "mod": VALUE_SOURCE_MODS[move["values_source"]],
         }
 
@@ -789,7 +975,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    print("Cordy's Lab move importer v3")
+    print("Cordy's Lab move importer v4 (import_moves.py)")
     arguments = parse_arguments()
 
     (

@@ -1,15 +1,19 @@
-"""Cordy's Lab regulation importer — version 3.
+"""Cordy's Lab regulation importer — version 4 (import_regulations.py).
 
 Import Pokémon Champions VGC regulation pools from Pokémon Showdown.
 
 Run from the project root with:
 
-    python3 tools/import_regulations_v3.py
+    python3 tools/import_regulations.py
 
 The importer reads data/pokemon_v2.json, discovers the Pokémon Champions VGC
 regulations currently present in Pokémon Showdown, maps
 Showdown species/form IDs to the local PokéAPI-based pokemon_id values, and
 writes data/regulations.json.
+
+The importer resolves ``master`` to one exact Showdown commit before it reads
+any data. That commit is written to ``regulations.json`` so the move, learnset
+and item importers can use the identical snapshot.
 
 The currently active regulation is detected from Showdown's ``vgc`` alias.
 Only actual regulations are stored; ``National Dex`` remains a dynamic scope in
@@ -32,15 +36,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 OUTPUT_NAME = "regulations.json"
 
+SHOWDOWN_REPOSITORY = "smogon/pokemon-showdown"
+SHOWDOWN_COMMIT_URL = (
+    f"https://api.github.com/repos/{SHOWDOWN_REPOSITORY}/commits/master"
+)
 SHOWDOWN_RAW_ROOT = (
-    "https://raw.githubusercontent.com/smogon/pokemon-showdown/master"
+    f"https://raw.githubusercontent.com/{SHOWDOWN_REPOSITORY}"
 )
-FORMATS_URL = f"{SHOWDOWN_RAW_ROOT}/config/formats.ts"
-ALIASES_URL = f"{SHOWDOWN_RAW_ROOT}/data/aliases.ts"
-FORMATS_DATA_URL = (
-    f"{SHOWDOWN_RAW_ROOT}/data/mods/{{mod}}/formats-data.ts"
-)
-USER_AGENT = "CordysLab-Regulation-Importer/3.0"
+USER_AGENT = "CordysLab-Regulation-Importer/4.0"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 FORMAT_NAME_RE = re.compile(
     r"^\[Gen 9 Champions\] VGC (?P<year>\d{4}) Reg "
@@ -91,6 +95,17 @@ SHOWDOWN_ID_ALIASES: dict[str, tuple[str, ...]] = {
     "palafinhero": ("palafin",),
     "terapagosterastal": ("terapagos",),
     "terapagosterastalform": ("terapagos",),
+
+    # Local/PokéAPI form labels that use longer names than Showdown.
+    "darmanitangalarstandard": ("darmanitangalar",),
+    "greninjabattlebond": ("greninjabond",),
+    "miniorredcore": ("minior",),
+    "necrozmadusk": ("necrozmaduskmane",),
+    "ogerponcornerstonemask": ("ogerponcornerstone",),
+    "ogerponhearthflamemask": ("ogerponhearthflame",),
+    "ogerponwellspringmask": ("ogerponwellspring",),
+    "rockruffowntempo": ("rockruffdusk",),
+    "zygarde50forme": ("zygarde",),
 }
 
 
@@ -102,8 +117,36 @@ def fetch_text(url: str) -> str:
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             return response.read().decode("utf-8")
+    except urllib.error.HTTPError:
+        raise
     except (urllib.error.URLError, TimeoutError) as error:
         raise RuntimeError(f"Could not download {url}: {error}") from error
+
+
+def fetch_json(url: str) -> Any:
+    """Download one JSON document."""
+    try:
+        return json.loads(fetch_text(url))
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"Invalid JSON from {url}: {error}") from error
+
+
+def resolve_showdown_commit() -> str:
+    """Resolve Showdown's master branch once and validate the exact commit."""
+    metadata = fetch_json(SHOWDOWN_COMMIT_URL)
+    commit = str(metadata.get("sha", "")).casefold()
+    if COMMIT_RE.fullmatch(commit) is None:
+        raise RuntimeError(
+            "GitHub did not return a valid Pokémon Showdown commit."
+        )
+    return commit
+
+
+def showdown_raw_url(commit: str, relative_path: str) -> str:
+    """Return a raw GitHub URL pinned to ``commit``."""
+    if COMMIT_RE.fullmatch(commit) is None:
+        raise ValueError(f"Invalid Pokémon Showdown commit: {commit!r}")
+    return f"{SHOWDOWN_RAW_ROOT}/{commit}/{relative_path.lstrip('/')}"
 
 
 def load_json(path: Path) -> Any:
@@ -456,9 +499,19 @@ def import_regulations(data_dir: Path) -> tuple[Path, dict[str, Any]]:
                 if isinstance(record, dict)
             ]
 
-    print("Downloading Pokémon Showdown regulation metadata …")
-    formats_text = fetch_text(FORMATS_URL)
-    aliases_text = fetch_text(ALIASES_URL)
+    existing_by_id = {
+        str(record.get("id")): record
+        for record in existing_records
+        if isinstance(record.get("id"), str)
+    }
+
+    print("Resolving the current Pokémon Showdown commit …")
+    showdown_commit = resolve_showdown_commit()
+    formats_url = showdown_raw_url(showdown_commit, "config/formats.ts")
+    aliases_url = showdown_raw_url(showdown_commit, "data/aliases.ts")
+    print(f"Using Pokémon Showdown commit {showdown_commit[:12]}.")
+    formats_text = fetch_text(formats_url)
+    aliases_text = fetch_text(aliases_url)
     formats = parse_champions_vgc_formats(formats_text)
     current_format_name = parse_current_vgc_format(aliases_text)
 
@@ -470,6 +523,33 @@ def import_regulations(data_dir: Path) -> tuple[Path, dict[str, Any]]:
         ),
         None,
     )
+
+    # Showdown's aliases.ts can lag behind formats.ts for a few hours after a
+    # regulation change. The currently active Champions regulation uses the base
+    # "champions" mod, while archived regulations use frozen mods such as
+    # "championsregmb".
+    current_base_mod_record = next(
+        (
+            record
+            for record in formats
+            if record["mod"] == "champions"
+        ),
+        None,
+    )
+
+    if (
+            current_base_mod_record is not None
+            and current_record is not None
+            and current_base_mod_record["source_order"]
+            < current_record["source_order"]
+    ):
+        print(
+            "Showdown's vgc alias is still pointing to "
+            f"{current_record['name']}; using newer "
+            f"{current_base_mod_record['name']} from formats.ts."
+        )
+        current_record = current_base_mod_record
+
     if current_record is None:
         raise ValueError(
             "Showdown's current vgc alias points to a format that was not "
@@ -495,9 +575,52 @@ def import_regulations(data_dir: Path) -> tuple[Path, dict[str, Any]]:
     for record in ordered:
         mod = str(record["mod"])
         if mod not in parsed_mods:
-            url = FORMATS_DATA_URL.format(mod=mod)
+            url = showdown_raw_url(
+                showdown_commit,
+                f"data/mods/{mod}/formats-data.ts",
+            )
             print(f"Downloading Showdown mod {mod} …")
-            parsed_mods[mod] = parse_formats_data(fetch_text(url))
+            try:
+                parsed_mods[mod] = parse_formats_data(fetch_text(url))
+            except urllib.error.HTTPError as error:
+                if error.code != 404:
+                    raise
+
+                archived = existing_by_id.get(str(record["id"]))
+                archived_ids = (
+                    archived.get("pokemon_ids")
+                    if isinstance(archived, dict)
+                    else None
+                )
+                if not isinstance(archived_ids, list) or not all(
+                    isinstance(pokemon_id, int)
+                    for pokemon_id in archived_ids
+                ):
+                    print(
+                        f"  Skipping {record['name']}: Showdown no longer "
+                        f"ships the archived {mod} data and no previous "
+                        "local snapshot is available."
+                    )
+                    continue
+
+                preserved = dict(archived)
+                preserved.update(
+                    {
+                        "name": record["name"],
+                        "format_name": record["format_name"],
+                        "year": record["year"],
+                        "code": record["code"],
+                        "mod": mod,
+                        "status": "expired",
+                        "pokemon_ids": sorted(set(archived_ids)),
+                    }
+                )
+                regulation_records.append(preserved)
+                print(
+                    f"  Preserved archived {record['name']}: "
+                    f"{len(preserved['pokemon_ids'])} local forms"
+                )
+                continue
         known_ids, legal_ids = parsed_mods[mod]
 
         pokemon_ids, unresolved = regulation_ids_for_mod(
@@ -526,6 +649,7 @@ def import_regulations(data_dir: Path) -> tuple[Path, dict[str, Any]]:
                     if record["id"] == current_record["id"]
                     else "expired"
                 ),
+                "showdown_commit": showdown_commit,
                 "pokemon_ids": pokemon_ids,
             }
         )
@@ -547,12 +671,14 @@ def import_regulations(data_dir: Path) -> tuple[Path, dict[str, Any]]:
         print(f"  Preserved archived {preserved.get('name', old_id)}")
 
     output = {
-        "schema_version": 1,
+        "schema_version": 2,
         "source": {
             "name": "Pokémon Showdown",
-            "repository": "smogon/pokemon-showdown",
-            "formats_url": FORMATS_URL,
-            "aliases_url": ALIASES_URL,
+            "repository": SHOWDOWN_REPOSITORY,
+            "branch": "master",
+            "commit": showdown_commit,
+            "formats_url": formats_url,
+            "aliases_url": aliases_url,
             "imported_at": datetime.now(timezone.utc).isoformat(),
         },
         "current_regulation_id": current_record["id"],
@@ -593,7 +719,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    print("Cordy\'s Lab regulation importer v3")
+    print("Cordy\'s Lab regulation importer v4 (import_regulations.py)")
     arguments = parse_arguments()
     output_file, output = import_regulations(arguments.data_dir)
     print()

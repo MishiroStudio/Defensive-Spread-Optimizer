@@ -21925,7 +21925,15 @@
                     "spd": 60,
                     "spe": 151
                 },
-                "abilities": [],
+                "abilities": [
+                    {
+                        "api_name": "sharpness",
+                        "name_en": "Sharpness",
+                        "name_de": "Scharfkantig",
+                        "is_hidden": false,
+                        "slot": 1
+                    }
+                ],
                 "sprites": {
                     "home": "assets/sprites/home/normal/absol-mega-z.png",
                     "home_shiny": "assets/sprites/home/shiny/absol-mega-z.png"
@@ -26700,7 +26708,15 @@
                     "spd": 85,
                     "spe": 151
                 },
-                "abilities": [],
+                "abilities": [
+                    {
+                        "api_name": "levitate",
+                        "name_en": "Levitate",
+                        "name_de": "Schwebe",
+                        "is_hidden": false,
+                        "slot": 1
+                    }
+                ],
                 "sprites": {
                     "home": "assets/sprites/home/normal/garchomp-mega-z.png",
                     "home_shiny": "assets/sprites/home/shiny/garchomp-mega-z.png"
@@ -26919,7 +26935,15 @@
                     "spd": 70,
                     "spe": 151
                 },
-                "abilities": [],
+                "abilities": [
+                    {
+                        "api_name": "aura-guard",
+                        "name_en": "Aura Guard",
+                        "name_de": "Aura Guard",
+                        "is_hidden": false,
+                        "slot": 1
+                    }
+                ],
                 "sprites": {
                     "home": "assets/sprites/home/normal/lucario-mega-z.png",
                     "home_shiny": "assets/sprites/home/shiny/lucario-mega-z.png"
@@ -45841,7 +45865,15 @@
                     "spd": 120,
                     "spe": 40
                 },
-                "abilities": [],
+                "abilities": [
+                    {
+                        "api_name": "tough-claws",
+                        "name_en": "Tough Claws",
+                        "name_de": "Krallenwucht",
+                        "is_hidden": false,
+                        "slot": 1
+                    }
+                ],
                 "sprites": {
                     "home": "assets/sprites/home/normal/golisopod-mega.png",
                     "home_shiny": "assets/sprites/home/shiny/golisopod-mega.png"

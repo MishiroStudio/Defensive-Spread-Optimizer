@@ -1,4 +1,4 @@
-"""Cordy's Lab learnset importer — version 2.
+"""Cordy's Lab learnset importer — version 3 (import_learnset.py).
 
 Build the learnset database used by the Cordy's Lab Pokédex.
 
@@ -20,13 +20,13 @@ therefore keeps only methods from the selected source generation instead of
 accidentally adding older transfer-only moves. Showdown's own Dex loader is
 used for mod inheritance and form learnset inheritance.
 
-Version 2 adds robust family-aware matching for the cosmetic Squawkabilly and
-Tatsugiri forms retained by the Pokémon importer, including all Tatsugiri Mega
-forms regardless of the token order used by the upstream API name.
+Version 3 pins the Champions data to the exact Pokémon Showdown commit written
+by ``import_regulations.py``. The stable npm runtime continues to provide the
+base game data, while the live Champions mod is overlaid from that commit.
 
 Run from the project root with:
 
-    python3 tools/import_learnsets_v2.py
+    python3 tools/import_learnset.py
 
 The normal import writes ``data/learnsets.json``. A limited test import writes
 ``data/learnsets_preview.json`` so preview data can never replace the complete
@@ -48,16 +48,22 @@ try:
     from import_moves import (
         download_showdown_package,
         extract_showdown_dist,
+        load_showdown_commit,
+        overlay_live_showdown_mods,
         require_node,
+        showdown_snapshot_version,
         write_json_atomically,
     )
 except ModuleNotFoundError:
-    # Supports ``python -m tools.import_learnsets_v2`` as well as executing the
-    # file directly with ``python tools/import_learnsets_v2.py``.
+    # Supports ``python -m tools.import_learnset`` as well as executing the
+    # file directly with ``python tools/import_learnset.py``.
     from tools.import_moves import (
         download_showdown_package,
         extract_showdown_dist,
+        load_showdown_commit,
+        overlay_live_showdown_mods,
         require_node,
+        showdown_snapshot_version,
         write_json_atomically,
     )
 
@@ -964,7 +970,12 @@ def import_learnsets(
         forms = forms[:limit]
 
     node_executable = require_node()
-    tarball, showdown_version = download_showdown_package()
+    showdown_commit = load_showdown_commit()
+    tarball, npm_version = download_showdown_package()
+    showdown_version = showdown_snapshot_version(
+        npm_version,
+        showdown_commit,
+    )
 
     if showdown_version != moves_version:
         raise RuntimeError(
@@ -979,6 +990,12 @@ def import_learnsets(
         showdown_package = extract_showdown_dist(
             tarball,
             Path(temporary_directory),
+        )
+        overlay_live_showdown_mods(
+            showdown_package,
+            showdown_commit,
+            {"champions"},
+            required_mods={"champions"},
         )
         source_entries = export_source_learnsets(
             showdown_package,
@@ -1036,7 +1053,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    print("Cordy's Lab learnset importer v2")
+    print("Cordy's Lab learnset importer v3 (import_learnset.py)")
     arguments = parse_arguments()
     (
         output_file,
