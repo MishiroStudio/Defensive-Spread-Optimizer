@@ -1,7 +1,10 @@
 """Build the nested Pokédex data file from PokéAPI.
 
-This importer deliberately writes ``data/pokemon_v2.json`` so the existing
-Defensive Spread Optimizer can keep using the legacy ``data/pokemon.json``.
+Version 5 (import_pokemon_v2.py): curated form names, explicit cosmetic-form
+retention and targeted ability fallbacks for new Champions forms.
+
+This importer writes the shared nested Pokémon dataset used by all
+Cordy's Lab applications.
 """
 
 from __future__ import annotations
@@ -39,6 +42,103 @@ STAT_NAMES = {
 }
 
 STAT_KEY_ORDER = ("hp", "atk", "def", "spa", "spd", "spe")
+
+
+# Full display-name overrides for forms whose upstream labels are incomplete,
+# misleading, or redundant. Values are: (English name, German name).
+FORM_DISPLAY_NAME_OVERRIDES = {
+    "calyrex-ice": (
+        "Calyrex (Ice Rider)",
+        "Coronospa (Schimmelreiter)",
+    ),
+    "calyrex-shadow": (
+        "Calyrex (Shadow Rider)",
+        "Coronospa (Rappenreiter)",
+    ),
+    "tauros-paldea-combat-breed": (
+        "Tauros (Paldean Form (Combat Breed))",
+        "Paldea-Tauros",
+    ),
+    "tauros-paldea-blaze-breed": (
+        "Tauros (Paldean Form (Blaze Breed))",
+        "Paldea-Tauros (Flammenvariante)",
+    ),
+    "tauros-paldea-aqua-breed": (
+        "Tauros (Paldean Form (Aqua Breed))",
+        "Paldea-Tauros (Flutenvariante)",
+    ),
+    "absol-mega-z": (
+        "Absol (Mega Z)",
+        "Absol (Mega Z)",
+    ),
+    "garchomp-mega-z": (
+        "Garchomp (Mega Z)",
+        "Knakrack (Mega Z)",
+    ),
+    "lucario-mega-z": (
+        "Lucario (Mega Z)",
+        "Lucario (Mega Z)",
+    ),
+
+    # Meowstic / Psiaugon.
+    "meowstic-male": (
+        "Meowstic (Male)",
+        "Psiaugon (Männlich)",
+    ),
+    "meowstic-female": (
+        "Meowstic (Female)",
+        "Psiaugon (Weiblich)",
+    ),
+
+    # Hoopa.
+    "hoopa-unbound": (
+        "Hoopa (Unbound)",
+        "Hoopa (Entfesselt)",
+    ),
+
+    # Eiscue / Kubuin.
+    "eiscue-ice": (
+        "Eiscue (Ice Face)",
+        "Kubuin (Tiefkühlkopf)",
+    ),
+    "eiscue-noice": (
+        "Eiscue (Noice Face)",
+        "Kubuin (Wohlfühlkopf)",
+    ),
+}
+
+
+# PokéAPI currently exposes the new Mega Baxcalibur form (ID 10325) without
+# any abilities. Pokémon Showdown/Champions assigns it Thermal Exchange. Keep
+# this override in the importer so the generated pokemon_v2.json remains
+# complete even before PokéAPI adds the form's ability data.
+# Values use the same schema as the generated ability records.
+FORM_ABILITY_OVERRIDES: dict[str, tuple[dict[str, Any], ...]] = {
+    "baxcalibur-mega": (
+        {
+            "api_name": "thermal-exchange",
+            "name_en": "Thermal Exchange",
+            "name_de": "Thermowandel",
+            "is_hidden": False,
+            "slot": 1,
+        },
+    ),
+}
+
+
+# Let's Go partner forms are intentionally omitted from the shared Pokédex.
+EXCLUDED_VARIETY_API_NAMES = {
+    "pikachu-partner",
+    "eevee-partner",
+}
+
+
+# Keep these visually distinct form families as separate Pokédex entries even
+# when two forms are mechanically identical.
+FORCE_KEEP_VARIETY_PREFIXES = (
+    "squawkabilly-",
+    "tatsugiri-",
+)
 
 
 # Consistent labels for common form suffixes used by PokéAPI.
@@ -130,6 +230,21 @@ def get_json(url: str) -> dict[str, Any]:
     response = session.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
     response.raise_for_status()
     return response.json()
+
+
+def get_resource_id(resource: dict[str, Any] | None) -> int | None:
+    """Extract the numeric PokéAPI ID from a named API resource."""
+    if not isinstance(resource, dict):
+        return None
+
+    url = resource.get("url")
+    if not isinstance(url, str) or not url:
+        return None
+
+    try:
+        return int(url.rstrip("/").rsplit("/", 1)[-1])
+    except ValueError as error:
+        raise ValueError(f"Invalid PokéAPI resource URL: {url}") from error
 
 
 def get_localized_name(
@@ -225,12 +340,75 @@ def get_form_labels(
     return name_en, name_de
 
 
+def get_dynamic_form_display_name_override(
+    api_name: str,
+) -> tuple[str, str] | None:
+    """Return curated names for form families with variable API suffixes."""
+    tokens = set(api_name.split("-"))
+
+    # Mega Meowstic has one shared Mega form.
+    if api_name.startswith("meowstic-") and "mega" in tokens:
+        return (
+            "Meowstic (Mega)",
+            "Psiaugon (Mega)",
+        )
+
+    # Squawkabilly / Krawalloro: retain and name all four plumages.
+    if api_name.startswith("squawkabilly-"):
+        plumage_names = {
+            "green": ("Green Plumage", "Grüngefiedert"),
+            "blue": ("Blue Plumage", "Blaugefiedert"),
+            "yellow": ("Yellow Plumage", "Gelbgefiedert"),
+            "white": ("White Plumage", "Weißgefiedert"),
+        }
+        for token, (name_en, name_de) in plumage_names.items():
+            if token in tokens:
+                return (
+                    f"Squawkabilly ({name_en})",
+                    f"Krawalloro ({name_de})",
+                )
+
+    # Tatsugiri / Nigiragi: retain all three base forms and all three Mega
+    # forms. Token order is ignored so this also tolerates upstream renames.
+    if api_name.startswith("tatsugiri-"):
+        form_names = {
+            "curly": ("Curly Form", "Gebogene Form"),
+            "droopy": ("Droopy Form", "Hängende Form"),
+            "stretchy": ("Stretchy Form", "Gestreckte Form"),
+        }
+        for token, (name_en, name_de) in form_names.items():
+            if token not in tokens:
+                continue
+
+            if "mega" in tokens:
+                return (
+                    f"Tatsugiri (Mega {name_en})",
+                    f"Nigiragi (Mega {name_de})",
+                )
+
+            return (
+                f"Tatsugiri ({name_en})",
+                f"Nigiragi ({name_de})",
+            )
+
+    return None
+
+
 def get_form_display_names(
     species_data: dict[str, Any],
     pokemon_data: dict[str, Any],
     distinguish_form: bool,
 ) -> tuple[str, str]:
     """Build full English and German display names for one variety."""
+    api_name = str(pokemon_data.get("name", ""))
+    override = FORM_DISPLAY_NAME_OVERRIDES.get(api_name)
+    if override is not None:
+        return override
+
+    dynamic_override = get_dynamic_form_display_name_override(api_name)
+    if dynamic_override is not None:
+        return dynamic_override
+
     species_name_en, species_name_de = get_species_names(species_data)
     if not distinguish_form:
         return species_name_en, species_name_de
@@ -279,6 +457,11 @@ def get_abilities(
     pokemon_data: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """Return abilities with DE/EN names and hidden-ability flags."""
+    form_api_name = str(pokemon_data.get("name", ""))
+    override = FORM_ABILITY_OVERRIDES.get(form_api_name)
+    if override is not None:
+        return [dict(ability) for ability in override]
+
     abilities = []
 
     for entry in sorted(
@@ -317,8 +500,8 @@ def get_mechanical_signature(
     """Return the fields that make a variety relevant to our battle tools.
 
     PokéAPI also exposes costume, Totem and other special varieties that are
-    mechanically identical to another variety of the same species.  They do
-    not need separate records in the Champions Pokédex.  Regional and other
+    mechanically identical to another variety of the same species. They do
+    not need separate records in the Champions Pokédex. Regional and other
     meaningful forms remain distinct when their types, stats or abilities
     differ.
     """
@@ -355,7 +538,7 @@ def select_distinct_varieties(
 ]:
     """Keep one representative of each mechanical variety.
 
-    The default variety is considered first.  Remaining varieties are ordered
+    The default variety is considered first. Remaining varieties are ordered
     by PokéAPI ID, so an ordinary form such as ``raticate-alola`` is retained
     before its later duplicate ``raticate-totem-alola``.
     """
@@ -370,11 +553,30 @@ def select_distinct_varieties(
         )
     )
 
+    retained_varieties = []
+    for variety, pokemon_data in loaded_varieties:
+        api_name = str(pokemon_data.get("name", ""))
+        if api_name in EXCLUDED_VARIETY_API_NAMES:
+            print(
+                f"  Excluding {api_name}: partner form not used "
+                "in the Cordy's Lab Pokédex"
+            )
+            continue
+        retained_varieties.append((variety, pokemon_data))
+
+    loaded_varieties = retained_varieties
+
     selected = []
     skipped = []
     representatives: dict[tuple[Any, ...], str] = {}
 
     for variety, pokemon_data in loaded_varieties:
+        api_name = str(pokemon_data.get("name", ""))
+
+        if api_name.startswith(FORCE_KEEP_VARIETY_PREFIXES):
+            selected.append((variety, pokemon_data))
+            continue
+
         signature = get_mechanical_signature(pokemon_data)
         representative_name = representatives.get(signature)
 
@@ -506,6 +708,9 @@ def build_species(
             "api_name": species_data["name"],
             "name_en": name_en,
             "name_de": name_de,
+            "evolves_from_species_id": get_resource_id(
+                species_data.get("evolves_from_species")
+            ),
             "forms": forms,
         },
         len(skipped_varieties),
@@ -523,6 +728,13 @@ def validate_pokemon_data(pokemon_list: list[dict[str, Any]]) -> None:
         if dex_number in dex_numbers:
             raise ValueError(f"Duplicate National Dex number: {dex_number}")
         dex_numbers.add(dex_number)
+
+        parent_species_id = species.get("evolves_from_species_id")
+        if parent_species_id is not None and not isinstance(parent_species_id, int):
+            raise ValueError(
+                f"Invalid evolves_from_species_id for Dex #{dex_number}: "
+                f"{parent_species_id!r}"
+            )
 
         forms = species.get("forms", [])
         if not forms:
@@ -610,8 +822,8 @@ def import_pokemon(
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Import nested Pokémon, form, type, stat, ability and sprite "
-            "data from PokéAPI."
+            "Import nested Pokémon, evolution, form, type, stat, ability "
+            "and sprite data from PokéAPI."
         )
     )
     parser.add_argument(
