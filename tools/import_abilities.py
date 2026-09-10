@@ -22,7 +22,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-IMPORTER_VERSION = "v4"
+IMPORTER_VERSION = "v5"
 API_BASE_URL = "https://pokeapi.co/api/v2"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "abilities.json"
@@ -389,12 +389,25 @@ GERMAN_ATTACK_TYPE_NAMES = (
     "Fee",
 )
 
-# PokéAPI is the source for established abilities. These six abilities were
-# introduced in Pokémon Champions and are curated separately because the API
-# still contains incomplete localization for some of them. Applying the
-# overrides after every import also prevents future refreshes from reverting
-# official German names or the complete Piercing Drill effect.
-CHAMPIONS_ABILITY_OVERRIDES: dict[str, dict[str, str]] = {
+# PokéAPI is the source for established abilities. Champions-specific changes
+# and abilities that are not yet present in PokéAPI are curated here. Applying
+# the overrides after every import prevents future refreshes from reverting
+# the Champions mechanics or their bilingual descriptions.
+CHAMPIONS_ABILITY_OVERRIDES: dict[str, dict[str, Any]] = {
+    "run-away": {
+        "name_en": "Run Away",
+        "name_de": "Angsthase",
+        "description_en": (
+            "Enables the Pokémon to ignore any effects that would usually "
+            "prevent it from switching out of battle and being replaced by "
+            "another party Pokémon."
+        ),
+        "description_de": (
+            "Ermöglicht dem Pokémon, alle Effekte zu ignorieren, die es "
+            "normalerweise am Auswechseln hindern würden, sodass es durch "
+            "ein anderes Pokémon aus dem Team ersetzt werden kann."
+        ),
+    },
     "piercing-drill": {
         "name_en": "Piercing Drill",
         "name_de": "Stichbohrer",
@@ -468,6 +481,21 @@ CHAMPIONS_ABILITY_OVERRIDES: dict[str, dict[str, str]] = {
         ),
         "description_de": (
             "Erhöht den Schaden von Feuer-Attacken um 50 %."
+        ),
+    },
+    "aura-guard": {
+        # Aura Guard is currently absent from PokéAPI. The stable internal ID
+        # matches the Pokémon Showdown ability number.
+        "ability_id": 319,
+        "name_en": "Aura Guard",
+        "name_de": "Auraschutz",
+        "description_en": (
+            "Reduces damage taken from moves that make physical contact by "
+            "50%."
+        ),
+        "description_de": (
+            "Verringert den durch Attacken mit physischem Kontakt erlittenen "
+            "Schaden um 50 %."
         ),
     },
 }
@@ -609,6 +637,25 @@ def import_abilities(output: Path, workers: int) -> list[dict[str, Any]]:
             if record is not None:
                 records.append(record)
             print(f"[{position:>3}/{total}] {resource['name']}")
+
+    # Some Champions abilities are not available in PokéAPI yet. Add their
+    # complete records after the API import while avoiding duplicates if they
+    # are added upstream later.
+    known_api_names = {record["api_name"] for record in records}
+    for api_name, override in CHAMPIONS_ABILITY_OVERRIDES.items():
+        if api_name in known_api_names or "ability_id" not in override:
+            continue
+        records.append(
+            {
+                "ability_id": int(override["ability_id"]),
+                "api_name": api_name,
+                "name_en": str(override["name_en"]),
+                "name_de": str(override["name_de"]),
+                "description_en": str(override["description_en"]),
+                "description_de": str(override["description_de"]),
+            }
+        )
+        known_api_names.add(api_name)
 
     records.sort(key=lambda record: int(record["ability_id"]))
     write_json_atomically(records, output)

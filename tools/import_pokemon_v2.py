@@ -1,7 +1,7 @@
 """Build the nested Pokédex data file from PokéAPI.
 
-Version 5 (import_pokemon_v2.py): curated form names, explicit cosmetic-form
-retention and targeted ability fallbacks for new Champions forms.
+Version 5: curated form names, explicit cosmetic-form retention and
+Champions-specific ability fallbacks.
 
 This importer writes the shared nested Pokémon dataset used by all
 Cordy's Lab applications.
@@ -108,11 +108,9 @@ FORM_DISPLAY_NAME_OVERRIDES = {
 }
 
 
-# PokéAPI currently exposes the new Mega Baxcalibur form (ID 10325) without
-# any abilities. Pokémon Showdown/Champions assigns it Thermal Exchange. Keep
-# this override in the importer so the generated pokemon_v2.json remains
-# complete even before PokéAPI adds the form's ability data.
-# Values use the same schema as the generated ability records.
+# PokéAPI currently exposes some new Champions forms without abilities.
+# These overrides keep the generated Pokémon catalog complete even before
+# PokéAPI adds the corresponding form data.
 FORM_ABILITY_OVERRIDES: dict[str, tuple[dict[str, Any], ...]] = {
     "baxcalibur-mega": (
         {
@@ -123,6 +121,23 @@ FORM_ABILITY_OVERRIDES: dict[str, tuple[dict[str, Any], ...]] = {
             "slot": 1,
         },
     ),
+    "lucario-mega-z": (
+        {
+            "api_name": "aura-guard",
+            "name_en": "Aura Guard",
+            "name_de": "Auraschutz",
+            "is_hidden": False,
+            "slot": 1,
+        },
+    ),
+}
+
+
+# Use the numeric PokéAPI ID as a second key in case a form name is normalized
+# differently by the API.
+FORM_ABILITY_OVERRIDES_BY_ID: dict[int, tuple[dict[str, Any], ...]] = {
+    10325: FORM_ABILITY_OVERRIDES["baxcalibur-mega"],
+    10310: FORM_ABILITY_OVERRIDES["lucario-mega-z"],
 }
 
 
@@ -457,8 +472,12 @@ def get_abilities(
     pokemon_data: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """Return abilities with DE/EN names and hidden-ability flags."""
-    form_api_name = str(pokemon_data.get("name", ""))
+    form_api_name = str(pokemon_data.get("name", "")).casefold()
     override = FORM_ABILITY_OVERRIDES.get(form_api_name)
+    if override is None:
+        pokemon_id = pokemon_data.get("id")
+        if isinstance(pokemon_id, int):
+            override = FORM_ABILITY_OVERRIDES_BY_ID.get(pokemon_id)
     if override is not None:
         return [dict(ability) for ability in override]
 

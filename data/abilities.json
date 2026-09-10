@@ -396,8 +396,8 @@
         "api_name": "run-away",
         "name_en": "Run Away",
         "name_de": "Angsthase",
-        "description_en": "Ensures success fleeing from wild battles.",
-        "description_de": "Stellt sicher, dass die Flucht vor wilden Pokémon gelingt."
+        "description_en": "Enables the Pokémon to ignore any effects that would usually prevent it from switching out of battle and being replaced by another party Pokémon.",
+        "description_de": "Ermöglicht dem Pokémon, alle Effekte zu ignorieren, die es normalerweise am Auswechseln hindern würden, sodass es durch ein anderes Pokémon aus dem Team ersetzt werden kann."
     },
     {
         "ability_id": 51,
@@ -2502,5 +2502,13 @@
         "name_de": "Flammenmähne",
         "description_en": "Boosts the power of the Pokémon's Fire-type moves by 50%.",
         "description_de": "Erhöht den Schaden von Feuer-Attacken um 50 %."
+    },
+    {
+        "ability_id": 319,
+        "api_name": "aura-guard",
+        "name_en": "Aura Guard",
+        "name_de": "Auraschutz",
+        "description_en": "Reduces damage taken from moves that make physical contact by 50%.",
+        "description_de": "Verringert den durch Attacken mit physischem Kontakt erlittenen Schaden um 50 %."
     }
 ]
