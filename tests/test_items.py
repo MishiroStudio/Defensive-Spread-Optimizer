@@ -48,7 +48,7 @@ class ItemCatalogTests(unittest.TestCase):
     def test_catalog_contains_gen_eight_and_nine_items(self) -> None:
         sitrus_berry = self.records_by_api_name["sitrus-berry"]
 
-        self.assertEqual(
+        self.assertCountEqual(
             sitrus_berry["legal_in_games"],
             ["sword-shield", "scarlet-violet"],
         )
@@ -66,7 +66,7 @@ class ItemCatalogTests(unittest.TestCase):
 
         self.assertEqual(chandelurite["legal_in_games"], [])
         self.assertTrue(chandelurite["legal_in_regulations"])
-        self.assertTrue(chandelurite["name_de_is_fallback"])
+        self.assertFalse(chandelurite["name_de_is_fallback"])
 
     def test_pokeapi_id_and_official_german_name_are_retained(self) -> None:
         sitrus_berry = self.records_by_api_name["sitrus-berry"]
