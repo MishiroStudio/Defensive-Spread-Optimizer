@@ -128,6 +128,10 @@ const assetDirectories = [
     source: resolve(projectDirectory, 'assets', 'move_categories'),
     destination: resolve(webDirectory, 'public', 'assets', 'move-categories'),
   },
+  {
+    source: resolve(projectDirectory, 'assets', 'items'),
+    destination: resolve(webDirectory, 'public', 'assets', 'items'),
+  },
 ]
 
 let copiedFiles = 0

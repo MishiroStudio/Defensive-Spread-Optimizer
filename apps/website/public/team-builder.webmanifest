@@ -1,0 +1,23 @@
+{
+  "id": "/Defensive-Spread-Optimizer/team-builder/",
+  "name": "MISHIRO Team Builder",
+  "short_name": "Team Builder",
+  "description": "The Team Builder for VGC Players",
+  "start_url": "/Defensive-Spread-Optimizer/team-builder/",
+  "scope": "/Defensive-Spread-Optimizer/team-builder/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#F28C28",
+  "icons": [
+    {
+      "src": "icons/pokedex-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/pokedex-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

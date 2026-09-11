@@ -29,6 +29,7 @@ const dataFiles = [
   'learnsets.json',
   'abilities.json',
   'regulations.json',
+  'items.json',
 ]
 
 await mkdir(destinationDirectory, {

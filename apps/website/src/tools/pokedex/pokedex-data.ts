@@ -123,6 +123,10 @@ export interface Regulation {
   name: string;
   status: string;
   pokemon_ids: number[];
+  format_name?: string;
+  year?: number;
+  code?: string;
+  mod?: string;
 }
 
 export interface RegulationsData {
