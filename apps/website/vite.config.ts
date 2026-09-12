@@ -17,6 +17,9 @@ export default defineConfig({
         pokedex: fileURLToPath(
           new URL('./pokedex/index.html', import.meta.url),
         ),
+        teamBuilder: fileURLToPath(
+          new URL('./team-builder/index.html', import.meta.url),
+        ),
       },
     },
   },
@@ -36,6 +39,7 @@ export default defineConfig({
         'icons/pokedex-apple-touch-icon.png',
         'icons/pokedex-192x192.png',
         'icons/pokedex-512x512.png',
+        'team-builder.webmanifest',
         'assets/sprites/missingno.png',
       ],
 
