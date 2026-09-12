@@ -264,7 +264,7 @@ button:disabled {
 
 .roster {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   margin-top: 17px;
 }
 
@@ -307,10 +307,10 @@ button:disabled {
   position: relative;
   display: grid;
   grid-template-columns: 66px minmax(0, 1fr) 164px;
-  min-height: 124px;
+  min-height: 112px;
   gap: 9px;
   align-items: start;
-  padding: 8px 12px 8px 8px;
+  padding: 4px 4px 4px 4px;
   cursor: pointer;
   transition: border-color 130ms ease, box-shadow 130ms ease, opacity 130ms ease;
 }
@@ -335,25 +335,72 @@ button:disabled {
   z-index: 2;
   top: 4px;
   right: 4px;
+
   display: grid;
-  width: 15px;
-  height: 15px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   place-items: center;
+
   border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
-  border-radius: 5px;
+  border-radius: 8px;
+
   background: color-mix(in srgb, var(--danger) 10%, var(--surface));
   color: var(--danger);
-  font-size: 10px;
+
+  font-size: 12px;
   font-weight: 800;
   line-height: 1;
 }
 
 .compact-identity {
+  grid-column: 1;
+  grid-row: 1 / 4;
+
   display: grid;
   min-width: 0;
   justify-items: center;
+  align-self: center;
   padding-top: 3px;
+}
+
+.compact-sprite-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.compact-pokemon-sprite {
+  display: block;
+}
+
+.compact-item-overlay {
+  position: absolute;
+
+  /* stärker nach unten rechts */
+  right: -6px;
+  bottom: -7px;
+
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+
+  pointer-events: none;
+}
+
+.compact-item-sprite {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.25));
+}
+
+.compact-item-fallback {
+  flex: none;
 }
 
 .compact-pokemon-sprite,
@@ -365,7 +412,7 @@ button:disabled {
 .compact-type-icons {
   display: flex;
   gap: 3px;
-  margin-top: -4px;
+  margin-top: 4px;
 }
 
 .tb-type-icon {
@@ -374,12 +421,36 @@ button:disabled {
 }
 
 .compact-set {
-  min-width: 0;
-  padding-top: 1px;
+  display: contents;
 }
 
 .compact-set h3 {
-  margin: 0 18px 5px 0;
+  grid-column: 2 / 4;
+  grid-row: 1;
+  min-width: 0;
+  margin: 0 18px 2px 0;
+}
+
+.compact-meta-grid {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.compact-moves {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.compact-stat-bars {
+  grid-column: 3;
+  grid-row: 2 / 4;
+
+  align-self: start;
+  padding-top: 0px;
+}
+
+.compact-set h3 {
+  margin: 0 18px 3px 0;
   overflow: hidden;
   color: var(--text);
   font-size: 1.18rem;
@@ -390,8 +461,8 @@ button:disabled {
 
 .compact-meta-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 2px 7px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
   min-width: 0;
   color: var(--text-secondary);
   font-size: 0.72rem;
@@ -414,12 +485,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.compact-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
 .item-dot {
   flex: 0 0 7px;
   width: 7px;
@@ -432,7 +497,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 3px 5px;
-  margin-top: 5px;
+  margin-top: 0px;
 }
 
 .compact-moves span {
@@ -450,9 +515,9 @@ button:disabled {
 
 .compact-stat-bars {
   display: grid;
-  gap: 4px;
+  gap: 0px;
   align-self: center;
-  padding-top: 7px;
+  padding-top: 0px;
 }
 
 .compact-stat-row {
@@ -475,36 +540,53 @@ button:disabled {
 }
 
 .stat-bar-track {
+  display: flex;
+  align-items: stretch;
+
   position: relative;
   height: 8px;
   overflow: hidden;
+
   border-radius: 99px;
   background: var(--border);
 }
 
 .stat-bar-base,
 .stat-bar-invested {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  position: static;
+  display: block;
+
+  flex: 0 0 auto;
+  height: 100%;
+
+  border-radius: 0;
+  opacity: 1;
+  filter: none;
 }
 
-.stat-bar-base {
-  left: 0;
-  border-radius: 99px 0 0 99px;
+.stat-bar-base.low {
+  background: #ef5b2a;
 }
 
-.stat-bar-invested {
-  filter: saturate(0.62) brightness(1.25);
-  opacity: 0.72;
+.stat-bar-invested.low {
+  background: color-mix(in srgb, #ef5b2a 65%, white);
 }
 
-.stat-bar-base.low,
-.stat-bar-invested.low { background: #ef5b2a; }
-.stat-bar-base.middle,
-.stat-bar-invested.middle { background: #e7b928; }
-.stat-bar-base.high,
-.stat-bar-invested.high { background: #3fa129; }
+.stat-bar-base.middle {
+  background: #e7b928;
+}
+
+.stat-bar-invested.middle {
+  background: color-mix(in srgb, #e7b928 65%, white);
+}
+
+.stat-bar-base.high {
+  background: #3fa129;
+}
+
+.stat-bar-invested.high {
+  background: color-mix(in srgb, #3fa129 65%, white);
+}
 
 .empty-team-slot {
   display: flex;
@@ -1033,9 +1115,13 @@ button:disabled {
   white-space: nowrap;
 }
 
-.move-description {
+.tb-move-description {
+  grid-column: 2 / -1;
+  display: block;
   width: 100%;
+  min-width: 0;
   margin-top: 5px;
+  box-sizing: border-box;
 }
 
 .empty-menu-message {
@@ -1223,7 +1309,7 @@ button:disabled {
   .compact-meta-grid small { font-size: 0.58rem; }
   .compact-moves { gap: 3px; }
   .compact-moves span { font-size: 0.61rem; }
-  .compact-stat-bars { gap: 3px; }
+  .compact-stat-bars { gap: 1px; }
   .compact-stat-row { grid-template-columns: 26px minmax(38px, 1fr) 23px; font-size: 0.58rem; }
   .compact-stat-row strong { font-size: 0.6rem; }
   .item-picker { grid-template-columns: 1fr; }
@@ -1265,4 +1351,374 @@ button:disabled {
   .move-combobox-control { grid-template-columns: 20px minmax(82px, 1fr) 29px 35px 34px 25px 24px; }
   .selected-move-header { grid-template-columns: 18px 20px minmax(82px, 1fr) 29px 35px 34px 25px 24px; }
   .move-table-row { grid-template-columns: 20px minmax(82px, 1fr) 29px 35px 34px 25px; }
+}
+
+/* =========================================================
+   Team Builder layout fixes
+   ========================================================= */
+
+/* Keep move dropdown arrow inside its own column */
+.move-combobox-control > .move-arrow {
+  grid-column: 7;
+  grid-row: 1;
+  min-width: 0;
+}
+
+/* Give the move name a little less space so the arrow fits */
+.selected-move-header,
+.move-table-row {
+  grid-template-columns:
+    27px
+    minmax(90px, 1fr)
+    40px
+    52px
+    48px
+    36px;
+}
+
+.selected-move-header {
+  grid-template-columns:
+    32px
+    27px
+    minmax(90px, 1fr)
+    40px
+    52px
+    48px
+    36px
+    24px;
+}
+
+.move-combobox-control {
+  grid-template-columns:
+    27px
+    minmax(90px, 1fr)
+    40px
+    52px
+    48px
+    36px
+    24px;
+}
+
+/* Stats:
+   Stat name | Base | Final | Slider | Points | Nature
+*/
+.stat-editor-row,
+.stats-footer {
+  grid-template-columns:
+    40px
+    42px
+    44px
+    minmax(105px, 1fr)
+    49px
+    72px;
+}
+
+.final-stat-value {
+  color: var(--text);
+}
+
+.stats-footer .bst-label {
+  grid-column: 1;
+}
+
+.stats-footer .bst-base {
+  grid-column: 2;
+}
+
+.stats-footer .bst-final {
+  grid-column: 3;
+}
+
+.stats-footer .points-total {
+  grid-column: 5;
+}
+
+.stats-footer .nature-name {
+  grid-column: 6;
+}
+
+
+/* =========================================================
+   Mobile
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  /*
+   iOS Safari zooms into inputs whose font size is below 16px.
+   Keep all editable controls at 16px.
+  */
+  .team-builder-card input:not([type="range"]),
+  .paste-dialog textarea {
+    font-size: 16px;
+  }
+
+  .selected-move-header {
+    grid-template-columns:
+      27px
+      25px
+      minmax(74px, 1fr)
+      36px
+      45px
+      43px
+      31px
+      24px;
+  }
+
+  .move-combobox-control {
+    grid-template-columns:
+      25px
+      minmax(74px, 1fr)
+      36px
+      45px
+      43px
+      31px
+      24px;
+  }
+
+  .move-table-row {
+    grid-template-columns:
+      25px
+      minmax(74px, 1fr)
+      36px
+      45px
+      43px
+      31px;
+  }
+
+  .stat-editor-row,
+  .stats-footer {
+    grid-template-columns:
+      34px
+      35px
+      38px
+      minmax(65px, 1fr)
+      43px
+      64px;
+    gap: 3px;
+  }
+}
+
+
+@media (max-width: 460px) {
+
+  .selected-move-header {
+    grid-template-columns:
+      21px
+      22px
+      minmax(64px, 1fr)
+      33px
+      41px
+      38px
+      28px
+      24px;
+  }
+
+  .move-combobox-control {
+    grid-template-columns:
+      22px
+      minmax(64px, 1fr)
+      33px
+      41px
+      38px
+      28px
+      24px;
+  }
+
+  .move-table-row {
+    grid-template-columns:
+      22px
+      minmax(64px, 1fr)
+      33px
+      41px
+      38px
+      28px;
+  }
+
+  .stat-editor-row,
+  .stats-footer {
+    grid-template-columns:
+      31px
+      30px
+      34px
+      minmax(52px, 1fr)
+      40px;
+    gap: 3px;
+  }
+}
+
+
+@media (max-width: 380px) {
+
+  .move-combobox-control {
+    grid-template-columns:
+      20px
+      minmax(58px, 1fr)
+      29px
+      35px
+      34px
+      25px
+      24px;
+  }
+
+  .selected-move-header {
+    grid-template-columns:
+      18px
+      20px
+      minmax(58px, 1fr)
+      29px
+      35px
+      34px
+      25px
+      24px;
+  }
+
+  .move-table-row {
+    grid-template-columns:
+      20px
+      minmax(58px, 1fr)
+      29px
+      35px
+      34px
+      25px;
+  }
+}
+
+/* =========================================================
+   Move picker fixes
+   ========================================================= */
+
+/* The selected move row really needs to be a grid.
+   It currently inherits display:flex from the generic
+   combobox styling. */
+.move-combobox-control {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  grid-template-columns:
+    27px
+    minmax(0, 1fr)
+    40px
+    52px
+    48px
+    36px
+    24px;
+
+  overflow: hidden;
+}
+
+/* Move name input may shrink if necessary */
+.move-combobox-control > input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Keep arrow inside the final grid column */
+.move-combobox-control > .move-arrow {
+  grid-column: 7;
+  grid-row: 1;
+  width: 24px;
+  min-width: 24px;
+  max-width: 24px;
+  justify-self: stretch;
+}
+
+
+/* =========================================================
+   Responsive move grid
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .move-combobox-control {
+    grid-template-columns:
+      25px
+      minmax(0, 1fr)
+      36px
+      45px
+      43px
+      31px
+      24px;
+  }
+}
+
+@media (max-width: 460px) {
+  .move-combobox-control {
+    grid-template-columns:
+      22px
+      minmax(0, 1fr)
+      33px
+      41px
+      38px
+      28px
+      24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .move-combobox-control {
+    grid-template-columns:
+      20px
+      minmax(0, 1fr)
+      29px
+      35px
+      34px
+      25px
+      24px;
+  }
+}
+
+/* =========================================================
+   Compact mobile stat editor
+   ========================================================= */
+
+@media (max-width: 460px) {
+
+  .stat-editor-row {
+    grid-template-columns:
+      28px   /* Stat */
+      27px   /* Base */
+      32px   /* Final */
+      minmax(40px, 1fr) /* Slider */
+      34px   /* Points */
+      56px;  /* Nature +/- */
+
+    gap: 2px;
+  }
+
+  .stat-editor-row input[type="range"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stat-editor-row input[type="number"] {
+    width: 34px;
+    max-width: 34px;
+    height: 25px;
+    padding: 1px;
+    font-size: 0.68rem;
+  }
+
+  .stat-editor-row > .nature-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+
+  .stat-editor-row > .nature-buttons button {
+    width: 27px;
+    height: 25px;
+    padding: 0;
+    font-size: 0.76rem;
+  }
+
+  .stat-editor-row > .nature-empty {
+    display: block;
+  }
+
+  /* The separate mobile nature selector is no longer needed */
+  .nature-mobile-grid {
+    display: none;
+  }
 }

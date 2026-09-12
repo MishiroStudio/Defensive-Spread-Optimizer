@@ -267,21 +267,60 @@ function CompactMemberCard({
         onClick={(event) => { event.stopPropagation(); onRemove(); }}
       >×</button>
       <div className="compact-identity">
-        <img
-          className="compact-pokemon-sprite"
-          src={publicPath(displayForm.sprites.home ?? `assets/sprites/list/normal/${displayForm.api_name}.png`)}
-          alt=""
-          width="62"
-          height="62"
-          onError={(event) => { event.currentTarget.src = publicPath("assets/sprites/missingno.png"); }}
-        />
-        <div className="compact-type-icons">{displayForm.types.map((type) => <TypeIcon type={type} size={20} key={type} />)}</div>
+        <div className="compact-sprite-wrap">
+          <img
+            className="compact-pokemon-sprite"
+            src={publicPath(displayForm.sprites.home ?? `assets/sprites/list/normal/${displayForm.api_name}.png`)}
+            alt=""
+            width="62"
+            height="62"
+            onError={(event) => {
+              event.currentTarget.src = publicPath("assets/sprites/missingno.png");
+            }}
+          />
+
+          {item && (
+            <span className="compact-item-overlay" aria-hidden="true">
+              <img
+                className="compact-item-sprite"
+                src={publicPath(`assets/items/${item.api_name}.png`)}
+                alt=""
+                width="24"
+                height="24"
+                onLoad={(event) => {
+                  event.currentTarget.hidden = false;
+
+                  const fallback =
+                    event.currentTarget.nextElementSibling as HTMLElement | null;
+
+                  if (fallback) fallback.hidden = true;
+                }}
+                onError={(event) => {
+                  event.currentTarget.hidden = true;
+
+                  const fallback =
+                    event.currentTarget.nextElementSibling as HTMLElement | null;
+
+                  if (fallback) fallback.hidden = false;
+                }}
+              />
+
+              <span className="item-dot compact-item-fallback" hidden />
+            </span>
+          )}
+        </div>
+
+        <div className="compact-type-icons">
+          {displayForm.types.map((type) => (
+            <TypeIcon type={type} size={20} key={type} />
+          ))}
+        </div>
       </div>
       <div className="compact-set">
         <h3>{localizedName(displayForm, language)}</h3>
         <div className="compact-meta-grid">
           <span>{ability ? localizedName(ability, language) : "—"}</span>
-          <span className="compact-item">{item && <span className="item-dot" />}{item ? localizedName(item, language) : "—"}</span>
+          <span>{item ? localizedName(item, language) : "—"}</span>
           <small>{data.natureSummary(member, language, STAT_NAMES[language])}</small>
         </div>
         <div className="compact-moves">
@@ -399,7 +438,7 @@ function MemberEditor({
               key={ability.api_name}
               onClick={() => selectAbility(ability.api_name)}
             >
-              {localizedName(ability, language)}{ability.is_hidden ? <small> {language === "de" ? "(VF)" : "(HA)"}</small> : null}
+              {localizedName(ability, language)}
             </button>
           ))}
         </div>
@@ -572,6 +611,7 @@ export default function TeamBuilderApp() {
   const [loadedTeamId, setLoadedTeamId] = useState<string | undefined>();
   const feedbackTimer = useRef<number | null>(null);
   const suppressCardClick = useRef(false);
+  const dragSourceRef = useRef<RosterLocation | null>(null);
   const touchDrag = useRef<{
     source: RosterLocation;
     target: RosterLocation | null;
@@ -664,7 +704,13 @@ export default function TeamBuilderApp() {
   };
 
   const drop = (target: RosterLocation) => {
-    if (dragSource) moveMember(dragSource, target);
+    const source = dragSourceRef.current ?? dragSource;
+
+    if (source) {
+      moveMember(source, target);
+    }
+
+    dragSourceRef.current = null;
     setDragSource(null);
     setDropTarget(null);
   };
@@ -853,8 +899,15 @@ export default function TeamBuilderApp() {
         dropTarget={sameLocation(dropTarget, location)}
         onEdit={() => openEditor(location)}
         onRemove={() => removeAt(location)}
-        onDragStart={() => setDragSource(location)}
-        onDragEnd={() => { setDragSource(null); setDropTarget(null); }}
+        onDragStart={() => {
+          dragSourceRef.current = location;
+          setDragSource(location);
+        }}
+        onDragEnd={() => {
+          dragSourceRef.current = null;
+          setDragSource(null);
+          setDropTarget(null);
+        }}
         onDrop={() => drop(location)}
         onTouchStart={(event) => beginTouchDrag(location, event)}
         onTouchMove={moveTouchDrag}

@@ -451,7 +451,11 @@ export function MovePicker({
           </SearchPopup>
         )}
       </div>
-      {selected && <p className="effect-description move-description">{data.moveDescription(selected.api_name, language)}</p>}
+        {selected && (
+          <p className="effect-description tb-move-description">
+            {data.moveDescription(selected.api_name, language)}
+          </p>
+        )}
     </div>
   );
 }
@@ -496,34 +500,34 @@ export function StatsEditor({
   };
   return (
     <div className="stats-editor">
-      <div className="stats-table-header">
-        <span>{language === "de" ? "Wert" : "Stat"}</span>
-        <span>{language === "de" ? "Basis" : "Base"}</span>
-        <span>{language === "de" ? "Stat Points" : "Stat Points"}</span>
-        <span>{language === "de" ? "Final" : "Final"}</span>
-      </div>
       {STAT_ORDER.map((stat) => (
         <div className="stat-editor-row" key={stat}>
           <strong>{STAT_NAMES[language][stat]}</strong>
+
           <span>{baseStats[stat]}</span>
+
+          <strong className="final-stat-value">
+            {stats[stat]}
+          </strong>
+
           <input
             type="range"
             min="0"
-            max={Math.min(MAX_STAT_POINTS, MAX_TOTAL_STAT_POINTS - (total - member.stat_points[stat]))}
+            max={MAX_STAT_POINTS}
             value={member.stat_points[stat]}
             onChange={(event) => setPoints(stat, Number(event.target.value))}
             aria-label={`${STAT_NAMES[language][stat]} Stat Points`}
           />
+
           <input
             type="number"
             inputMode="numeric"
             min="0"
-            max="32"
+            max={MAX_STAT_POINTS}
             value={member.stat_points[stat]}
             onFocus={(event) => event.currentTarget.select()}
             onChange={(event) => setPoints(stat, Number(event.target.value))}
           />
-          <strong>{stats[stat]}</strong>
           {stat === "hp" ? <span className="nature-empty" /> : (
             <div className="nature-buttons">
               <button type="button" className={member.nature_increased === stat ? "active positive" : ""} onClick={() => toggleNature(stat, "up")}>+</button>
