@@ -1,4 +1,4 @@
-// pokedex-data.ts — Pokédex V10
+// pokedex-data.ts — Pokédex V11
 import { publicPath } from "./public-path";
 
 export type Language = "de" | "en";
@@ -954,6 +954,18 @@ export class PokedexIndex {
 
     const learnset = this.learnsetsByPokemonId.get(pokemonId);
     const moveIds = new Set(learnset?.move_ids ?? []);
+
+    // Champions learnsets are already fully resolved by Pokémon Showdown's
+    // getMovePool() in import_learnset.py. Do not merge a pre-evolution's
+    // fallback movepool here, otherwise removed moves can reappear (for
+    // example Tera Blast or Mirror Coat).
+    if (learnset?.learnset_source === "champions") {
+      this.resolvedMoveIdsCache.set(pokemonId, moveIds);
+      return moveIds;
+    }
+
+    // Main-series fallback learnsets still use the existing evolution-chain
+    // resolution so National Dex entries can inherit moves from pre-evolutions.
     const form = this.formsByPokemonId.get(pokemonId);
     const parent = form ? this.selectParentForm(form) : undefined;
     if (parent) {
@@ -961,6 +973,7 @@ export class PokedexIndex {
       this.collectResolvedMoveIds(parent.pokemon_id, visiting).forEach((id) => moveIds.add(id));
       visiting.delete(pokemonId);
     }
+
     this.resolvedMoveIdsCache.set(pokemonId, moveIds);
     return moveIds;
   }
