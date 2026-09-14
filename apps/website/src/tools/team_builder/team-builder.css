@@ -188,15 +188,21 @@
   border-top: 1px solid var(--border);
 }
 
-.team-library-content > label {
+.team-library-content > .team-library-field {
   display: grid;
   grid-template-columns: 98px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding-top: 9px;
+
   color: var(--text-muted);
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+.team-library-field > .pretty-select {
+  width: 100%;
+  min-width: 0;
 }
 
 .library-actions,
@@ -722,7 +728,7 @@ button:disabled {
 
 .editor-identity {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr) auto;
+  grid-template-columns: 112px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -742,8 +748,10 @@ button:disabled {
 }
 
 .editor-name-block h2 {
+  padding-right: 42px;
   font-size: 1.45rem;
   line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .editor-name-block > p {
@@ -816,10 +824,6 @@ button:disabled {
 .type-steel { --type-color: #60a1b8; }
 .type-fairy { --type-color: #ef70ef; }
 
-.change-pokemon-button {
-  white-space: nowrap;
-  font-size: 0.82rem;
-}
 
 .editor-section {
   margin-top: 18px;
@@ -1039,6 +1043,10 @@ button:disabled {
 .move-combobox-control > input {
   padding: 0 6px;
   font-weight: 600;
+  font-size: 0.78rem;
+}
+.move-combobox-control > input::placeholder {
+  font-size: 0.78rem;
 }
 
 .move-combobox-control > span:not(.empty-type-icon) {
@@ -1109,7 +1117,8 @@ button:disabled {
 
 .move-option .move-name-cell {
   overflow: hidden;
-  font-size: 0.86rem;
+  padding-left: 6px;
+  font-size: 0.78rem;
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1405,12 +1414,14 @@ button:disabled {
 .stat-editor-row,
 .stats-footer {
   grid-template-columns:
-    40px
-    42px
-    44px
-    minmax(105px, 1fr)
-    49px
-    72px;
+    28px   /* Stat / BST */
+    27px   /* Base */
+    32px   /* Final */
+    minmax(40px, 1fr) /* Slider */
+    34px   /* Points */
+    56px;  /* Nature */
+
+  gap: 2px;
 }
 
 .final-stat-value {
@@ -1450,7 +1461,7 @@ button:disabled {
   */
   .team-builder-card input:not([type="range"]),
   .paste-dialog textarea {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .selected-move-header {
@@ -1609,11 +1620,6 @@ button:disabled {
   overflow: hidden;
 }
 
-/* Move name input may shrink if necessary */
-.move-combobox-control > input {
-  width: 100%;
-  min-width: 0;
-}
 
 /* Keep arrow inside the final grid column */
 .move-combobox-control > .move-arrow {
@@ -1720,5 +1726,55 @@ button:disabled {
   /* The separate mobile nature selector is no longer needed */
   .nature-mobile-grid {
     display: none;
+  }
+}
+
+.editor-delete-button {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+
+  background: var(--surface-soft);
+  color: var(--text-muted);
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.editor-delete-button:hover {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--control-border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  /* Kein Safari-Zoom bei der Pokémon-Suche */
+  .pokemon-search-field input {
+    font-size: 16px !important;
+  }
+
+  /* Kein Safari-Zoom bei manueller Stat-Eingabe */
+  .stat-editor-row input[type="number"] {
+    width: 45px;
+    max-width: 45px;
+    height: 33px;
+
+    padding: 1px;
+    font-size: 16px !important;
+
+    zoom: 0.75;
   }
 }

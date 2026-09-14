@@ -4,10 +4,10 @@
         "name": "Pokémon Showdown",
         "repository": "smogon/pokemon-showdown",
         "branch": "master",
-        "commit": "d849b220082e113d8a17303509fb44d420c543d5",
-        "formats_url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/d849b220082e113d8a17303509fb44d420c543d5/config/formats.ts",
-        "aliases_url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/d849b220082e113d8a17303509fb44d420c543d5/data/aliases.ts",
-        "imported_at": "2026-09-10T15:44:41.315537+00:00"
+        "commit": "aa6d5f0856d24679be8f5df167d1b528c2dcbd71",
+        "formats_url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/aa6d5f0856d24679be8f5df167d1b528c2dcbd71/config/formats.ts",
+        "aliases_url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/aa6d5f0856d24679be8f5df167d1b528c2dcbd71/data/aliases.ts",
+        "imported_at": "2026-09-14T06:00:23.235063+00:00"
     },
     "current_regulation_id": "reg-m-c",
     "regulations": [
@@ -19,7 +19,7 @@
             "code": "M-C",
             "mod": "champions",
             "status": "current",
-            "showdown_commit": "d849b220082e113d8a17303509fb44d420c543d5",
+            "showdown_commit": "aa6d5f0856d24679be8f5df167d1b528c2dcbd71",
             "pokemon_ids": [
                 3,
                 6,
@@ -381,7 +381,7 @@
             "code": "M-B",
             "mod": "championsregmb",
             "status": "expired",
-            "showdown_commit": "d849b220082e113d8a17303509fb44d420c543d5",
+            "showdown_commit": "aa6d5f0856d24679be8f5df167d1b528c2dcbd71",
             "pokemon_ids": [
                 3,
                 6,

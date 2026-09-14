@@ -1,27 +1,37 @@
-"""Cordy's Lab learnset importer — version 3 (import_learnset.py).
+"""Cordy's Lab learnset importer — version 4 (import_learnset.py).
 
 Build the learnset database used by the Cordy's Lab Pokédex.
 
 Every mechanically distinct form from ``data/pokemon_v2.json`` receives
-exactly one record. Learnsets are selected independently from the move values
-stored in ``data/moves.json`` and use this priority:
+exactly one record.
 
-1. Pokémon Champions
-2. Scarlet/Violet
-3. Sword/Shield
-4. Brilliant Diamond/Shining Pearl
+For Pokémon legal in the current Pokémon Champions regulation, the importer
+uses only the Pokémon Champions movepool. It never falls back to
+Scarlet/Violet, Sword/Shield or BDSP for those Pokémon. This is important
+because Champions can remove moves that exist in the main-series games.
+
+For Pokémon that are not legal in the current Champions regulation, learnsets
+use this fallback priority:
+
+1. Scarlet/Violet
+2. Sword/Shield
+3. Brilliant Diamond/Shining Pearl
 
 Legends games and generations before Generation 8 are deliberately excluded.
 If none of the selected games contains the form, the importer stores an empty
 movepool and the note ``No set is currently available.``
 
-Pokémon Showdown stores historical learning methods together. The importer
-therefore keeps only methods from the selected source generation instead of
-accidentally adding older transfer-only moves. Showdown's own Dex loader is
-used for mod inheritance and form learnset inheritance.
+Pokémon Champions movepools are resolved with Pokémon Showdown's
+``Dex.species.getMovePool()``, which returns the complete valid movepool for
+the current generation/mod. The fallback games retain the existing
+generation-filtered learnset logic.
 
-Version 3 pins the Champions data to the exact Pokémon Showdown commit written
-by ``import_regulations.py``. The stable npm runtime continues to provide the
+Version 4 also determines ``available_in_champions`` from the current
+regulation in ``data/regulations.json`` instead of inferring availability from
+the existence of a Champions learnset entry.
+
+The Champions data is pinned to the exact Pokémon Showdown commit written by
+``import_regulations.py``. The stable npm runtime continues to provide the
 base game data, while the live Champions mod is overlaid from that commit.
 
 Run from the project root with:
@@ -72,22 +82,23 @@ PROJECT_DIRECTORY = Path(__file__).resolve().parent.parent
 DATA_DIRECTORY = PROJECT_DIRECTORY / "data"
 POKEMON_FILE = DATA_DIRECTORY / "pokemon_v2.json"
 MOVES_FILE = DATA_DIRECTORY / "moves.json"
+REGULATIONS_FILE = DATA_DIRECTORY / "regulations.json"
 OUTPUT_FILE = DATA_DIRECTORY / "learnsets.json"
 PREVIEW_OUTPUT_FILE = DATA_DIRECTORY / "learnsets_preview.json"
 
 NO_CURRENT_LEARNSET_NOTE = "No set is currently available."
 
-# First match wins. This is the learnset priority; the displayed values for
-# every move remain governed independently by MOVE_VALUE_SOURCES in
-# import_moves.py.
-LEARNSET_SOURCES = (
-    {
-        "key": "champions",
-        "showdown_mod": "champions",
-        "label": "Pokémon Champions",
-        "generation": 9,
-        "is_fallback": False,
-    },
+# Champions is handled specially: current-regulation Pokémon MUST use the
+# Champions movepool and may never fall back to another game.
+CHAMPIONS_SOURCE = {
+    "key": "champions",
+    "showdown_mod": "champions",
+    "label": "Pokémon Champions",
+    "generation": 9,
+    "is_fallback": False,
+}
+
+FALLBACK_LEARNSET_SOURCES = (
     {
         "key": "scarlet-violet",
         "showdown_mod": "gen9",
@@ -111,6 +122,7 @@ LEARNSET_SOURCES = (
     },
 )
 
+LEARNSET_SOURCES = (CHAMPIONS_SOURCE, *FALLBACK_LEARNSET_SOURCES)
 SOURCE_BY_KEY = {source["key"]: source for source in LEARNSET_SOURCES}
 
 
@@ -201,7 +213,7 @@ const sourceDefinitions = [
   {key: 'bdsp', mod: 'gen8bdsp', generation: 8},
 ];
 
-function getLearnset(dex, species, mergeInherited) {
+function getFallbackLearnset(dex, species) {
   const candidateIds = [
     species.id,
     species.changesFrom ? dex.toID(species.changesFrom) : null,
@@ -231,31 +243,21 @@ function getLearnset(dex, species, mergeInherited) {
         ...new Set([...(mergedLearnset[moveId] || []), ...methods]),
       ];
     }
-
-    if (!mergeInherited) break;
   }
 
   return {sourceSpecies, learnset: mergedLearnset};
 }
 
-function getLegalMoves(dex, species, generation, mergeInherited) {
-  const {sourceSpecies, learnset} = getLearnset(
-    dex,
-    species,
-    mergeInherited
-  );
+function normalizeMoves(dex, moveIds) {
   const movesByNumber = new Map();
-  const generationPrefix = String(generation);
 
-  for (const [moveId, learningMethods] of Object.entries(learnset)) {
-    if (
-      !Array.isArray(learningMethods) ||
-      !learningMethods.some(method => String(method).startsWith(generationPrefix))
-    ) continue;
-
+  for (const moveId of moveIds) {
     const move = dex.moves.get(moveId);
     if (
-      !move.exists || move.isNonstandard || move.num <= 0 || move.num === 1000
+      !move.exists ||
+      move.isNonstandard ||
+      move.num <= 0 ||
+      move.num === 1000
     ) continue;
 
     const existing = movesByNumber.get(move.num);
@@ -264,25 +266,55 @@ function getLegalMoves(dex, species, generation, mergeInherited) {
         `Move ID ${move.num} is both ${existing.api_name} and ${move.id}`
       );
     }
+
     movesByNumber.set(move.num, {
       move_id: move.num,
       api_name: move.id,
     });
   }
 
-  const moves = [...movesByNumber.values()].sort(
+  return [...movesByNumber.values()].sort(
     (left, right) => left.move_id - right.move_id
   );
-  return {sourceSpecies, moves};
+}
+
+function getChampionsMoves(dex, species) {
+  // Pokémon Showdown resolves the complete valid movepool for the current
+  // generation/mod, including inherited/pre-evolution learnsets.
+  const movePool = dex.species.getMovePool(species.id);
+  return {
+    sourceSpecies: species,
+    moves: normalizeMoves(dex, movePool),
+  };
+}
+
+function getFallbackMoves(dex, species, generation) {
+  const {sourceSpecies, learnset} = getFallbackLearnset(dex, species);
+  const generationPrefix = String(generation);
+  const moveIds = [];
+
+  for (const [moveId, learningMethods] of Object.entries(learnset)) {
+    if (
+      !Array.isArray(learningMethods) ||
+      !learningMethods.some(
+        method => String(method).startsWith(generationPrefix)
+      )
+    ) continue;
+
+    moveIds.push(moveId);
+  }
+
+  return {
+    sourceSpecies,
+    moves: normalizeMoves(dex, moveIds),
+  };
 }
 
 function buildEntry(dex, species, source) {
-  const {sourceSpecies, moves} = getLegalMoves(
-    dex,
-    species,
-    source.generation,
-    source.key !== 'champions'
-  );
+  const {sourceSpecies, moves} = source.key === 'champions'
+    ? getChampionsMoves(dex, species)
+    : getFallbackMoves(dex, species, source.generation);
+
   if (!moves.length) return null;
 
   const abilities = Object.values(species.abilities || {})
@@ -313,29 +345,27 @@ function buildEntry(dex, species, source) {
 
 function exportSource(source) {
   const dex = Dex.mod(source.mod);
+
+  // For Champions export every real species/form known by the mod. Regulation
+  // legality is decided later from regulations.json, not from isNonstandard.
   const speciesList = dex.species.all().filter(species => (
-    species.exists && !species.isNonstandard && species.num > 0
+    species.exists &&
+    species.num > 0 &&
+    (
+      source.key === 'champions' ||
+      !species.isNonstandard
+    )
   ));
 
   const entries = [];
   const seenIds = new Set();
 
   for (const species of speciesList) {
-    if (!species.exists || species.isNonstandard || species.num <= 0) {
-      if (source.key === 'champions') {
-        throw new Error(`Invalid Champions species: ${species.id}`);
-      }
-      continue;
-    }
+    if (!species.exists || species.num <= 0) continue;
     if (seenIds.has(species.id)) continue;
 
     const entry = buildEntry(dex, species, source);
-    if (!entry) {
-      if (source.key === 'champions') {
-        throw new Error(`No Champions learnset found for ${species.name}`);
-      }
-      continue;
-    }
+    if (!entry) continue;
 
     entries.push(entry);
     seenIds.add(species.id);
@@ -366,14 +396,7 @@ def _append_candidate(candidates: list[str], value: str) -> None:
 
 
 def _family_showdown_id_candidates(api_name: str) -> list[str]:
-    """Return robust candidates for retained cosmetic form families.
-
-    The Pokémon importer deliberately retains all Squawkabilly plumages and
-    all Tatsugiri base/Mega forms. Upstream API names can change token order,
-    while Showdown uses compact canonical IDs, so these families need a small
-    amount of semantic candidate generation instead of pure punctuation
-    stripping.
-    """
+    """Return robust candidates for retained cosmetic form families."""
     candidates: list[str] = []
     tokens = set(api_name.split("-"))
 
@@ -387,29 +410,33 @@ def _family_showdown_id_candidates(api_name: str) -> list[str]:
         for plumage, showdown_id in showdown_by_plumage.items():
             if plumage in tokens:
                 _append_candidate(candidates, showdown_id)
-                # If a source collapses cosmetic plumages, they share the
-                # selectable base species' learnset.
                 _append_candidate(candidates, "squawkabilly")
                 break
 
     if api_name.startswith("tatsugiri-"):
         form_token = next(
-            (token for token in ("curly", "droopy", "stretchy") if token in tokens),
+            (
+                token
+                for token in ("curly", "droopy", "stretchy")
+                if token in tokens
+            ),
             None,
         )
         if form_token is not None:
             if "mega" in tokens:
-                _append_candidate(candidates, f"tatsugiri{form_token}mega")
-                # Showdown's generic Mega alias resolves to Curly-Mega. The
-                # three retained Mega appearances share the same learnset; use
-                # it only as a final family fallback if a cosmetic ID is absent.
+                _append_candidate(
+                    candidates,
+                    f"tatsugiri{form_token}mega",
+                )
                 _append_candidate(candidates, "tatsugiricurlymega")
             else:
                 if form_token == "curly":
                     _append_candidate(candidates, "tatsugiri")
                 else:
-                    _append_candidate(candidates, f"tatsugiri{form_token}")
-                # Older/fallback sources may collapse all three appearances.
+                    _append_candidate(
+                        candidates,
+                        f"tatsugiri{form_token}",
+                    )
                 _append_candidate(candidates, "tatsugiri")
 
     return candidates
@@ -443,15 +470,19 @@ def _matching_base_form_for_battle_form(
     api_name = str(form["api_name"])
     tokens = set(api_name.split("-"))
 
-    # Keep each retained Tatsugiri Mega tied to the corresponding base
-    # appearance rather than always falling back to Curly/default.
     if api_name.startswith("tatsugiri-") and "mega" in tokens:
         form_token = next(
-            (token for token in ("curly", "droopy", "stretchy") if token in tokens),
+            (
+                token
+                for token in ("curly", "droopy", "stretchy")
+                if token in tokens
+            ),
             None,
         )
         if form_token is not None:
-            base_form = forms_by_api_name.get(f"tatsugiri-{form_token}")
+            base_form = forms_by_api_name.get(
+                f"tatsugiri-{form_token}"
+            )
             if base_form is not None:
                 return base_form
 
@@ -459,7 +490,7 @@ def _matching_base_form_for_battle_form(
 
 
 def load_move_index() -> tuple[dict[int, str], str]:
-    """Load move IDs and the Showdown version used by ``moves.json``."""
+    """Load move IDs and the Showdown version used by moves.json."""
     if not MOVES_FILE.exists():
         raise FileNotFoundError(
             f"Missing {MOVES_FILE}. Run tools/import_moves.py first."
@@ -497,6 +528,82 @@ def load_move_index() -> tuple[dict[int, str], str]:
         )
 
     return move_index, showdown_versions.pop()
+
+
+def load_current_regulation() -> tuple[str, str, set[int]]:
+    """Load the current regulation ID, mod and legal local Pokémon IDs."""
+    if not REGULATIONS_FILE.exists():
+        raise FileNotFoundError(
+            f"Missing {REGULATIONS_FILE}. "
+            "Run tools/import_regulations.py first."
+        )
+
+    try:
+        data = json.loads(REGULATIONS_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            f"Invalid JSON in {REGULATIONS_FILE}: {error}"
+        ) from error
+
+    if not isinstance(data, dict):
+        raise ValueError("regulations.json must contain a JSON object.")
+
+    current_id = data.get("current_regulation_id")
+    regulations = data.get("regulations")
+
+    if not isinstance(current_id, str) or not current_id:
+        raise ValueError(
+            "regulations.json has no valid current_regulation_id."
+        )
+    if not isinstance(regulations, list):
+        raise ValueError(
+            "regulations.json has no valid regulations list."
+        )
+
+    current = next(
+        (
+            regulation
+            for regulation in regulations
+            if isinstance(regulation, dict)
+            and regulation.get("id") == current_id
+        ),
+        None,
+    )
+    if current is None:
+        raise ValueError(
+            f"Current regulation {current_id!r} was not found."
+        )
+
+    mod = current.get("mod")
+    pokemon_ids = current.get("pokemon_ids")
+
+    if not isinstance(mod, str) or not mod:
+        raise ValueError(
+            f"Current regulation {current_id!r} has no valid mod."
+        )
+    if (
+        not isinstance(pokemon_ids, list)
+        or not all(
+            isinstance(pokemon_id, int) and pokemon_id > 0
+            for pokemon_id in pokemon_ids
+        )
+    ):
+        raise ValueError(
+            f"Current regulation {current_id!r} has invalid pokemon_ids."
+        )
+
+    # This importer currently exports the live Champions source from the
+    # `champions` mod. If a future current regulation uses another mod, fail
+    # loudly instead of silently importing the wrong movepools.
+    if mod != CHAMPIONS_SOURCE["showdown_mod"]:
+        raise RuntimeError(
+            f"Current regulation {current_id!r} uses Showdown mod {mod!r}, "
+            f"but this importer expects "
+            f"{CHAMPIONS_SOURCE['showdown_mod']!r}. Update the importer "
+            "before importing the new regulation."
+        )
+
+    return current_id, mod, set(pokemon_ids)
 
 
 def load_pokemon_forms(
@@ -553,7 +660,11 @@ def load_pokemon_forms(
                     "pokemon_id": pokemon_id,
                     "api_name": api_name,
                     "name_en": form.get("name_en") or api_name,
-                    "name_de": form.get("name_de") or form.get("name_en") or api_name,
+                    "name_de": (
+                        form.get("name_de")
+                        or form.get("name_en")
+                        or api_name
+                    ),
                     "national_dex": national_dex,
                     "is_default": bool(form.get("is_default")),
                     "types": form.get("types", []),
@@ -561,7 +672,10 @@ def load_pokemon_forms(
                     "abilities": [
                         ability.get("api_name")
                         for ability in form.get("abilities", [])
-                        if isinstance(ability, dict) and ability.get("api_name")
+                        if (
+                            isinstance(ability, dict)
+                            and ability.get("api_name")
+                        )
                     ],
                 }
             )
@@ -636,7 +750,10 @@ def export_source_learnsets(
 
 def build_source_indexes(
     entries: list[dict[str, Any]],
-) -> tuple[dict[str, dict[str, Any]], dict[int, list[dict[str, Any]]]]:
+) -> tuple[
+    dict[str, dict[str, Any]],
+    dict[int, list[dict[str, Any]]],
+]:
     """Index one Showdown source by ID and National Dex number."""
     by_id: dict[str, dict[str, Any]] = {}
     by_dex: dict[int, list[dict[str, Any]]] = {}
@@ -662,14 +779,16 @@ def build_source_indexes(
 
 def normalize_abilities(abilities: list[str]) -> tuple[str, ...]:
     """Normalize an ability collection for cross-source matching."""
-    return tuple(sorted(normalize_showdown_id(value) for value in abilities))
+    return tuple(
+        sorted(normalize_showdown_id(value) for value in abilities)
+    )
 
 
 def matches_types_and_stats(
     form: dict[str, Any],
     candidate: dict[str, Any],
 ) -> bool:
-    """Return whether the stable mechanical fields identify the same form."""
+    """Return whether stable mechanical fields identify the same form."""
     return (
         form["types"] == candidate.get("types")
         and form["base_stats"] == candidate.get("base_stats")
@@ -684,7 +803,9 @@ def find_source_match(
     allow_stats_only_match: bool,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Match one PokéAPI form to a Showdown source conservatively."""
-    for candidate_id in get_showdown_id_candidates(str(form["api_name"])):
+    for candidate_id in get_showdown_id_candidates(
+        str(form["api_name"])
+    ):
         candidate = by_id.get(candidate_id)
         if candidate is not None:
             return candidate, "id"
@@ -700,13 +821,17 @@ def find_source_match(
     exact_candidates = [
         candidate
         for candidate in mechanical_candidates
-        if normalize_abilities(list(candidate.get("abilities", [])))
-        == form_abilities
+        if normalize_abilities(
+            list(candidate.get("abilities", []))
+        ) == form_abilities
     ]
 
     if exact_candidates:
         move_sets = {
-            tuple(move["move_id"] for move in candidate.get("moves", []))
+            tuple(
+                move["move_id"]
+                for move in candidate.get("moves", [])
+            )
             for candidate in exact_candidates
         }
         if len(move_sets) == 1:
@@ -752,13 +877,76 @@ def validate_move_links(
     return move_ids
 
 
+def _find_move_id(
+    move_index: dict[int, str],
+    api_name: str,
+) -> int | None:
+    """Return one move ID by Showdown/API name."""
+    for move_id, stored_name in move_index.items():
+        if stored_name == api_name:
+            return move_id
+    return None
+
+
+def validate_champions_sanity(
+    learnsets: list[dict[str, Any]],
+    move_index: dict[int, str],
+) -> None:
+    """Catch known Champions-vs-main-series movepool regressions."""
+    tera_blast_id = _find_move_id(move_index, "terablast")
+    meteor_assault_id = _find_move_id(move_index, "meteorassault")
+
+    champions_entries = [
+        entry
+        for entry in learnsets
+        if entry["available_in_champions"]
+    ]
+
+    if tera_blast_id is not None:
+        offenders = [
+            str(entry["api_name"])
+            for entry in champions_entries
+            if tera_blast_id in entry["move_ids"]
+        ]
+        if offenders:
+            preview = ", ".join(offenders[:12])
+            suffix = (
+                ""
+                if len(offenders) <= 12
+                else f", ... (+{len(offenders) - 12})"
+            )
+            raise ValueError(
+                "Champions movepools unexpectedly contain Tera Blast: "
+                f"{preview}{suffix}"
+            )
+
+    sirfetchd = next(
+        (
+            entry
+            for entry in champions_entries
+            if entry["api_name"] == "sirfetchd"
+        ),
+        None,
+    )
+    if sirfetchd is not None:
+        if meteor_assault_id is None:
+            raise ValueError(
+                "moves.json does not contain Meteor Assault."
+            )
+        if meteor_assault_id not in sirfetchd["move_ids"]:
+            raise ValueError(
+                "Champions Sirfetch'd learnset is missing Meteor Assault."
+            )
+
+
 def build_learnsets(
     forms: list[dict[str, Any]],
     source_entries: dict[str, list[dict[str, Any]]],
     move_index: dict[int, str],
     showdown_version: str,
+    champions_legal_ids: set[int],
 ) -> tuple[list[dict[str, Any]], Counter[str], int, int]:
-    """Select the highest-priority movepool for every Pokédex form."""
+    """Select one correct movepool for every Pokédex form."""
     indexes = {
         source_key: build_source_indexes(entries)
         for source_key, entries in source_entries.items()
@@ -780,29 +968,37 @@ def build_learnsets(
     mechanical_match_count = 0
 
     for form in forms:
+        pokemon_id = int(form["pokemon_id"])
+        available_in_champions = pokemon_id in champions_legal_ids
+
         selected_source: dict[str, Any] | None = None
         selected_entry: dict[str, Any] | None = None
         match_method: str | None = None
 
-        champions_by_id, champions_by_dex = indexes["champions"]
-        champions_entry, _ = find_source_match(
-            form,
-            champions_by_id,
-            champions_by_dex,
-            allow_stats_only_match=False,
+        # Critical rule:
+        # - legal in current Champions regulation -> Champions ONLY
+        # - not legal -> main-series fallbacks ONLY
+        candidate_sources = (
+            (CHAMPIONS_SOURCE,)
+            if available_in_champions
+            else FALLBACK_LEARNSET_SOURCES
         )
-        available_in_champions = champions_entry is not None
 
-        for source in LEARNSET_SOURCES:
-            by_id, by_dex = indexes[str(source["key"])]
+        for source in candidate_sources:
+            source_key = str(source["key"])
+            by_id, by_dex = indexes[source_key]
+
             selected_entry, match_method = find_source_match(
                 form,
                 by_id,
                 by_dex,
-                allow_stats_only_match=source["key"] != "champions",
+                allow_stats_only_match=source_key != "champions",
             )
 
-            if selected_entry is None and inherits_base_form_learnset(form):
+            if (
+                selected_entry is None
+                and inherits_base_form_learnset(form)
+            ):
                 base_form = _matching_base_form_for_battle_form(
                     form,
                     forms_by_api_name,
@@ -813,7 +1009,9 @@ def build_learnsets(
                         base_form,
                         by_id,
                         by_dex,
-                        allow_stats_only_match=(source["key"] != "champions"),
+                        allow_stats_only_match=(
+                            source_key != "champions"
+                        ),
                     )
                     if base_entry is not None:
                         selected_entry = {
@@ -821,7 +1019,9 @@ def build_learnsets(
                             "showdown_id": normalize_showdown_id(
                                 str(form["api_name"])
                             ),
-                            "learnset_source_id": base_entry["showdown_id"],
+                            "learnset_source_id": (
+                                base_entry["showdown_id"]
+                            ),
                         }
                         match_method = "base-form"
 
@@ -838,10 +1038,21 @@ def build_learnsets(
             "is_default": form["is_default"],
         }
 
+        if available_in_champions and (
+            selected_source is None or selected_entry is None
+        ):
+            raise ValueError(
+                f"{form['api_name']} (pokemon_id={pokemon_id}) is legal "
+                "in the current Champions regulation but no Champions "
+                "learnset could be matched. No fallback was used."
+            )
+
         if selected_source is None or selected_entry is None:
             base_record.update(
                 {
-                    "showdown_id": normalize_showdown_id(str(form["api_name"])),
+                    "showdown_id": normalize_showdown_id(
+                        str(form["api_name"])
+                    ),
                     "learnset_source_id": None,
                     "available_in_champions": False,
                     "learnset_source": None,
@@ -854,17 +1065,28 @@ def build_learnsets(
             )
             source_counts["none"] += 1
         else:
-            move_ids = validate_move_links(selected_entry, move_index)
+            move_ids = validate_move_links(
+                selected_entry,
+                move_index,
+            )
             source_key = str(selected_source["key"])
 
             base_record.update(
                 {
                     "showdown_id": selected_entry["showdown_id"],
-                    "learnset_source_id": selected_entry["learnset_source_id"],
-                    "available_in_champions": available_in_champions,
+                    "learnset_source_id": (
+                        selected_entry["learnset_source_id"]
+                    ),
+                    "available_in_champions": (
+                        available_in_champions
+                    ),
                     "learnset_source": source_key,
-                    "source_generation": selected_source["generation"],
-                    "is_fallback": selected_source["is_fallback"],
+                    "source_generation": (
+                        selected_source["generation"]
+                    ),
+                    "is_fallback": (
+                        selected_source["is_fallback"]
+                    ),
                     "move_ids": move_ids,
                     "note": None,
                     "source": {
@@ -879,11 +1101,19 @@ def build_learnsets(
                 selected_entry["showdown_id"]
                 != selected_entry["learnset_source_id"]
             )
-            mechanical_match_count += match_method == "mechanical"
+            mechanical_match_count += (
+                match_method == "mechanical"
+            )
 
         learnsets.append(base_record)
 
-    validate_complete_learnsets(learnsets, forms)
+    validate_complete_learnsets(
+        learnsets,
+        forms,
+        champions_legal_ids,
+    )
+    validate_champions_sanity(learnsets, move_index)
+
     return (
         learnsets,
         source_counts,
@@ -895,52 +1125,87 @@ def build_learnsets(
 def validate_complete_learnsets(
     learnsets: list[dict[str, Any]],
     forms: list[dict[str, Any]],
+    champions_legal_ids: set[int],
 ) -> None:
-    """Verify complete one-to-one form coverage and source invariants."""
+    """Verify one-to-one form coverage and source invariants."""
     if len(learnsets) != len(forms):
-        raise ValueError("Not every pokemon_v2.json form has one learnset.")
+        raise ValueError(
+            "Not every pokemon_v2.json form has one learnset."
+        )
 
     expected_ids = {form["pokemon_id"] for form in forms}
     actual_ids = [entry["pokemon_id"] for entry in learnsets]
 
     if len(actual_ids) != len(set(actual_ids)):
-        raise ValueError("learnsets.json contains duplicate Pokémon IDs.")
+        raise ValueError(
+            "learnsets.json contains duplicate Pokémon IDs."
+        )
     if set(actual_ids) != expected_ids:
-        raise ValueError("learnsets.json does not match pokemon_v2.json.")
+        raise ValueError(
+            "learnsets.json does not match pokemon_v2.json."
+        )
 
     for entry in learnsets:
+        pokemon_id = int(entry["pokemon_id"])
         source_key = entry["learnset_source"]
         move_ids = entry["move_ids"]
+        expected_champions = pokemon_id in champions_legal_ids
+
+        if (
+            bool(entry["available_in_champions"])
+            != expected_champions
+        ):
+            raise ValueError(
+                f"Wrong Champions availability for "
+                f"{entry['api_name']}."
+            )
 
         if source_key is None:
+            if expected_champions:
+                raise ValueError(
+                    f"Champions-legal Pokémon has no learnset: "
+                    f"{entry['api_name']}"
+                )
             if move_ids or entry["source"] is not None:
                 raise ValueError(
-                    f"Source-less entry contains data: {entry['api_name']}"
+                    f"Source-less entry contains data: "
+                    f"{entry['api_name']}"
                 )
             if entry["note"] != NO_CURRENT_LEARNSET_NOTE:
                 raise ValueError(
-                    f"Missing no-learnset note: {entry['api_name']}"
+                    f"Missing no-learnset note: "
+                    f"{entry['api_name']}"
                 )
             continue
 
         source = SOURCE_BY_KEY.get(source_key)
         if source is None:
             raise ValueError(
-                f"Unknown learnset source for {entry['api_name']}: "
-                f"{source_key}"
+                f"Unknown learnset source for "
+                f"{entry['api_name']}: {source_key}"
             )
         if not move_ids or entry["source"] is None:
             raise ValueError(
-                f"Incomplete learnset entry: {entry['api_name']}"
+                f"Incomplete learnset entry: "
+                f"{entry['api_name']}"
             )
         if entry["source"]["mod"] != source["showdown_mod"]:
             raise ValueError(
                 f"Wrong source mod for {entry['api_name']}."
             )
-        if entry["available_in_champions"] and source_key != "champions":
+
+        if expected_champions:
+            if source_key != "champions":
+                raise ValueError(
+                    f"Champions-legal Pokémon fell back to "
+                    f"{source_key}: {entry['api_name']}"
+                )
+        elif source_key == "champions":
             raise ValueError(
-                f"Wrong Champions availability for {entry['api_name']}."
+                f"Non-current Pokémon incorrectly uses Champions "
+                f"learnset: {entry['api_name']}"
             )
+
         if entry["is_fallback"] != source["is_fallback"]:
             raise ValueError(
                 f"Wrong fallback flag for {entry['api_name']}."
@@ -959,15 +1224,30 @@ def import_learnsets(
     int,
     int,
     str,
+    str,
 ]:
     """Export, select, validate and write every form's movepool."""
     if limit is not None and limit < 1:
         raise ValueError("--limit must be at least 1.")
 
     move_index, moves_version = load_move_index()
+    current_regulation_id, _, champions_legal_ids = (
+        load_current_regulation()
+    )
     forms = load_pokemon_forms(pokemon_file)
+
     if limit is not None:
         forms = forms[:limit]
+
+    # Limit legality to forms participating in this import. This keeps preview
+    # validation correct without changing the real regulation data.
+    imported_form_ids = {
+        int(form["pokemon_id"])
+        for form in forms
+    }
+    champions_legal_ids = (
+        champions_legal_ids & imported_form_ids
+    )
 
     node_executable = require_node()
     showdown_commit = load_showdown_commit()
@@ -1012,16 +1292,25 @@ def import_learnsets(
         source_entries,
         move_index,
         showdown_version,
+        champions_legal_ids,
     )
 
-    output_file = PREVIEW_OUTPUT_FILE if limit is not None else OUTPUT_FILE
+    output_file = (
+        PREVIEW_OUTPUT_FILE
+        if limit is not None
+        else OUTPUT_FILE
+    )
     write_json_atomically(learnsets, output_file)
 
-    link_count = sum(len(entry["move_ids"]) for entry in learnsets)
+    link_count = sum(
+        len(entry["move_ids"])
+        for entry in learnsets
+    )
     champions_available_count = sum(
         bool(entry["available_in_champions"])
         for entry in learnsets
     )
+
     return (
         output_file,
         len(learnsets),
@@ -1031,14 +1320,16 @@ def import_learnsets(
         inherited_count,
         mechanical_match_count,
         showdown_version,
+        current_regulation_id,
     )
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Import prioritized Champions, Scarlet/Violet, Sword/Shield "
-            "and BDSP movepools for every pokemon_v2.json form."
+            "Import current Champions movepools for legal Pokémon and "
+            "Scarlet/Violet, Sword/Shield or BDSP fallbacks for the "
+            "remaining Pokédex forms."
         )
     )
     parser.add_argument(
@@ -1053,8 +1344,12 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
-    print("Cordy's Lab learnset importer v3 (import_learnset.py)")
+    print(
+        "Cordy's Lab learnset importer v4 "
+        "(import_learnset.py)"
+    )
     arguments = parse_arguments()
+
     (
         output_file,
         learnset_count,
@@ -1064,6 +1359,7 @@ def main() -> None:
         inherited_count,
         mechanical_match_count,
         showdown_version,
+        current_regulation_id,
     ) = import_learnsets(limit=arguments.limit)
 
     print()
@@ -1071,17 +1367,40 @@ def main() -> None:
         f"Done! Imported {learnset_count} form learnsets from "
         f"Pokémon Showdown {showdown_version}."
     )
+    print(
+        f"Current Champions regulation: "
+        f"{current_regulation_id}"
+    )
+
     for source in LEARNSET_SOURCES:
-        suffix = " fallbacks" if source["is_fallback"] else " learnset source"
+        suffix = (
+            " fallbacks"
+            if source["is_fallback"]
+            else " learnset source"
+        )
         print(
             f"{source['label']}{suffix}: "
             f"{source_counts[source['key']]}"
         )
-    print(f"Available in Pokémon Champions: {champions_available_count}")
-    print(f"No current learnset: {source_counts['none']}")
-    print(f"Pokémon-to-move links: {link_count}")
-    print(f"Inherited form learnsets: {inherited_count}")
-    print(f"Mechanical ID matches: {mechanical_match_count}")
+
+    print(
+        f"Available in Pokémon Champions: "
+        f"{champions_available_count}"
+    )
+    print(
+        f"No current learnset: "
+        f"{source_counts['none']}"
+    )
+    print(
+        f"Pokémon-to-move links: {link_count}"
+    )
+    print(
+        f"Inherited form learnsets: {inherited_count}"
+    )
+    print(
+        f"Mechanical ID matches: "
+        f"{mechanical_match_count}"
+    )
     print(f"Saved to: {output_file}")
 
 

@@ -366,7 +366,6 @@ function MemberEditor({
   regulationId,
   language,
   onChange,
-  onChangePokemon,
   onSave,
   onRemove,
 }: {
@@ -375,7 +374,6 @@ function MemberEditor({
   regulationId: string;
   language: Language;
   onChange: (member: TeamMember) => void;
-  onChangePokemon: () => void;
   onSave: () => void;
   onRemove: () => void;
 }) {
@@ -397,7 +395,15 @@ function MemberEditor({
   };
   return (
     <article className="member-editor-card">
-      <div className="editor-identity">
+      <button
+          type="button"
+          className="editor-delete-button"
+          aria-label={text.removePokemon}
+          onClick={onRemove}
+        >
+          ×
+        </button>
+        <div className="editor-identity">
         <img
           className="editor-pokemon-sprite"
           src={publicPath(form.sprites.home ?? `assets/sprites/home/normal/${form.api_name}.png`)}
@@ -425,7 +431,6 @@ function MemberEditor({
           )}
           <div className="editor-type-chips">{form.types.map((type) => <TypeChip type={type} language={language} key={type} />)}</div>
         </div>
-        <button type="button" className="change-pokemon-button" onClick={onChangePokemon}>{text.changePokemon}</button>
       </div>
 
       <section className="editor-section ability-section">
@@ -498,10 +503,16 @@ function MemberEditor({
       </section>
 
       <div className="editor-actions">
-        <button type="button" className="danger-button" onClick={onRemove}>{text.removePokemon}</button>
-        <button type="button" className="primary-button" onClick={onSave}>{text.savePokemon}</button>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={onSave}
+        >
+          {text.savePokemon}
+        </button>
       </div>
     </article>
+
   );
 }
 
@@ -547,13 +558,30 @@ function TeamLibrary({
       </button>
       {expanded && (
         <div className="team-library-content">
-          <label><span>{text.folder}</span><Dropdown value={folder?.id ?? ""} options={folderOptions} onChange={onFolder} label={text.folder} /></label>
+          <div className="team-library-field">
+            <span>{text.folder}</span>
+            <Dropdown
+              value={folder?.id ?? ""}
+              options={folderOptions}
+              onChange={onFolder}
+              label={text.folder}
+            />
+          </div>
           <div className="library-actions triple">
             <button type="button" onClick={onCreateFolder}>{text.createFolder}</button>
             <button type="button" onClick={onRenameFolder}>{text.renameFolder}</button>
             <button type="button" className="danger-button" onClick={onDeleteFolder}>{text.deleteFolder}</button>
           </div>
-          <label><span>{text.savedTeam}</span><Dropdown value={selectedTeamId} options={teamOptions} onChange={onTeam} label={text.savedTeam} disabled={!folder?.teams.length} /></label>
+          <div className="team-library-field">
+            <span>{text.savedTeam}</span>
+            <Dropdown
+              value={selectedTeamId}
+              options={teamOptions}
+              onChange={onTeam}
+              label={text.savedTeam}
+              disabled={!folder?.teams.length}
+            />
+          </div>
           <div className="library-actions triple">
             <button type="button" className="primary-button" onClick={onSaveTeam}>{text.saveTeam}</button>
             <button type="button" onClick={onLoadTeam} disabled={!selectedTeamId}>{text.loadTeam}</button>
@@ -885,7 +913,7 @@ export default function TeamBuilderApp() {
   const renderLocation = (location: RosterLocation, member: TeamMember | null) => {
     if (sameLocation(editor, location)) {
       if (!draft) return <PokemonSearch data={data} regulationId={regulationId} language={language} onSelect={choosePokemon} onCancel={() => setEditor(null)} />;
-      return <MemberEditor member={draft} data={data} regulationId={regulationId} language={language} onChange={setDraft} onChangePokemon={() => setDraft(null)} onSave={saveDraft} onRemove={() => removeAt(location, false)} />;
+      return <MemberEditor member={draft} data={data} regulationId={regulationId} language={language} onChange={setDraft} onSave={saveDraft} onRemove={() => removeAt(location, false)} />;
     }
     if (!member) return <EmptySlot location={location} language={language} dropTarget={sameLocation(dropTarget, location)} onClick={() => openEditor(location)} onDrop={() => drop(location)} />;
     return (

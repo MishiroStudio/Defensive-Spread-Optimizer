@@ -413,7 +413,7 @@ export function MovePicker({
           {selected ? <TypeIcon type={selected.type} size={22} /> : <span className="empty-type-icon" />}
           <input
             value={query}
-            placeholder={language === "de" ? "Attacke auswählen" : "Choose move"}
+            placeholder={language === "de" ? "Attacke wählen" : "Choose move"}
             aria-label={`${language === "de" ? "Attacke" : "Move"} ${number}`}
             onFocus={(event) => { setOpen(true); if (selected) event.currentTarget.select(); }}
             onChange={(event) => {
