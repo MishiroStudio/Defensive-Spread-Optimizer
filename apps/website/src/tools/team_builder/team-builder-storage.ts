@@ -3,10 +3,68 @@ import {
   persistedMember,
   type TeamFolder,
   type TeamLibraryDocument,
+  type TeamMember,
   type TeamSnapshot,
 } from "./team-builder-data";
 
 export const TEAM_LIBRARY_KEY = "mishiro-team-builder-library-v1";
+export const WORKING_TEAM_KEY = "mishiro-team-builder-working-team-v1";
+
+export interface WorkingTeamState {
+  schema_version: 1;
+  team_name: string;
+  regulation_id: string;
+  active_slots: Array<TeamMember | null>;
+  bench: TeamMember[];
+  selected_folder_id?: string;
+  selected_team_id?: string;
+  loaded_team_id?: string;
+}
+
+function normalizeWorkingTeam(value: unknown): WorkingTeamState | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Partial<WorkingTeamState>;
+  const active = Array.isArray(raw.active_slots)
+    ? raw.active_slots.slice(0, 6).map(normalizeMember)
+    : [];
+  while (active.length < 6) active.push(null);
+  const bench = Array.isArray(raw.bench)
+    ? raw.bench.map(normalizeMember).filter((member) => member !== null)
+    : [];
+  return {
+    schema_version: 1,
+    team_name: String(raw.team_name ?? ""),
+    regulation_id: String(raw.regulation_id ?? ""),
+    active_slots: active,
+    bench,
+    ...(raw.selected_folder_id ? { selected_folder_id: String(raw.selected_folder_id) } : {}),
+    ...(raw.selected_team_id ? { selected_team_id: String(raw.selected_team_id) } : {}),
+    ...(raw.loaded_team_id ? { loaded_team_id: String(raw.loaded_team_id) } : {}),
+  };
+}
+
+export function loadWorkingTeam(storage: Pick<Storage, "getItem">): WorkingTeamState | null {
+  const serialized = storage.getItem(WORKING_TEAM_KEY);
+  if (!serialized) return null;
+  try {
+    return normalizeWorkingTeam(JSON.parse(serialized));
+  } catch {
+    return null;
+  }
+}
+
+export function saveWorkingTeam(
+  storage: Pick<Storage, "setItem">,
+  state: Omit<WorkingTeamState, "schema_version">,
+): void {
+  const stored: WorkingTeamState = {
+    ...state,
+    schema_version: 1,
+    active_slots: state.active_slots.map(persistedMember),
+    bench: state.bench.map((member) => persistedMember(member)!),
+  };
+  storage.setItem(WORKING_TEAM_KEY, JSON.stringify(stored));
+}
 
 function identifier(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
@@ -129,4 +187,3 @@ export function deleteTeam(document: TeamLibraryDocument, folderId: string, team
       : folder),
   };
 }
-

@@ -51,8 +51,10 @@ import {
   deleteFolder,
   deleteTeam,
   loadTeamLibrary,
+  loadWorkingTeam,
   renameFolder,
   saveTeamLibrary,
+  saveWorkingTeam,
   upsertTeam,
 } from "./team-builder-storage";
 import { moveRosterMember, type RosterPosition } from "./team-builder-roster";
@@ -235,8 +237,20 @@ function CompactMemberCard({
 }) {
   const form = data.form(member);
   const displayForm = data.compactDisplayForm(member);
-  const ability = form.abilities.find((entry) => entry.api_name === member.ability_id);
   const item = member.item_id ? data.itemsByName.get(member.item_id) : undefined;
+  const baseAbilityId = member.ability_ids_by_form?.[displayForm.pokemon_id]
+    ?? (form.pokemon_id === displayForm.pokemon_id ? member.ability_id : null);
+  const baseAbility = displayForm.abilities.find((entry) => entry.api_name === baseAbilityId);
+  const megaForm = item ? data.megaFormForStone(member, item, regulationId) : null;
+  const megaAbilityId = megaForm
+    ? (member.ability_ids_by_form?.[megaForm.pokemon_id]
+      ?? (form.pokemon_id === megaForm.pokemon_id ? member.ability_id : null))
+    : null;
+  const megaAbility = megaForm?.abilities.find((entry) => entry.api_name === megaAbilityId)
+    ?? (megaForm?.abilities.length === 1 ? megaForm.abilities[0] : undefined);
+  const abilityLabel = megaForm
+    ? `${baseAbility ? localizedName(baseAbility, language) : "–"} / ${megaAbility ? localizedName(megaAbility, language) : "–"}`
+    : baseAbility ? localizedName(baseAbility, language) : "–";
   const moves = [...member.move_ids.slice(0, 4)];
   while (moves.length < 4) moves.push("");
   return (
@@ -248,6 +262,8 @@ function CompactMemberCard({
       onDragStart={(event) => {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", `${location.area}:${location.index}`);
+        const bounds = event.currentTarget.getBoundingClientRect();
+        event.dataTransfer.setDragImage(event.currentTarget, bounds.width / 2, Math.min(28, bounds.height / 2));
         onDragStart();
       }}
       onDragEnd={onDragEnd}
@@ -270,6 +286,7 @@ function CompactMemberCard({
         <div className="compact-sprite-wrap">
           <img
             className="compact-pokemon-sprite"
+            draggable={false}
             src={publicPath(displayForm.sprites.home ?? `assets/sprites/list/normal/${displayForm.api_name}.png`)}
             alt=""
             width="62"
@@ -283,6 +300,7 @@ function CompactMemberCard({
             <span className="compact-item-overlay" aria-hidden="true">
               <img
                 className="compact-item-sprite"
+                draggable={false}
                 src={publicPath(`assets/items/${item.api_name}.png`)}
                 alt=""
                 width="24"
@@ -319,7 +337,7 @@ function CompactMemberCard({
       <div className="compact-set">
         <h3>{localizedName(displayForm, language)}</h3>
         <div className="compact-meta-grid">
-          <span>{ability ? localizedName(ability, language) : "—"}</span>
+          <span>{abilityLabel}</span>
           <span>{item ? localizedName(item, language) : "—"}</span>
           <small>{data.natureSummary(member, language, STAT_NAMES[language])}</small>
         </div>
@@ -396,14 +414,23 @@ function MemberEditor({
   return (
     <article className="member-editor-card">
       <button
-          type="button"
-          className="editor-delete-button"
-          aria-label={text.removePokemon}
-          onClick={onRemove}
-        >
-          ×
-        </button>
-        <div className="editor-identity">
+        type="button"
+        className="editor-delete-button"
+        aria-label={text.removePokemon}
+        onClick={onRemove}
+      >
+        ×
+      </button>
+      <button
+        type="button"
+        className="editor-quick-save-button"
+        aria-label={text.savePokemon}
+        title={text.savePokemon}
+        onClick={onSave}
+      >
+        ✓
+      </button>
+      <div className="editor-identity">
         <img
           className="editor-pokemon-sprite"
           src={publicPath(form.sprites.home ?? `assets/sprites/home/normal/${form.api_name}.png`)}
@@ -529,6 +556,10 @@ function TeamLibrary({
   onSaveTeam,
   onLoadTeam,
   onDeleteTeam,
+  onUploadPaste,
+  onImportPaste,
+  uploadPasteDisabled,
+  importPasteDisabled,
 }: {
   language: Language;
   library: TeamLibraryDocument;
@@ -542,6 +573,10 @@ function TeamLibrary({
   onSaveTeam: () => void;
   onLoadTeam: () => void;
   onDeleteTeam: () => void;
+  onUploadPaste: () => void;
+  onImportPaste: () => void;
+  uploadPasteDisabled: boolean;
+  importPasteDisabled: boolean;
 }) {
   const text = COPY[language];
   const [expanded, setExpanded] = useState(false);
@@ -587,6 +622,10 @@ function TeamLibrary({
             <button type="button" onClick={onLoadTeam} disabled={!selectedTeamId}>{text.loadTeam}</button>
             <button type="button" className="danger-button" onClick={onDeleteTeam} disabled={!selectedTeamId}>{text.deleteTeam}</button>
           </div>
+          <div className="pokepaste-actions team-library-pokepaste-actions">
+            <button type="button" disabled={uploadPasteDisabled} onClick={onUploadPaste}>{text.upload}</button>
+            <button type="button" disabled={importPasteDisabled} onClick={onImportPaste}>{text.import}</button>
+          </div>
         </div>
       )}
     </section>
@@ -619,13 +658,14 @@ function PasteImportDialog({
 }
 
 export default function TeamBuilderApp() {
+  const [workingTeam] = useState(() => loadWorkingTeam(window.localStorage));
   const [data, setData] = useState<TeamBuilderData | null>(null);
   const [loadError, setLoadError] = useState("");
   const [language, setLanguage] = useState<Language>(() => window.localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "de");
-  const [regulationId, setRegulationId] = useState("");
-  const [teamName, setTeamName] = useState("");
-  const [team, setTeam] = useState<Array<TeamMember | null>>(EMPTY_TEAM);
-  const [bench, setBench] = useState<TeamMember[]>([]);
+  const [regulationId, setRegulationId] = useState(workingTeam?.regulation_id ?? "");
+  const [teamName, setTeamName] = useState(workingTeam?.team_name ?? "");
+  const [team, setTeam] = useState<Array<TeamMember | null>>(() => workingTeam?.active_slots ?? EMPTY_TEAM());
+  const [bench, setBench] = useState<TeamMember[]>(() => workingTeam?.bench ?? []);
   const [editor, setEditor] = useState<RosterLocation | null>(null);
   const [draft, setDraft] = useState<TeamMember | null>(null);
   const [dragSource, setDragSource] = useState<RosterLocation | null>(null);
@@ -634,9 +674,13 @@ export default function TeamBuilderApp() {
   const [pasteDialog, setPasteDialog] = useState(false);
   const [pasteBusy, setPasteBusy] = useState(false);
   const [library, setLibrary] = useState<TeamLibraryDocument>(() => loadTeamLibrary(window.localStorage, COPY[language].defaultFolder));
-  const [selectedFolderId, setSelectedFolderId] = useState(() => library.folders[0].id);
-  const [selectedTeamId, setSelectedTeamId] = useState("");
-  const [loadedTeamId, setLoadedTeamId] = useState<string | undefined>();
+  const [selectedFolderId, setSelectedFolderId] = useState(() => (
+    workingTeam?.selected_folder_id && library.folders.some((folder) => folder.id === workingTeam.selected_folder_id)
+      ? workingTeam.selected_folder_id
+      : library.folders[0].id
+  ));
+  const [selectedTeamId, setSelectedTeamId] = useState(workingTeam?.selected_team_id ?? "");
+  const [loadedTeamId, setLoadedTeamId] = useState<string | undefined>(workingTeam?.loaded_team_id);
   const feedbackTimer = useRef<number | null>(null);
   const suppressCardClick = useRef(false);
   const dragSourceRef = useRef<RosterLocation | null>(null);
@@ -655,7 +699,9 @@ export default function TeamBuilderApp() {
       .then((bundle) => {
         const next = new TeamBuilderData(bundle);
         setData(next);
-        setRegulationId(next.currentRegulationId);
+        setRegulationId((current) => next.regulationChoices().some((regulation) => regulation.id === current)
+          ? current
+          : next.currentRegulationId);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -670,6 +716,16 @@ export default function TeamBuilderApp() {
   }, [language]);
 
   useEffect(() => saveTeamLibrary(window.localStorage, library), [library]);
+
+  useEffect(() => saveWorkingTeam(window.localStorage, {
+    team_name: teamName,
+    regulation_id: regulationId,
+    active_slots: team,
+    bench,
+    selected_folder_id: selectedFolderId,
+    ...(selectedTeamId ? { selected_team_id: selectedTeamId } : {}),
+    ...(loadedTeamId ? { loaded_team_id: loadedTeamId } : {}),
+  }), [bench, loadedTeamId, regulationId, selectedFolderId, selectedTeamId, team, teamName]);
 
   useEffect(() => () => {
     if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
@@ -895,6 +951,7 @@ export default function TeamBuilderApp() {
       setBench(result.members.slice(6));
       setTeamName(remote.title || (language === "de" ? "Importiertes Team" : "Imported team"));
       setLoadedTeamId(undefined);
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       setPasteDialog(false);
       notify(`${result.members.length} Pokémon ${language === "de" ? "wurden importiert" : "were imported"}${result.issues.length ? ` · ${language === "de" ? "nicht erkannt" : "not recognized"}: ${result.issues.slice(0, 4).join(", ")}` : ""}.`);
     } catch (error) {
@@ -984,6 +1041,10 @@ export default function TeamBuilderApp() {
             if (loadedTeamId === selectedSavedTeam.id) { setTeam(EMPTY_TEAM()); setBench([]); setTeamName(""); setLoadedTeamId(undefined); }
             setSelectedTeamId("");
           }}
+          onUploadPaste={uploadPaste}
+          onImportPaste={() => setPasteDialog(true)}
+          uploadPasteDisabled={!team.some(Boolean) || editor !== null}
+          importPasteDisabled={editor !== null}
         />
 
         {feedback && <div className="app-feedback" role="status">{feedback}</div>}
@@ -994,11 +1055,6 @@ export default function TeamBuilderApp() {
         }}>
           <SectionHeader title={COPY[language].team} action={<button type="button" className="section-danger-button" disabled={!team.some(Boolean) && !bench.length} onClick={resetTeam}>{COPY[language].resetTeam}</button>} />
           {team.map((member, index) => <div className="roster-card-host" key={`team-${index}`}>{renderLocation({ area: "team", index }, member)}</div>)}
-
-          <div className="pokepaste-actions">
-            <button type="button" disabled={!team.some(Boolean) || editor !== null} onClick={uploadPaste}>{COPY[language].upload}</button>
-            <button type="button" disabled={editor !== null} onClick={() => setPasteDialog(true)}>{COPY[language].import}</button>
-          </div>
 
           <SectionHeader title={COPY[language].bench} action={<button type="button" className="section-danger-button" disabled={!bench.length} onClick={resetBench}>{COPY[language].resetBench}</button>} />
           {bench.map((member, index) => <div className="roster-card-host" key={`bench-${index}-${member.pokemon_id}`}>{renderLocation({ area: "bench", index }, member)}</div>)}

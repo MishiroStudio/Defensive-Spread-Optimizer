@@ -66,7 +66,7 @@ export interface TeamMember {
   stat_points: StatPoints;
   nature_increased: StatKey | null;
   nature_decreased: StatKey | null;
-  /** Editor-only memory. It is deliberately not persisted. */
+  /** Form-specific choices, used for Base/Mega display and restored form switches. */
   ability_ids_by_form?: Record<number, string>;
 }
 
@@ -232,9 +232,7 @@ export function normalizeMember(value: unknown): TeamMember | null {
 
 export function persistedMember(member: TeamMember | null): TeamMember | null {
   if (!member) return null;
-  const copy = cloneMember(member);
-  delete copy.ability_ids_by_form;
-  return copy;
+  return cloneMember(member);
 }
 
 export async function loadTeamBuilderBundle(signal?: AbortSignal): Promise<TeamBuilderBundle> {
@@ -403,7 +401,26 @@ export class TeamBuilderData {
 
   moveDescription(moveId: string, language: Language): string {
     const move = this.movesByName.get(moveId);
-    return move ? formatMoveEffect(move, language) : "–";
+    if (!move) return "–";
+    const formatted = formatMoveEffect(move, language);
+    const priorityLine = language === "de"
+      ? `Priorität: ${move.priority > 0 ? "+" : ""}${move.priority}`
+      : `Priority: ${move.priority > 0 ? "+" : ""}${move.priority}`;
+    const summary = language === "de"
+      ? (move.effects?.summary_de || move.effects?.summary_en)
+      : move.effects?.summary_en;
+    const usefulSummary = typeof summary === "string"
+      && summary.trim().length > 0
+      && summary !== "No additional effect."
+      && summary !== "Kein zusätzlicher Effekt.";
+    if (move.priority !== 0 && formatted === priorityLine && usefulSummary) {
+      const fallbackPrefix = language === "de"
+        && (move.effects?.summary_de_is_fallback || !move.effects?.summary_de)
+        ? "Details (EN): "
+        : "";
+      return `${formatted}\n${fallbackPrefix}${summary.trim()}`;
+    }
+    return formatted;
   }
 
   movePp(member: TeamMember, move: Move): string {
@@ -462,6 +479,12 @@ export class TeamBuilderData {
       this.isMegaStone(item)
       && Object.values(item.mega_stone ?? {}).map(showdownId).includes(selectedId)
     )) ?? null;
+  }
+
+  megaFormForStone(member: TeamMember, item: Item, regulationId: string): PokemonForm | null {
+    if (!this.isMegaStone(item) || !this.megaStoneMatches(item, member)) return null;
+    const targets = new Set(Object.values(item.mega_stone ?? {}).map(showdownId));
+    return this.relatedForms(member, regulationId).find((form) => targets.has(showdownId(form.api_name))) ?? null;
   }
 
   abilityDescription(abilityId: string, language: Language): string {

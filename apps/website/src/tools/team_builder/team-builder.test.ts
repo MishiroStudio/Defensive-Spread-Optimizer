@@ -20,7 +20,9 @@ import {
 } from "./team-builder-pokepaste";
 import {
   emptyTeamLibrary,
+  loadWorkingTeam,
   normalizeTeamLibrary,
+  saveWorkingTeam,
   upsertTeam,
 } from "./team-builder-storage";
 import { moveRosterMember } from "./team-builder-roster";
@@ -75,6 +77,25 @@ const moves: Move[] = [{
   properties: [],
   effects: { summary_en: "No additional effect.", summary_de: "Kein zusätzlicher Effekt." },
 }];
+
+const trickRoom: Move = {
+  move_id: 433,
+  api_name: "trickroom",
+  name_en: "Trick Room",
+  name_de: "Bizarroraum",
+  type: "psychic",
+  category: "status",
+  power: null,
+  accuracy: null,
+  always_hits: true,
+  pp: 5,
+  priority: -7,
+  properties: [],
+  effects: {
+    summary_en: "Goes last. For 5 turns, turn order is reversed.",
+    summary_de: "Kehrt 5 Runden lang die Zugreihenfolge um.",
+  },
+};
 
 const items: Item[] = [{
   item_id: 761,
@@ -134,6 +155,12 @@ describe("Team Builder form handling", () => {
 
     expect(data.compactDisplayForm(mega).api_name).toBe("blastoise");
     expect(data.availableItems(base, "reg-m-c", "de", "mega-stones").map((item) => item.api_name)).toEqual(["blastoisinite"]);
+    expect(data.megaFormForStone(base, items[0], "reg-m-c")?.api_name).toBe("blastoise-mega");
+  });
+
+  it("shows Trick Room's explanation in addition to its priority", () => {
+    const data = new TeamBuilderData({ ...bundle(), moves: [...moves, trickRoom] });
+    expect(data.moveDescription("trickroom", "de")).toBe("Priorität: -7\nKehrt 5 Runden lang die Zugreihenfolge um.");
   });
 
   it("searches Pokémon and moves in both languages", () => {
@@ -143,14 +170,14 @@ describe("Team Builder form handling", () => {
     expect(data.filteredMoves(member, "de", "", "", "Hydro Pump")[0].name_de).toBe("Hydropumpe");
   });
 
-  it("keeps form-specific ability memory in the live clone but not in saved JSON", () => {
+  it("keeps form-specific ability memory in live and saved teams", () => {
     const data = new TeamBuilderData(bundle());
     const member = data.newMember(data.pokedex.formsByPokemonId.get(9)!);
     member.ability_id = "rain-dish";
     member.ability_ids_by_form = { 9: "rain-dish", 10036: "mega-launcher" };
 
     expect(normalizeMember(member)?.ability_ids_by_form).toEqual(member.ability_ids_by_form);
-    expect(persistedMember(member)?.ability_ids_by_form).toBeUndefined();
+    expect(persistedMember(member)?.ability_ids_by_form).toEqual(member.ability_ids_by_form);
   });
 });
 
@@ -197,6 +224,29 @@ describe("team folders", () => {
 
     expect(reloaded.folders[0].teams[0].active_slots).toHaveLength(6);
     expect(reloaded.folders[0].teams[0].bench).toHaveLength(2);
+  });
+
+  it("restores the unsaved working team after a reload", () => {
+    const data = new TeamBuilderData(bundle());
+    const member = data.newMember(data.pokedex.formsByPokemonId.get(9)!);
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+    };
+    saveWorkingTeam(storage, {
+      team_name: "Unsaved rain",
+      regulation_id: "reg-m-c",
+      active_slots: [member, null, null, null, null, null],
+      bench: [member],
+      selected_folder_id: "folder-1",
+    });
+
+    const restored = loadWorkingTeam(storage);
+    expect(restored?.team_name).toBe("Unsaved rain");
+    expect(restored?.active_slots[0]?.pokemon_api_name).toBe("blastoise");
+    expect(restored?.bench).toHaveLength(1);
+    expect(restored?.active_slots).toHaveLength(6);
   });
 });
 

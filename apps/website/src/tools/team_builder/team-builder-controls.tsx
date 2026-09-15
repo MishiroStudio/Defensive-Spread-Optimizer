@@ -3,10 +3,12 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 
 import {
+  CATEGORY_COLORS,
   CATEGORY_NAMES,
   MAX_STAT_POINTS,
   MAX_TOTAL_STAT_POINTS,
@@ -114,6 +116,7 @@ export function TypeIcon({ type, size = 22 }: { type: string; size?: number }) {
       title={TYPE_NAMES.en[type] ?? type}
       width={size}
       height={size}
+      draggable={false}
     />
   );
 }
@@ -128,14 +131,19 @@ export function TypeChip({ type, language }: { type: string; language: Language 
 }
 
 export function CategoryIcon({ move, data, size = 18 }: { move: Move; data: TeamBuilderData; size?: number }) {
+  const image = data.categoryIcon(move);
   return (
-    <img
-      className={`move-category-icon category-${move.category}`}
-      src={data.categoryIcon(move)}
-      alt={move.category}
+    <span
+      className="move-category-icon"
+      role="img"
+      aria-label={CATEGORY_NAMES.en[move.category]}
       title={move.category}
-      width={size}
-      height={size}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        "--category-color": CATEGORY_COLORS[move.category],
+        "--category-image": `url(${image})`,
+      } as CSSProperties}
     />
   );
 }
@@ -471,12 +479,9 @@ export function StatsEditor({
   language: Language;
   onChange: (member: TeamMember) => void;
 }) {
-  const stats = data.calculatedStats(member);
   const baseStats = data.form(member).base_stats;
   const total = STAT_ORDER.reduce((sum, stat) => sum + member.stat_points[stat], 0);
   const baseStatTotal = STAT_ORDER.reduce((sum, stat) => sum + baseStats[stat], 0);
-  const finalStatTotal = STAT_ORDER.reduce((sum, stat) => sum + stats[stat], 0);
-  const natureStats = STAT_ORDER.filter((stat): stat is Exclude<StatKey, "hp"> => stat !== "hp");
   const setPoints = (stat: StatKey, requested: number) => {
     const current = member.stat_points[stat];
     const available = MAX_TOTAL_STAT_POINTS - (total - current);
@@ -506,10 +511,6 @@ export function StatsEditor({
 
           <span>{baseStats[stat]}</span>
 
-          <strong className="final-stat-value">
-            {stats[stat]}
-          </strong>
-
           <input
             type="range"
             min="0"
@@ -519,15 +520,17 @@ export function StatsEditor({
             aria-label={`${STAT_NAMES[language][stat]} Stat Points`}
           />
 
-          <input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            max={MAX_STAT_POINTS}
-            value={member.stat_points[stat]}
-            onFocus={(event) => event.currentTarget.select()}
-            onChange={(event) => setPoints(stat, Number(event.target.value))}
-          />
+          <span className="stat-point-input-wrap">
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max={MAX_STAT_POINTS}
+              value={member.stat_points[stat]}
+              onFocus={(event) => event.currentTarget.select()}
+              onChange={(event) => setPoints(stat, Number(event.target.value))}
+            />
+          </span>
           {stat === "hp" ? <span className="nature-empty" /> : (
             <div className="nature-buttons">
               <button type="button" className={member.nature_increased === stat ? "active positive" : ""} onClick={() => toggleNature(stat, "up")}>+</button>
@@ -540,14 +543,7 @@ export function StatsEditor({
         <strong className="bst-label">BST</strong>
         <strong className="bst-base">{baseStatTotal}</strong>
         <strong className="points-total">{total}/{MAX_TOTAL_STAT_POINTS}</strong>
-        <strong className="bst-final">{finalStatTotal}</strong>
         <span className="nature-name">{data.natureName(member, language)}</span>
-      </div>
-      <div className="nature-mobile-grid">
-        {natureStats.map((stat) => (
-          <div key={stat}><span>{STAT_NAMES[language][stat]}</span><div className="nature-buttons"><button type="button" className={member.nature_increased === stat ? "active positive" : ""} onClick={() => toggleNature(stat, "up")}>+</button><button type="button" className={member.nature_decreased === stat ? "active negative" : ""} onClick={() => toggleNature(stat, "down")}>−</button></div></div>
-        ))}
-        <strong>{data.natureName(member, language)}</strong>
       </div>
     </div>
   );
