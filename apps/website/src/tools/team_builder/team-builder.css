@@ -1054,7 +1054,7 @@ button:disabled {
   font-size: 0.9rem;
 }
 .move-combobox-control > input::placeholder {
-  font-size: 0.9rem;
+  font-size: 0.775rem;
 }
 
 .move-combobox-control > span:not(.empty-type-icon) {
@@ -1837,10 +1837,10 @@ button:disabled {
   }
 }
 
-/* Final stat editor: Stat | Basis | Regler | Punkte | Wesen */
+/* Final stat editor: Stat | Basis | Aktuell | Regler | Punkte | Wesen */
 .stat-editor-row,
 .stats-footer {
-  grid-template-columns: 28px 27px minmax(40px, 1fr) 34px 72px;
+  grid-template-columns: 28px 27px 32px minmax(40px, 1fr) 34px 72px;
   gap: 2px;
 }
 
@@ -1861,10 +1861,10 @@ button:disabled {
 
 .stats-footer .bst-label { grid-column: 1; }
 .stats-footer .bst-base { grid-column: 2; }
-.stats-footer .points-total { grid-column: 4; }
+.stats-footer .points-total { grid-column: 5; }
 .stats-footer .nature-name {
   display: block;
-  grid-column: 5;
+  grid-column: 6;
 }
 
 .team-library-pokepaste-actions {
@@ -1874,7 +1874,7 @@ button:disabled {
 @media (max-width: 640px) {
   .stat-editor-row,
   .stats-footer {
-    grid-template-columns: 34px 35px minmax(65px, 1fr) 34px 64px;
+    grid-template-columns: 34px 35px 38px minmax(65px, 1fr) 34px 64px;
     gap: 3px;
   }
 
@@ -1898,14 +1898,14 @@ button:disabled {
   }
 
   .move-combobox-control > input::placeholder {
-    font-size: 16px;
+    font-size: 14px;
   }
 }
 
 @media (max-width: 460px) {
   .stat-editor-row,
   .stats-footer {
-    grid-template-columns: 28px 27px minmax(40px, 1fr) 34px 64px;
+    grid-template-columns: 28px 27px 32px minmax(40px, 1fr) 34px 64px;
     gap: 2px;
   }
 }

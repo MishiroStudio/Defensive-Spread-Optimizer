@@ -480,6 +480,7 @@ export function StatsEditor({
   onChange: (member: TeamMember) => void;
 }) {
   const baseStats = data.form(member).base_stats;
+  const stats = data.calculatedStats(member);
   const total = STAT_ORDER.reduce((sum, stat) => sum + member.stat_points[stat], 0);
   const baseStatTotal = STAT_ORDER.reduce((sum, stat) => sum + baseStats[stat], 0);
   const setPoints = (stat: StatKey, requested: number) => {
@@ -510,6 +511,8 @@ export function StatsEditor({
           <strong>{STAT_NAMES[language][stat]}</strong>
 
           <span>{baseStats[stat]}</span>
+
+          <strong className="final-stat-value">{stats[stat]}</strong>
 
           <input
             type="range"
