@@ -1,4 +1,4 @@
-// pokedex-app.tsx — Pokédex V10
+// pokedex-app.tsx — Pokédex V11
 import {
   useEffect,
   useLayoutEffect,
@@ -194,6 +194,9 @@ export default function PokedexApp() {
   const [visibleCount, setVisibleCount] = useState(RESULT_PAGE_SIZE);
   const [loadError, setLoadError] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  const searchBlurTimerRef = useRef<number | null>(null);
+  const resultsScrollPositionRef = useRef(0);
+  const restoreResultsScrollRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -223,15 +226,32 @@ export default function PokedexApp() {
     return () => window.clearTimeout(restoreLanguage);
   }, []);
 
+  useEffect(() => () => {
+    if (searchBlurTimerRef.current !== null) {
+      window.clearTimeout(searchBlurTimerRef.current);
+    }
+  }, []);
+
   useLayoutEffect(() => {
-    if (!selectedForm) return;
-    const scrollToTop = () => {
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const shouldRestoreResults = !selectedForm && restoreResultsScrollRef.current;
+    if (!selectedForm && !shouldRestoreResults) return;
+
+    const targetScrollPosition = selectedForm
+      ? 0
+      : resultsScrollPositionRef.current;
+    restoreResultsScrollRef.current = false;
+
+    const scrollToTarget = () => {
+      document.documentElement.scrollTop = targetScrollPosition;
+      document.body.scrollTop = targetScrollPosition;
+      window.scrollTo({
+        top: targetScrollPosition,
+        left: 0,
+        behavior: "auto",
+      });
     };
-    scrollToTop();
-    const frame = window.requestAnimationFrame(scrollToTop);
+    scrollToTarget();
+    const frame = window.requestAnimationFrame(scrollToTarget);
     return () => window.cancelAnimationFrame(frame);
   }, [selectedForm]);
 
@@ -362,11 +382,30 @@ export default function PokedexApp() {
     return move ? localizedName(move, language) : String(filter.value);
   }
 
+  function cancelSearchBlur() {
+    if (searchBlurTimerRef.current === null) return;
+    window.clearTimeout(searchBlurTimerRef.current);
+    searchBlurTimerRef.current = null;
+  }
+
+  function focusSearch() {
+    cancelSearchBlur();
+    setInputFocused(true);
+    requestAnimationFrame(() => {
+      searchRef.current?.focus();
+      setInputFocused(true);
+    });
+  }
+
   function chooseSuggestion(suggestion: SearchSuggestion) {
     setSearchFeedback("");
     setSubmittedQuery("");
     if (suggestion.kind === "pokemon") {
       const form = suggestion.value as PokemonForm;
+      if (!selectedForm) {
+        resultsScrollPositionRef.current = window.scrollY;
+      }
+      restoreResultsScrollRef.current = false;
       setSelectedForm(form);
       setQuery(localizedName(form, language));
       setInputFocused(false);
@@ -384,8 +423,7 @@ export default function PokedexApp() {
     setVisibleCount(RESULT_PAGE_SIZE);
     setSelectedForm(null);
     setQuery("");
-    setInputFocused(false);
-    requestAnimationFrame(() => searchRef.current?.focus());
+    focusSearch();
   }
 
   function submitSearch() {
@@ -502,9 +540,20 @@ export default function PokedexApp() {
               value={query}
               placeholder={text.placeholder}
               autoComplete="off"
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => window.setTimeout(() => setInputFocused(false), 120)}
+              onFocus={() => {
+                cancelSearchBlur();
+                setInputFocused(true);
+              }}
+              onBlur={() => {
+                cancelSearchBlur();
+                searchBlurTimerRef.current = window.setTimeout(() => {
+                  searchBlurTimerRef.current = null;
+                  setInputFocused(false);
+                }, 120);
+              }}
               onChange={(event) => {
+                cancelSearchBlur();
+                setInputFocused(true);
                 setQuery(event.target.value);
                 setSubmittedQuery("");
                 setSearchFeedback("");
@@ -541,7 +590,7 @@ export default function PokedexApp() {
                   setSubmittedQuery("");
                   setSearchFeedback("");
                   setSelectedForm(null);
-                  searchRef.current?.focus();
+                  focusSearch();
                 }}
               >×</button>
             )}
@@ -615,6 +664,7 @@ export default function PokedexApp() {
             form={selectedForm}
             language={language}
             onBack={() => {
+              restoreResultsScrollRef.current = true;
               setSelectedForm(null);
               setQuery("");
               setSubmittedQuery("");
