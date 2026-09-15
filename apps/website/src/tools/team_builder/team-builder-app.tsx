@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -202,6 +203,51 @@ function CompactStatBars({
   );
 }
 
+function CompactMoveName({ name }: { name: string }) {
+  const boxRef = useRef<HTMLSpanElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const label = labelRef.current;
+    if (!box || !label) return undefined;
+
+    const fit = () => {
+      label.style.fontSize = "";
+
+      const boxStyle = window.getComputedStyle(box);
+      const horizontalPadding = Number.parseFloat(boxStyle.paddingLeft)
+        + Number.parseFloat(boxStyle.paddingRight);
+      const availableWidth = Math.max(0, box.clientWidth - horizontalPadding);
+      const naturalWidth = label.scrollWidth;
+
+      if (availableWidth > 0 && naturalWidth > availableWidth) {
+        const baseSize = Number.parseFloat(window.getComputedStyle(label).fontSize);
+        const fittedSize = Math.max(6, baseSize * availableWidth / naturalWidth);
+        label.style.fontSize = `${fittedSize}px`;
+      }
+    };
+
+    fit();
+    const observer = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(fit);
+    observer?.observe(box);
+    window.addEventListener("resize", fit);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, [name]);
+
+  return (
+    <span ref={boxRef} title={name}>
+      <span ref={labelRef} className="compact-move-label">{name}</span>
+    </span>
+  );
+}
+
 function CompactMemberCard({
   member,
   location,
@@ -342,7 +388,12 @@ function CompactMemberCard({
           <small>{data.natureSummary(member, language, STAT_NAMES[language])}</small>
         </div>
         <div className="compact-moves">
-          {moves.map((moveId, index) => <span key={`${moveId}-${index}`}>{moveId ? localizedName(data.movesByName.get(moveId) ?? { api_name: moveId }, language) : "—"}</span>)}
+          {moves.map((moveId, index) => (
+            <CompactMoveName
+              key={`${moveId}-${index}`}
+              name={moveId ? localizedName(data.movesByName.get(moveId) ?? { api_name: moveId }, language) : "—"}
+            />
+          ))}
         </div>
       </div>
       <CompactStatBars member={member} data={data} regulationId={regulationId} language={language} />

@@ -314,7 +314,7 @@ button:disabled {
 .compact-member-card {
   position: relative;
   display: grid;
-  grid-template-columns: 66px minmax(0, 1fr) 164px;
+  grid-template-columns: 62px minmax(0, 1fr) 164px;
   min-height: 112px;
   gap: 9px;
   align-items: start;
@@ -514,7 +514,7 @@ button:disabled {
   margin-top: 0px;
 }
 
-.compact-moves span {
+.compact-moves > span {
   min-width: 0;
   padding: 4px 6px;
   overflow: hidden;
@@ -524,6 +524,13 @@ button:disabled {
   font-size: 0.72rem;
   line-height: 1.1;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-move-label {
+  display: inline-block;
+  max-width: none;
+  line-height: inherit;
   white-space: nowrap;
 }
 
@@ -1294,10 +1301,10 @@ button:disabled {
   .team-builder-header .description { font-size: 0.78rem; }
   .language-control button { min-width: 80px; padding-inline: 8px; }
   .team-meta-row { grid-template-columns: minmax(0, 0.72fr) minmax(190px, 1.28fr); }
-  .compact-member-card { grid-template-columns: 58px minmax(0, 1fr) 145px; min-height: 117px; gap: 6px; padding: 7px 9px 7px 6px; }
-  .compact-pokemon-sprite { width: 55px; height: 55px; }
+  .compact-member-card { grid-template-columns: 54px minmax(0, 1fr) 145px; min-height: 117px; gap: 6px; padding: 7px 9px 7px 6px; }
+  .compact-pokemon-sprite { width: 53px; height: 53px; }
   .compact-set h3 { font-size: 1.08rem; }
-  .compact-moves span { padding-inline: 4px; font-size: 0.68rem; }
+  .compact-moves > span { padding-inline: 4px; font-size: 0.68rem; }
   .compact-stat-row { grid-template-columns: 28px minmax(43px, 1fr) 25px; gap: 4px; }
   .editor-identity { grid-template-columns: 87px minmax(0, 1fr); gap: 8px; }
   .editor-pokemon-sprite { width: 88px; height: 88px; }
@@ -1319,13 +1326,13 @@ button:disabled {
   .team-meta-row { grid-template-columns: minmax(0, 0.67fr) minmax(176px, 1.33fr); gap: 6px; }
   .team-name-field input,
   .regulation-field .pretty-select-trigger { font-size: 0.78rem; }
-  .compact-member-card { grid-template-columns: 54px minmax(0, 1fr) 129px; gap: 5px; padding-right: 7px; }
-  .compact-pokemon-sprite { width: 51px; height: 51px; }
+  .compact-member-card { grid-template-columns: 50px minmax(0, 1fr) 129px; gap: 5px; padding-right: 7px; }
+  .compact-pokemon-sprite { width: 49px; height: 49px; }
   .compact-set h3 { font-size: 1rem; }
   .compact-meta-grid { font-size: 0.65rem; }
   .compact-meta-grid small { font-size: 0.58rem; }
   .compact-moves { gap: 3px; }
-  .compact-moves span { font-size: 0.61rem; }
+  .compact-moves > span { font-size: 0.61rem; }
   .compact-stat-bars { gap: 1px; }
   .compact-stat-row { grid-template-columns: 26px minmax(38px, 1fr) 23px; font-size: 0.58rem; }
   .compact-stat-row strong { font-size: 0.6rem; }
@@ -1357,8 +1364,8 @@ button:disabled {
 }
 
 @media (max-width: 380px) {
-  .compact-member-card { grid-template-columns: 48px minmax(0, 1fr) 112px; }
-  .compact-pokemon-sprite { width: 46px; height: 46px; }
+  .compact-member-card { grid-template-columns: 45px minmax(0, 1fr) 112px; }
+  .compact-pokemon-sprite { width: 44px; height: 44px; }
   .compact-type-icons img { width: 17px; height: 17px; }
   .compact-set h3 { font-size: 0.92rem; }
   .compact-stat-row { grid-template-columns: 23px minmax(33px, 1fr) 22px; gap: 2px; }
@@ -1811,13 +1818,13 @@ button:disabled {
     font-size: 16px !important;
   }
 
-  .compact-moves span {
+  .compact-moves > span {
     font-size: 0.72rem;
   }
 }
 
 @media (max-width: 460px) {
-  .compact-moves span {
+  .compact-moves > span {
     font-size: 0.65rem;
   }
 
