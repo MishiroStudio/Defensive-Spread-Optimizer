@@ -1058,7 +1058,6 @@ export default function TeamBuilderApp() {
     setLoadedFolderId(folderId);
     setEditor(null);
     setDraft(null);
-    notify(language === "de" ? `„${savedTeam.name}“ wurde geladen.` : `“${savedTeam.name}” was loaded.`);
   };
 
   const selectSavedTeam = (teamId: string) => {

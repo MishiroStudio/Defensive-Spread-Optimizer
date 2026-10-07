@@ -16,7 +16,7 @@
 
 .team-meta-row {
   display: grid;
-  grid-template-columns: minmax(0, 0.78fr) minmax(220px, 1.22fr);
+  grid-template-columns: minmax(0, 1fr) 164px;
   gap: 10px;
   margin-top: 27px;
 }
@@ -51,6 +51,12 @@
 
 .regulation-field {
   position: relative;
+}
+
+.regulation-field .pretty-select-trigger {
+  gap: 6px;
+  padding-right: 8px;
+  padding-left: 10px;
 }
 
 .regulation-field > span {
@@ -387,23 +393,24 @@ button:disabled {
 .compact-form-toggle {
   position: absolute;
   z-index: 2;
-  top: -6px;
-  right: -8px;
+  top: -5px;
+  right: -7px;
   display: grid;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   padding: 3px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--control-border));
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
-  color: var(--accent);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  opacity: 0.65;
   cursor: pointer;
 }
 
 .compact-form-toggle:hover {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
 .compact-form-toggle svg {
@@ -1338,7 +1345,7 @@ button:disabled {
   .team-builder-header { gap: 10px; }
   .team-builder-header .description { font-size: 0.78rem; }
   .language-control button { min-width: 80px; padding-inline: 8px; }
-  .team-meta-row { grid-template-columns: minmax(0, 0.72fr) minmax(190px, 1.28fr); }
+  .team-meta-row { grid-template-columns: minmax(0, 1fr) 150px; }
   .compact-member-card { grid-template-columns: 54px minmax(0, 1fr) 145px; min-height: 117px; gap: 6px; padding: 7px 9px 7px 6px; }
   .compact-pokemon-sprite { width: 53px; height: 53px; }
   .compact-set h3 { font-size: 1.08rem; }
@@ -1361,7 +1368,7 @@ button:disabled {
 
 @media (max-width: 460px) {
   .team-builder-card { padding-inline: 9px; }
-  .team-meta-row { grid-template-columns: minmax(0, 0.67fr) minmax(176px, 1.33fr); gap: 6px; }
+  .team-meta-row { grid-template-columns: minmax(0, 1fr) 140px; gap: 6px; }
   .team-name-field input,
   .regulation-field .pretty-select-trigger { font-size: 0.78rem; }
   .compact-member-card { grid-template-columns: 50px minmax(0, 1fr) 129px; gap: 5px; padding-right: 7px; }
@@ -1402,6 +1409,7 @@ button:disabled {
 }
 
 @media (max-width: 380px) {
+  .team-meta-row { grid-template-columns: minmax(0, 1fr) 136px; }
   .compact-member-card { grid-template-columns: 45px minmax(0, 1fr) 112px; }
   .compact-pokemon-sprite { width: 44px; height: 44px; }
   .compact-type-icons img { width: 17px; height: 17px; }
