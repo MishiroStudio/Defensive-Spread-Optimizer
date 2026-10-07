@@ -1,4 +1,4 @@
-// pokedex-detail.tsx — Pokédex V10
+// pokedex-detail.tsx — Pokédex V12
 import {
   type CSSProperties,
   useEffect,
@@ -366,7 +366,7 @@ function MovesPanel({ index, form, language }: {
   const currentMoves = useMemo(() => index.resolvedMoves(form.pokemon_id), [form.pokemon_id, index]);
   const currentMoveIds = useMemo(() => new Set(currentMoves.map((move) => move.move_id)), [currentMoves]);
   const [query, setQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [searchState, setSearchState] = useState<SearchState>(null);
   const [selectedMoveId, setSelectedMoveId] = useState<number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<MoveCategory | "">("");
@@ -420,7 +420,7 @@ function MovesPanel({ index, form, language }: {
     const learned = currentMoveIds.has(match.move_id);
     setQuery(localizedName(match, language));
     setSelectedMoveId(match.move_id);
-    setSearchFocused(false);
+    setSuggestionsOpen(false);
     setSearchState(learned ? "learned" : "not-learned");
     if (!learned) return;
 
@@ -468,19 +468,21 @@ function MovesPanel({ index, form, language }: {
             value={displayQuery}
             placeholder={text.moveSearch}
             autoComplete="off"
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
+            aria-expanded={suggestionsOpen && moveSuggestions.length > 0}
+            aria-controls="move-suggestions"
+            onFocus={() => setSuggestionsOpen(true)}
             onChange={(event) => {
               setQuery(event.target.value);
               setSearchState(null);
               setSelectedMoveId(null);
+              setSuggestionsOpen(true);
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
                 runMoveSearch();
               }
-              if (event.key === "Escape") setSearchFocused(false);
+              if (event.key === "Escape") setSuggestionsOpen(false);
             }}
           />
           {displayQuery && (
@@ -491,11 +493,12 @@ function MovesPanel({ index, form, language }: {
                 setQuery("");
                 setSearchState(null);
                 setSelectedMoveId(null);
+                setSuggestionsOpen(false);
               }}
             >×</button>
           )}
-          {searchFocused && moveSuggestions.length > 0 && (
-            <div className="move-suggestions">
+          {suggestionsOpen && moveSuggestions.length > 0 && (
+            <div className="move-suggestions" id="move-suggestions">
               {moveSuggestions.map((move) => (
                 <button
                   type="button"
