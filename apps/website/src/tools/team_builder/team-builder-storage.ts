@@ -19,6 +19,7 @@ export interface WorkingTeamState {
   selected_folder_id?: string;
   selected_team_id?: string;
   loaded_team_id?: string;
+  loaded_folder_id?: string;
 }
 
 function normalizeWorkingTeam(value: unknown): WorkingTeamState | null {
@@ -40,6 +41,7 @@ function normalizeWorkingTeam(value: unknown): WorkingTeamState | null {
     ...(raw.selected_folder_id ? { selected_folder_id: String(raw.selected_folder_id) } : {}),
     ...(raw.selected_team_id ? { selected_team_id: String(raw.selected_team_id) } : {}),
     ...(raw.loaded_team_id ? { loaded_team_id: String(raw.loaded_team_id) } : {}),
+    ...(raw.loaded_folder_id ? { loaded_folder_id: String(raw.loaded_folder_id) } : {}),
   };
 }
 
@@ -158,10 +160,12 @@ export function upsertTeam(
   const folders = document.folders.map((folder) => {
     if (folder.id !== folderId) return folder;
     const normalized = snapshot.name.trim().toLocaleLowerCase();
-    const existingIndex = folder.teams.findIndex((team) => (
-      (preferredTeamId && team.id === preferredTeamId)
-      || team.name.trim().toLocaleLowerCase() === normalized
-    ));
+    const preferredIndex = preferredTeamId
+      ? folder.teams.findIndex((team) => team.id === preferredTeamId)
+      : -1;
+    const existingIndex = preferredIndex >= 0
+      ? preferredIndex
+      : folder.teams.findIndex((team) => team.name.trim().toLocaleLowerCase() === normalized);
     teamId = existingIndex >= 0 ? folder.teams[existingIndex].id : identifier();
     const stored: TeamSnapshot = {
       ...snapshot,
@@ -186,4 +190,42 @@ export function deleteTeam(document: TeamLibraryDocument, folderId: string, team
       ? { ...folder, teams: folder.teams.filter((team) => team.id !== teamId) }
       : folder),
   };
+}
+
+export function duplicateTeam(
+  document: TeamLibraryDocument,
+  folderId: string,
+  teamId: string,
+  copyPrefix: string,
+): [TeamLibraryDocument, string] {
+  let duplicateId = "";
+  const folders = document.folders.map((folder) => {
+    if (folder.id !== folderId) return folder;
+    const source = folder.teams.find((team) => team.id === teamId);
+    if (!source) return folder;
+
+    duplicateId = identifier();
+    const baseName = `${copyPrefix}${source.name}`;
+    const existingNames = new Set(folder.teams.map((team) => team.name.toLocaleLowerCase()));
+    let name = baseName;
+    let suffix = 2;
+    while (existingNames.has(name.toLocaleLowerCase())) {
+      name = `${baseName} (${suffix})`;
+      suffix += 1;
+    }
+
+    const duplicate: TeamSnapshot = {
+      ...source,
+      id: duplicateId,
+      name,
+      active_slots: source.active_slots.map(persistedMember),
+      bench: source.bench.map((member) => persistedMember(member)!),
+    };
+    const teams = [...folder.teams, duplicate]
+      .toSorted((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    return { ...folder, teams };
+  });
+
+  if (!duplicateId) throw new Error("Das ausgewählte Team existiert nicht mehr.");
+  return [{ ...document, folders }, duplicateId];
 }

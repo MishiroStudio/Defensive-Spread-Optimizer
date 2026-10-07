@@ -19,6 +19,7 @@ import {
   parseStatPoints,
 } from "./team-builder-pokepaste";
 import {
+  duplicateTeam,
   emptyTeamLibrary,
   loadWorkingTeam,
   normalizeTeamLibrary,
@@ -226,6 +227,53 @@ describe("team folders", () => {
     expect(reloaded.folders[0].teams[0].bench).toHaveLength(2);
   });
 
+  it("duplicates a complete team with a new id and copy prefix", () => {
+    const data = new TeamBuilderData(bundle());
+    const member = data.newMember(data.pokedex.formsByPokemonId.get(9)!);
+    const document = emptyTeamLibrary("My teams");
+    const snapshot: TeamSnapshot = {
+      name: "Rain",
+      regulation_id: "reg-m-c",
+      active_slots: [member, null, null, null, null, null],
+      bench: [member],
+    };
+    const [stored, originalId] = upsertTeam(document, document.folders[0].id, snapshot);
+    const [duplicated, duplicateId] = duplicateTeam(stored, document.folders[0].id, originalId, "Kopie von ");
+    const copy = duplicated.folders[0].teams.find((team) => team.id === duplicateId);
+
+    expect(duplicateId).not.toBe(originalId);
+    expect(copy?.name).toBe("Kopie von Rain");
+    expect(copy?.active_slots[0]?.pokemon_api_name).toBe("blastoise");
+    expect(copy?.bench).toHaveLength(1);
+  });
+
+  it("updates the preferred team instead of overwriting a different team with the same name", () => {
+    const document = emptyTeamLibrary("My teams");
+    const folderId = document.folders[0].id;
+    const [withFirst, firstId] = upsertTeam(document, folderId, {
+      name: "Rain",
+      regulation_id: "reg-m-c",
+      active_slots: [null, null, null, null, null, null],
+      bench: [],
+    });
+    const [withSecond, secondId] = upsertTeam(withFirst, folderId, {
+      name: "Sun",
+      regulation_id: "reg-m-c",
+      active_slots: [null, null, null, null, null, null],
+      bench: [],
+    });
+    const [renamed] = upsertTeam(withSecond, folderId, {
+      name: "Rain",
+      regulation_id: "national_dex",
+      active_slots: [null, null, null, null, null, null],
+      bench: [],
+    }, secondId);
+
+    expect(renamed.folders[0].teams).toHaveLength(2);
+    expect(renamed.folders[0].teams.find((team) => team.id === firstId)?.regulation_id).toBe("reg-m-c");
+    expect(renamed.folders[0].teams.find((team) => team.id === secondId)?.regulation_id).toBe("national_dex");
+  });
+
   it("restores the unsaved working team after a reload", () => {
     const data = new TeamBuilderData(bundle());
     const member = data.newMember(data.pokedex.formsByPokemonId.get(9)!);
@@ -240,6 +288,7 @@ describe("team folders", () => {
       active_slots: [member, null, null, null, null, null],
       bench: [member],
       selected_folder_id: "folder-1",
+      loaded_folder_id: "folder-1",
     });
 
     const restored = loadWorkingTeam(storage);
@@ -247,6 +296,7 @@ describe("team folders", () => {
     expect(restored?.active_slots[0]?.pokemon_api_name).toBe("blastoise");
     expect(restored?.bench).toHaveLength(1);
     expect(restored?.active_slots).toHaveLength(6);
+    expect(restored?.loaded_folder_id).toBe("folder-1");
   });
 });
 

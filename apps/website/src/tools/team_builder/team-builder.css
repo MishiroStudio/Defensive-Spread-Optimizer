@@ -237,6 +237,11 @@
   padding-inline: 6px;
 }
 
+.library-actions.double button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .primary-button {
   border-color: var(--accent) !important;
   background: var(--accent) !important;
@@ -377,6 +382,39 @@ button:disabled {
   display: inline-grid;
   place-items: center;
   line-height: 0;
+}
+
+.compact-form-toggle {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -8px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  padding: 3px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--control-border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.compact-form-toggle:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+
+.compact-form-toggle svg {
+  width: 14px;
+  height: 14px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .compact-pokemon-sprite {
@@ -1744,40 +1782,10 @@ button:disabled {
   }
 }
 
-.editor-delete-button {
-  position: absolute;
-  z-index: 3;
-  top: 10px;
-  right: 10px;
-
-  display: grid;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  place-items: center;
-
-  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--control-border));
-  border-radius: 50%;
-
-  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
-  color: var(--danger);
-
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-
-  cursor: pointer;
-}
-
-.editor-delete-button:hover {
-  border-color: color-mix(in srgb, var(--danger) 70%, var(--control-border));
-  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
-}
-
 .editor-quick-save-button {
   position: absolute;
   z-index: 3;
-  top: 46px;
+  top: 10px;
   right: 10px;
   display: grid;
   width: 30px;

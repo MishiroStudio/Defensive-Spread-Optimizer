@@ -51,6 +51,7 @@ import {
   createFolder,
   deleteFolder,
   deleteTeam,
+  duplicateTeam,
   loadTeamLibrary,
   loadWorkingTeam,
   renameFolder,
@@ -76,8 +77,7 @@ const COPY = {
     createFolder: "Ordner erstellen",
     renameFolder: "Ordner umbenennen",
     deleteFolder: "Ordner löschen",
-    saveTeam: "Team speichern",
-    loadTeam: "Team laden",
+    duplicateTeam: "Team duplizieren",
     deleteTeam: "Team löschen",
     team: "Team",
     bench: "Ersatzbank",
@@ -87,6 +87,8 @@ const COPY = {
     changePokemon: "Pokémon ändern",
     removePokemon: "Pokémon löschen",
     savePokemon: "Sichern",
+    showBaseForm: "Basisform anzeigen",
+    showMegaForm: "Mega-Form anzeigen",
     abilities: "Fähigkeit",
     item: "Item",
     moves: "Attacken",
@@ -110,8 +112,7 @@ const COPY = {
     createFolder: "Create folder",
     renameFolder: "Rename folder",
     deleteFolder: "Delete folder",
-    saveTeam: "Save team",
-    loadTeam: "Load team",
+    duplicateTeam: "Duplicate team",
     deleteTeam: "Delete team",
     team: "Team",
     bench: "Bench",
@@ -121,6 +122,8 @@ const COPY = {
     changePokemon: "Change Pokémon",
     removePokemon: "Remove Pokémon",
     savePokemon: "Save",
+    showBaseForm: "Show base form",
+    showMegaForm: "Show Mega form",
     abilities: "Ability",
     item: "Item",
     moves: "Moves",
@@ -258,6 +261,7 @@ function CompactMemberCard({
   dropTarget,
   onEdit,
   onRemove,
+  onToggleMega,
   onDragStart,
   onDragEnd,
   onDrop,
@@ -274,6 +278,7 @@ function CompactMemberCard({
   dropTarget: boolean;
   onEdit: () => void;
   onRemove: () => void;
+  onToggleMega: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDrop: () => void;
@@ -282,12 +287,14 @@ function CompactMemberCard({
   onTouchEnd: (event: ReactPointerEvent<HTMLElement>) => void;
 }) {
   const form = data.form(member);
-  const displayForm = data.compactDisplayForm(member);
+  const baseForm = data.compactDisplayForm(member);
   const item = member.item_id ? data.itemsByName.get(member.item_id) : undefined;
-  const baseAbilityId = member.ability_ids_by_form?.[displayForm.pokemon_id]
-    ?? (form.pokemon_id === displayForm.pokemon_id ? member.ability_id : null);
-  const baseAbility = displayForm.abilities.find((entry) => entry.api_name === baseAbilityId);
+  const baseAbilityId = member.ability_ids_by_form?.[baseForm.pokemon_id]
+    ?? (form.pokemon_id === baseForm.pokemon_id ? member.ability_id : null);
+  const baseAbility = baseForm.abilities.find((entry) => entry.api_name === baseAbilityId);
   const megaForm = item ? data.megaFormForStone(member, item, regulationId) : null;
+  const canToggleMega = Boolean(megaForm && megaForm.pokemon_id !== baseForm.pokemon_id);
+  const showingMega = Boolean(megaForm && form.pokemon_id === megaForm.pokemon_id);
   const megaAbilityId = megaForm
     ? (member.ability_ids_by_form?.[megaForm.pokemon_id]
       ?? (form.pokemon_id === megaForm.pokemon_id ? member.ability_id : null))
@@ -333,7 +340,7 @@ function CompactMemberCard({
           <img
             className="compact-pokemon-sprite"
             draggable={false}
-            src={publicPath(displayForm.sprites.home ?? `assets/sprites/list/normal/${displayForm.api_name}.png`)}
+            src={publicPath(form.sprites.home ?? `assets/sprites/list/normal/${form.api_name}.png`)}
             alt=""
             width="62"
             height="62"
@@ -341,6 +348,29 @@ function CompactMemberCard({
               event.currentTarget.src = publicPath("assets/sprites/missingno.png");
             }}
           />
+
+          {canToggleMega && (
+            <button
+              type="button"
+              className="compact-form-toggle"
+              aria-label={showingMega ? COPY[language].showBaseForm : COPY[language].showMegaForm}
+              title={showingMega ? COPY[language].showBaseForm : COPY[language].showMegaForm}
+              draggable={false}
+              onPointerDown={(event) => event.stopPropagation()}
+              onDragStart={(event) => event.preventDefault()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleMega();
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 9A8 8 0 0 1 18 5.5L20 8" />
+                <path d="M20 4v4h-4" />
+                <path d="M19.5 15A8 8 0 0 1 6 18.5L4 16" />
+                <path d="M4 20v-4h4" />
+              </svg>
+            </button>
+          )}
 
           {item && (
             <span className="compact-item-overlay" aria-hidden="true">
@@ -375,13 +405,13 @@ function CompactMemberCard({
         </div>
 
         <div className="compact-type-icons">
-          {displayForm.types.map((type) => (
+          {baseForm.types.map((type) => (
             <TypeIcon type={type} size={20} key={type} />
           ))}
         </div>
       </div>
       <div className="compact-set">
-        <h3>{localizedName(displayForm, language)}</h3>
+        <h3>{localizedName(baseForm, language)}</h3>
         <div className="compact-meta-grid">
           <span>{abilityLabel}</span>
           <span>{item ? localizedName(item, language) : "—"}</span>
@@ -436,7 +466,6 @@ function MemberEditor({
   language,
   onChange,
   onSave,
-  onRemove,
 }: {
   member: TeamMember;
   data: TeamBuilderData;
@@ -444,7 +473,6 @@ function MemberEditor({
   language: Language;
   onChange: (member: TeamMember) => void;
   onSave: () => void;
-  onRemove: () => void;
 }) {
   const text = COPY[language];
   const form = data.form(member);
@@ -464,14 +492,6 @@ function MemberEditor({
   };
   return (
     <article className="member-editor-card">
-      <button
-        type="button"
-        className="editor-delete-button"
-        aria-label={text.removePokemon}
-        onClick={onRemove}
-      >
-        ×
-      </button>
       <button
         type="button"
         className="editor-quick-save-button"
@@ -604,8 +624,7 @@ function TeamLibrary({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
-  onSaveTeam,
-  onLoadTeam,
+  onDuplicateTeam,
   onDeleteTeam,
   onUploadPaste,
   onImportPaste,
@@ -621,8 +640,7 @@ function TeamLibrary({
   onCreateFolder: () => void;
   onRenameFolder: () => void;
   onDeleteFolder: () => void;
-  onSaveTeam: () => void;
-  onLoadTeam: () => void;
+  onDuplicateTeam: () => void;
   onDeleteTeam: () => void;
   onUploadPaste: () => void;
   onImportPaste: () => void;
@@ -668,9 +686,8 @@ function TeamLibrary({
               disabled={!folder?.teams.length}
             />
           </div>
-          <div className="library-actions triple">
-            <button type="button" className="primary-button" onClick={onSaveTeam}>{text.saveTeam}</button>
-            <button type="button" onClick={onLoadTeam} disabled={!selectedTeamId}>{text.loadTeam}</button>
+          <div className="library-actions double">
+            <button type="button" onClick={onDuplicateTeam} disabled={!selectedTeamId}>{text.duplicateTeam}</button>
             <button type="button" className="danger-button" onClick={onDeleteTeam} disabled={!selectedTeamId}>{text.deleteTeam}</button>
           </div>
           <div className="pokepaste-actions team-library-pokepaste-actions">
@@ -725,6 +742,7 @@ export default function TeamBuilderApp() {
   const [pasteDialog, setPasteDialog] = useState(false);
   const [pasteBusy, setPasteBusy] = useState(false);
   const [library, setLibrary] = useState<TeamLibraryDocument>(() => loadTeamLibrary(window.localStorage, COPY[language].defaultFolder));
+  const libraryRef = useRef(library);
   const [selectedFolderId, setSelectedFolderId] = useState(() => (
     workingTeam?.selected_folder_id && library.folders.some((folder) => folder.id === workingTeam.selected_folder_id)
       ? workingTeam.selected_folder_id
@@ -732,7 +750,17 @@ export default function TeamBuilderApp() {
   ));
   const [selectedTeamId, setSelectedTeamId] = useState(workingTeam?.selected_team_id ?? "");
   const [loadedTeamId, setLoadedTeamId] = useState<string | undefined>(workingTeam?.loaded_team_id);
+  const [loadedFolderId, setLoadedFolderId] = useState<string | undefined>(() => {
+    if (!workingTeam?.loaded_team_id) return undefined;
+    const candidate = workingTeam?.loaded_folder_id
+      ?? library.folders.find((folder) => folder.teams.some((team) => team.id === workingTeam?.loaded_team_id))?.id
+      ?? workingTeam?.selected_folder_id;
+    return candidate && library.folders.some((folder) => folder.id === candidate)
+      ? candidate
+      : undefined;
+  });
   const feedbackTimer = useRef<number | null>(null);
+  const autoSaveTimer = useRef<number | null>(null);
   const suppressCardClick = useRef(false);
   const dragSourceRef = useRef<RosterLocation | null>(null);
   const touchDrag = useRef<{
@@ -766,7 +794,10 @@ export default function TeamBuilderApp() {
     window.localStorage.setItem(LANGUAGE_KEY, language);
   }, [language]);
 
-  useEffect(() => saveTeamLibrary(window.localStorage, library), [library]);
+  useEffect(() => {
+    libraryRef.current = library;
+    saveTeamLibrary(window.localStorage, library);
+  }, [library]);
 
   useEffect(() => saveWorkingTeam(window.localStorage, {
     team_name: teamName,
@@ -776,10 +807,12 @@ export default function TeamBuilderApp() {
     selected_folder_id: selectedFolderId,
     ...(selectedTeamId ? { selected_team_id: selectedTeamId } : {}),
     ...(loadedTeamId ? { loaded_team_id: loadedTeamId } : {}),
-  }), [bench, loadedTeamId, regulationId, selectedFolderId, selectedTeamId, team, teamName]);
+    ...(loadedFolderId ? { loaded_folder_id: loadedFolderId } : {}),
+  }), [bench, loadedFolderId, loadedTeamId, regulationId, selectedFolderId, selectedTeamId, team, teamName]);
 
   useEffect(() => () => {
     if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
+    if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
     if (touchDrag.current) window.clearTimeout(touchDrag.current.timer);
   }, []);
 
@@ -791,6 +824,72 @@ export default function TeamBuilderApp() {
 
   const selectedFolder = library.folders.find((folder) => folder.id === selectedFolderId) ?? library.folders[0];
   const selectedSavedTeam = selectedFolder?.teams.find((saved) => saved.id === selectedTeamId);
+  const currentSnapshot = useMemo<TeamSnapshot | null>(() => {
+    const name = teamName.trim();
+    if (!name) return null;
+    return {
+      name,
+      regulation_id: regulationId,
+      active_slots: team.map(persistedMember),
+      bench: bench.map((member) => persistedMember(member)!),
+    };
+  }, [bench, regulationId, team, teamName]);
+
+  useEffect(() => {
+    if (autoSaveTimer.current !== null) window.clearTimeout(autoSaveTimer.current);
+    if (!currentSnapshot) return undefined;
+
+    const targetFolderId = loadedTeamId && loadedFolderId
+      ? loadedFolderId
+      : selectedFolderId;
+    if (!libraryRef.current.folders.some((folder) => folder.id === targetFolderId)) return undefined;
+
+    autoSaveTimer.current = window.setTimeout(() => {
+      const [next, teamId] = upsertTeam(
+        libraryRef.current,
+        targetFolderId,
+        currentSnapshot,
+        loadedTeamId,
+      );
+      libraryRef.current = next;
+      setLibrary(next);
+      setLoadedTeamId(teamId);
+      setLoadedFolderId(targetFolderId);
+      if (selectedFolderId === targetFolderId) setSelectedTeamId(teamId);
+      autoSaveTimer.current = null;
+    }, 300);
+
+    return () => {
+      if (autoSaveTimer.current !== null) {
+        window.clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+      }
+    };
+  }, [currentSnapshot, loadedFolderId, loadedTeamId, selectedFolderId]);
+
+  const persistPendingChanges = (): TeamLibraryDocument => {
+    if (autoSaveTimer.current !== null) {
+      window.clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
+    }
+    if (!currentSnapshot) return libraryRef.current;
+    const targetFolderId = loadedTeamId && loadedFolderId
+      ? loadedFolderId
+      : selectedFolderId;
+    if (!libraryRef.current.folders.some((folder) => folder.id === targetFolderId)) return libraryRef.current;
+    const [next, teamId] = upsertTeam(
+      libraryRef.current,
+      targetFolderId,
+      currentSnapshot,
+      loadedTeamId,
+    );
+    libraryRef.current = next;
+    setLibrary(next);
+    setLoadedTeamId(teamId);
+    setLoadedFolderId(targetFolderId);
+    if (selectedFolderId === targetFolderId) setSelectedTeamId(teamId);
+    return next;
+  };
 
   const openEditor = (location: RosterLocation) => {
     if (suppressCardClick.current) return;
@@ -830,6 +929,26 @@ export default function TeamBuilderApp() {
     else setBench((current) => current.filter((_, index) => index !== location.index));
     setEditor(null);
     setDraft(null);
+  };
+
+  const toggleMegaAt = (location: RosterLocation) => {
+    if (!data) return;
+    const member = location.area === "team" ? team[location.index] : bench[location.index];
+    if (!member?.item_id) return;
+    const item = data.itemsByName.get(member.item_id);
+    if (!item) return;
+    const baseForm = data.compactDisplayForm(member);
+    const megaForm = data.megaFormForStone(member, item, regulationId);
+    if (!megaForm || megaForm.pokemon_id === baseForm.pokemon_id) return;
+    const targetId = member.pokemon_id === megaForm.pokemon_id
+      ? baseForm.pokemon_id
+      : megaForm.pokemon_id;
+    const switched = data.switchForm(member, targetId, regulationId);
+    if (location.area === "team") {
+      setTeam((current) => current.map((entry, index) => index === location.index ? switched : entry));
+    } else {
+      setBench((current) => current.map((entry, index) => index === location.index ? switched : entry));
+    }
   };
 
   const moveMember = (source: RosterLocation, target: RosterLocation) => {
@@ -918,30 +1037,11 @@ export default function TeamBuilderApp() {
     }));
   }, [data]);
 
-  const snapshot = (name: string): TeamSnapshot => ({
-    name,
-    regulation_id: regulationId,
-    active_slots: team.map(persistedMember),
-    bench: bench.map((member) => persistedMember(member)!),
-  });
-
-  const saveCurrentTeam = () => {
-    const requestedName = teamName.trim() || window.prompt(language === "de" ? "Wie soll das Team heißen?" : "What should the team be called?", "")?.trim();
-    if (!requestedName || !selectedFolder) return;
-    const [next, teamId] = upsertTeam(library, selectedFolder.id, snapshot(requestedName), loadedTeamId);
-    setLibrary(next);
-    setTeamName(requestedName);
-    setSelectedTeamId(teamId);
-    setLoadedTeamId(teamId);
-    notify(language === "de" ? `„${requestedName}“ wurde gespeichert.` : `“${requestedName}” was saved.`);
-  };
-
-  const loadSavedTeam = () => {
-    if (!selectedSavedTeam || !data) return;
-    if ((team.some(Boolean) || bench.length) && !window.confirm(language === "de" ? "Das aktuelle Team wird ersetzt. Fortfahren?" : "The current team will be replaced. Continue?")) return;
-    const active = selectedSavedTeam.active_slots.slice(0, 6).map(normalizeMember);
+  const loadSavedTeam = (savedTeam: TeamSnapshot, folderId: string) => {
+    if (!data) return;
+    const active = savedTeam.active_slots.slice(0, 6).map(normalizeMember);
     while (active.length < 6) active.push(null);
-    const loadedBench = selectedSavedTeam.bench.map(normalizeMember).filter((member) => member !== null);
+    const loadedBench = savedTeam.bench.map(normalizeMember).filter((member) => member !== null);
     try {
       [...active, ...loadedBench].forEach((member) => { if (member) data.form(member); });
     } catch {
@@ -950,13 +1050,43 @@ export default function TeamBuilderApp() {
     }
     setTeam(active);
     setBench(loadedBench);
-    setTeamName(selectedSavedTeam.name);
-    const knownRegulation = data.regulationChoices().some((regulation) => regulation.id === selectedSavedTeam.regulation_id);
-    setRegulationId(knownRegulation ? selectedSavedTeam.regulation_id : data.currentRegulationId);
-    setLoadedTeamId(selectedSavedTeam.id);
+    setTeamName(savedTeam.name);
+    const knownRegulation = data.regulationChoices().some((regulation) => regulation.id === savedTeam.regulation_id);
+    setRegulationId(knownRegulation ? savedTeam.regulation_id : data.currentRegulationId);
+    setSelectedTeamId(savedTeam.id ?? "");
+    setLoadedTeamId(savedTeam.id);
+    setLoadedFolderId(folderId);
     setEditor(null);
     setDraft(null);
-    notify(language === "de" ? `„${selectedSavedTeam.name}“ wurde geladen.` : `“${selectedSavedTeam.name}” was loaded.`);
+    notify(language === "de" ? `„${savedTeam.name}“ wurde geladen.` : `“${savedTeam.name}” was loaded.`);
+  };
+
+  const selectSavedTeam = (teamId: string) => {
+    if (!teamId) {
+      setSelectedTeamId("");
+      return;
+    }
+    const currentLibrary = persistPendingChanges();
+    const folder = currentLibrary.folders.find((entry) => entry.id === selectedFolderId);
+    const savedTeam = folder?.teams.find((entry) => entry.id === teamId);
+    if (folder && savedTeam) loadSavedTeam(savedTeam, folder.id);
+  };
+
+  const duplicateSelectedTeam = () => {
+    if (!selectedFolder || !selectedSavedTeam) return;
+    const currentLibrary = persistPendingChanges();
+    const [next, duplicateId] = duplicateTeam(
+      currentLibrary,
+      selectedFolder.id,
+      selectedSavedTeam.id ?? "",
+      language === "de" ? "Kopie von " : "Copy of ",
+    );
+    libraryRef.current = next;
+    setLibrary(next);
+    const duplicate = next.folders
+      .find((folder) => folder.id === selectedFolder.id)
+      ?.teams.find((saved) => saved.id === duplicateId);
+    if (duplicate) loadSavedTeam(duplicate, selectedFolder.id);
   };
 
   const resetTeam = () => {
@@ -965,7 +1095,9 @@ export default function TeamBuilderApp() {
     setTeam(EMPTY_TEAM());
     setBench([]);
     setTeamName("");
+    setSelectedTeamId("");
     setLoadedTeamId(undefined);
+    setLoadedFolderId(undefined);
     setEditor(null);
     setDraft(null);
   };
@@ -1001,7 +1133,9 @@ export default function TeamBuilderApp() {
       setTeam(active);
       setBench(result.members.slice(6));
       setTeamName(remote.title || (language === "de" ? "Importiertes Team" : "Imported team"));
+      setSelectedTeamId("");
       setLoadedTeamId(undefined);
+      setLoadedFolderId(undefined);
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       setPasteDialog(false);
       notify(`${result.members.length} Pokémon ${language === "de" ? "wurden importiert" : "were imported"}${result.issues.length ? ` · ${language === "de" ? "nicht erkannt" : "not recognized"}: ${result.issues.slice(0, 4).join(", ")}` : ""}.`);
@@ -1021,7 +1155,7 @@ export default function TeamBuilderApp() {
   const renderLocation = (location: RosterLocation, member: TeamMember | null) => {
     if (sameLocation(editor, location)) {
       if (!draft) return <PokemonSearch data={data} regulationId={regulationId} language={language} onSelect={choosePokemon} onCancel={() => setEditor(null)} />;
-      return <MemberEditor member={draft} data={data} regulationId={regulationId} language={language} onChange={setDraft} onSave={saveDraft} onRemove={() => removeAt(location, false)} />;
+      return <MemberEditor member={draft} data={data} regulationId={regulationId} language={language} onChange={setDraft} onSave={saveDraft} />;
     }
     if (!member) return <EmptySlot location={location} language={language} dropTarget={sameLocation(dropTarget, location)} onClick={() => openEditor(location)} onDrop={() => drop(location)} />;
     return (
@@ -1035,6 +1169,7 @@ export default function TeamBuilderApp() {
         dropTarget={sameLocation(dropTarget, location)}
         onEdit={() => openEditor(location)}
         onRemove={() => removeAt(location)}
+        onToggleMega={() => toggleMegaAt(location)}
         onDragStart={() => {
           dragSourceRef.current = location;
           setDragSource(location);
@@ -1066,30 +1201,55 @@ export default function TeamBuilderApp() {
           library={library}
           selectedFolderId={selectedFolderId}
           selectedTeamId={selectedTeamId}
-          onFolder={(id) => { setSelectedFolderId(id); setSelectedTeamId(""); }}
-          onTeam={setSelectedTeamId}
+          onFolder={(id) => {
+            persistPendingChanges();
+            setSelectedFolderId(id);
+            setSelectedTeamId("");
+          }}
+          onTeam={selectSavedTeam}
           onCreateFolder={() => {
             const name = window.prompt(language === "de" ? "Name des neuen Ordners:" : "Name of the new folder:")?.trim();
             if (!name) return;
-            const [next, id] = createFolder(library, name);
+            const [next, id] = createFolder(persistPendingChanges(), name);
+            libraryRef.current = next;
             setLibrary(next); setSelectedFolderId(id); setSelectedTeamId("");
           }}
           onRenameFolder={() => {
             if (!selectedFolder) return;
             const name = window.prompt(language === "de" ? "Neuer Ordnername:" : "New folder name:", selectedFolder.name)?.trim();
-            if (name) setLibrary(renameFolder(library, selectedFolder.id, name));
+            if (name) {
+              const next = renameFolder(persistPendingChanges(), selectedFolder.id, name);
+              libraryRef.current = next;
+              setLibrary(next);
+            }
           }}
           onDeleteFolder={() => {
             if (!selectedFolder || !window.confirm(`${COPY[language].deleteFolder}: ${selectedFolder.name}?`)) return;
-            const next = deleteFolder(library, selectedFolder.id, COPY[language].defaultFolder);
+            const activeFolderId = loadedTeamId && loadedFolderId
+              ? loadedFolderId
+              : currentSnapshot ? selectedFolderId : undefined;
+            const deletedLoadedTeam = activeFolderId === selectedFolder.id;
+            const next = deleteFolder(persistPendingChanges(), selectedFolder.id, COPY[language].defaultFolder);
+            libraryRef.current = next;
             setLibrary(next); setSelectedFolderId(next.folders[0].id); setSelectedTeamId("");
+            if (deletedLoadedTeam) {
+              setTeam(EMPTY_TEAM()); setBench([]); setTeamName("");
+              setLoadedTeamId(undefined); setLoadedFolderId(undefined);
+              setEditor(null); setDraft(null);
+            }
           }}
-          onSaveTeam={saveCurrentTeam}
-          onLoadTeam={loadSavedTeam}
+          onDuplicateTeam={duplicateSelectedTeam}
           onDeleteTeam={() => {
             if (!selectedFolder || !selectedSavedTeam || !window.confirm(`${COPY[language].deleteTeam}: ${selectedSavedTeam.name}?`)) return;
-            setLibrary(deleteTeam(library, selectedFolder.id, selectedSavedTeam.id ?? ""));
-            if (loadedTeamId === selectedSavedTeam.id) { setTeam(EMPTY_TEAM()); setBench([]); setTeamName(""); setLoadedTeamId(undefined); }
+            const currentLibrary = persistPendingChanges();
+            const next = deleteTeam(currentLibrary, selectedFolder.id, selectedSavedTeam.id ?? "");
+            libraryRef.current = next;
+            setLibrary(next);
+            if (loadedTeamId === selectedSavedTeam.id && loadedFolderId === selectedFolder.id) {
+              setTeam(EMPTY_TEAM()); setBench([]); setTeamName("");
+              setLoadedTeamId(undefined); setLoadedFolderId(undefined);
+              setEditor(null); setDraft(null);
+            }
             setSelectedTeamId("");
           }}
           onUploadPaste={uploadPaste}
