@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { PokemonAutocomplete } from '../../shared/components/PokemonAutocomplete'
+import {
+  PokemonAutocomplete,
+} from '../../shared/components/PokemonAutocomplete'
+import {
+  localizedPokemonName,
+  type PokemonDisplayLanguage,
+} from '../../shared/components/pokemonAutocompleteData'
 import type { NatureStat } from '../../shared/calculations/natures'
 import {
   findBestDefensiveSpread,
@@ -14,30 +20,168 @@ import './optimizer.css'
 
 const TOTAL_INVESTMENT_POINTS = 66
 const SHINY_ODDS = 2048
+const LANGUAGE_KEY = 'mishiro-defensive-spread-optimizer-language'
 const MISSINGNO_SPRITE =
   `${import.meta.env.BASE_URL}assets/sprites/missingno.png`
 
-const increasedNatureOptions = [
-  { value: 'bulk', label: 'Bulk' },
-  { value: 'attack', label: 'Attack' },
-  { value: 'special_attack', label: 'Sp. Attack' },
-  { value: 'speed', label: 'Speed' },
-]
+type Language = PokemonDisplayLanguage
 
-const decreasedNatureOptions = [
-  { value: 'attack', label: 'Attack' },
-  { value: 'special_attack', label: 'Sp. Attack' },
-  { value: 'speed', label: 'Speed' },
-]
+const TYPE_COLORS: Record<string, string> = {
+  normal: '#9FA19F',
+  grass: '#3FA129',
+  fire: '#E62829',
+  water: '#2980EF',
+  electric: '#FAC000',
+  bug: '#91A119',
+  flying: '#81B9EF',
+  rock: '#AFA981',
+  poison: '#9141CB',
+  ground: '#915121',
+  ice: '#3FD8FF',
+  fighting: '#FF8000',
+  psychic: '#EF4179',
+  ghost: '#704170',
+  dragon: '#5060E1',
+  dark: '#50413F',
+  steel: '#60A1B8',
+  fairy: '#EF70EF',
+}
 
-const finalStatLabels = [
-  'HP',
-  'Attack',
-  'Defense',
-  'Sp. Attack',
-  'Sp. Defense',
-  'Speed',
-] as const
+const TYPE_NAMES: Record<Language, Record<string, string>> = {
+  de: {
+    normal: 'Normal',
+    fire: 'Feuer',
+    water: 'Wasser',
+    electric: 'Elektro',
+    grass: 'Pflanze',
+    ice: 'Eis',
+    fighting: 'Kampf',
+    poison: 'Gift',
+    ground: 'Boden',
+    flying: 'Flug',
+    psychic: 'Psycho',
+    bug: 'Käfer',
+    rock: 'Gestein',
+    ghost: 'Geist',
+    dragon: 'Drache',
+    dark: 'Unlicht',
+    steel: 'Stahl',
+    fairy: 'Fee',
+  },
+  en: {
+    normal: 'Normal',
+    fire: 'Fire',
+    water: 'Water',
+    electric: 'Electric',
+    grass: 'Grass',
+    ice: 'Ice',
+    fighting: 'Fighting',
+    poison: 'Poison',
+    ground: 'Ground',
+    flying: 'Flying',
+    psychic: 'Psychic',
+    bug: 'Bug',
+    rock: 'Rock',
+    ghost: 'Ghost',
+    dragon: 'Dragon',
+    dark: 'Dark',
+    steel: 'Steel',
+    fairy: 'Fairy',
+  },
+}
+
+const COPY = {
+  de: {
+    subtitle: 'Finde den defensiv stärksten Stat-Spread für dein Pokémon.',
+    switchPrompt: 'Switch to',
+    switchLanguage: 'English',
+    loading: 'Pokémon-Daten werden geladen …',
+    loadError: 'Die Pokémon-Daten konnten nicht geladen werden.',
+    searchPlaceholder: 'Nach einem Pokémon suchen',
+    shiny: 'Shiny',
+    dex: 'Nationaldex',
+    abilities: 'Fähigkeiten',
+    increasedNatureStat: 'Erhöhter Statuswert',
+    decreasedNatureStat: 'Verringerter Statuswert',
+    bulk: 'Bulk',
+    attack: 'Angriff',
+    defense: 'Verteidigung',
+    specialAttack: 'Sp. Angriff',
+    specialDefense: 'Sp. Verteidigung',
+    speed: 'Initiative',
+    fixedInvestments: 'Fixe Investitionen',
+    remaining: 'verbleibend',
+    invalidInvestments: 'Fixe Investitionen dürfen zusammen höchstens 66 Punkte betragen.',
+    battleModifiers: 'Kampfmodifikatoren',
+    heldItem: 'Item',
+    none: 'Keines',
+    eviolite: 'Evolith',
+    assaultVest: 'Offensivweste',
+    defenseStage: 'Vert.-Stufe',
+    specialDefenseStage: 'SpV-Stufe',
+    optimize: 'Optimieren',
+    statAlignment: 'Stat Alignment',
+    finalStats: 'Finale Statuswerte',
+  },
+  en: {
+    subtitle: 'Find the bulkiest defensive spread for your Pokémon.',
+    switchPrompt: 'Wechsel zu',
+    switchLanguage: 'Deutsch',
+    loading: 'Loading Pokémon data…',
+    loadError: 'Pokémon data could not be loaded.',
+    searchPlaceholder: 'Search for a Pokémon',
+    shiny: 'Shiny',
+    dex: 'National Dex',
+    abilities: 'Abilities',
+    increasedNatureStat: 'Increased Nature Stat',
+    decreasedNatureStat: 'Decreased Nature Stat',
+    bulk: 'Bulk',
+    attack: 'Attack',
+    defense: 'Defense',
+    specialAttack: 'Sp. Attack',
+    specialDefense: 'Sp. Defense',
+    speed: 'Speed',
+    fixedInvestments: 'Fixed Investments',
+    remaining: 'remaining',
+    invalidInvestments: 'Fixed investments cannot exceed 66 points in total.',
+    battleModifiers: 'Battle Modifiers',
+    heldItem: 'Held Item',
+    none: 'None',
+    eviolite: 'Eviolite',
+    assaultVest: 'Assault Vest',
+    defenseStage: 'Def Stage',
+    specialDefenseStage: 'SpD Stage',
+    optimize: 'Optimize',
+    statAlignment: 'Stat Alignment',
+    finalStats: 'Final Stats',
+  },
+} as const
+
+const RESULT_STAT_LABELS: Record<Language, {
+  hp: string
+  attack: string
+  defense: string
+  specialAttack: string
+  specialDefense: string
+  speed: string
+}> = {
+  de: {
+    hp: 'KP',
+    attack: 'Angr',
+    defense: 'Vert',
+    specialAttack: 'SpA',
+    specialDefense: 'SpV',
+    speed: 'Init',
+  },
+  en: {
+    hp: 'HP',
+    attack: 'Attack',
+    defense: 'Defense',
+    specialAttack: 'Sp. Attack',
+    specialDefense: 'Sp. Defense',
+    speed: 'Speed',
+  },
+}
 
 const statStageOptions = Array.from(
   { length: 13 },
@@ -65,32 +209,37 @@ function formatInvestment(points: number): string {
   return points > 0 ? `(+${points})` : ''
 }
 
-function formatNatureName(
+function localizedNatureName(
   nameEnglish: string,
   nameGerman: string,
+  language: Language,
 ): string {
-  return nameEnglish === nameGerman
-    ? nameEnglish
-    : `${nameEnglish} / ${nameGerman}`
+  return language === 'de'
+    ? nameGerman || nameEnglish
+    : nameEnglish || nameGerman
 }
 
 function formatDefensiveModifiers(
   item: HeldItem,
   stage: number,
   stat: DefensiveStat,
+  language: Language,
 ): string {
   const modifiers: string[] = []
+  const text = COPY[language]
 
   if (item === 'eviolite') {
-    modifiers.push('Eviolite')
+    modifiers.push(text.eviolite)
   }
 
   if (item === 'assault_vest' && stat === 'special_defense') {
-    modifiers.push('Assault Vest')
+    modifiers.push(text.assaultVest)
   }
 
   if (stage !== 0) {
-    const statName = stat === 'defense' ? 'Def' : 'SpD'
+    const statName = stat === 'defense'
+      ? language === 'de' ? 'Vert' : 'Def'
+      : language === 'de' ? 'SpV' : 'SpD'
     modifiers.push(`${formatStatStage(stage)} ${statName}`)
   }
 
@@ -250,6 +399,17 @@ function investmentValue(
 }
 
 function App() {
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window === 'undefined') {
+      return 'de'
+    }
+
+    const storedLanguage = window.localStorage.getItem(LANGUAGE_KEY)
+
+    return storedLanguage === 'de' || storedLanguage === 'en'
+      ? storedLanguage
+      : 'de'
+  })
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [selectedPokemonName, setSelectedPokemonName] = useState('')
   const [increasedNatureStat, setIncreasedNatureStat] = useState('bulk')
@@ -264,6 +424,14 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isShiny, setIsShiny] = useState(false)
+
+  const text = COPY[language]
+  const resultStatLabels = RESULT_STAT_LABELS[language]
+
+  useEffect(() => {
+    document.documentElement.lang = language
+    window.localStorage.setItem(LANGUAGE_KEY, language)
+  }, [language])
 
   useEffect(() => {
     let isCancelled = false
@@ -280,7 +448,7 @@ function App() {
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : 'Pokémon data could not be loaded.',
+              : COPY.de.loadError,
           )
         }
       } finally {
@@ -312,6 +480,7 @@ function App() {
 
     const spritePath = isShiny
       ? selectedPokemon.sprite_home_shiny
+        ?? selectedPokemon.sprite_home
       : selectedPokemon.sprite_home
 
     return spritePath === null
@@ -354,11 +523,38 @@ function App() {
 
     const shouldUseShinySprite =
       nextPokemon !== null
+      && nextPokemon.sprite_home_shiny !== null
       && Math.floor(Math.random() * SHINY_ODDS) === 0
 
     setSelectedPokemonName(value)
     setIsShiny(shouldUseShinySprite)
     invalidateResult()
+  }
+
+  function handlePokemonSelect(
+    pokemon: Pokemon,
+  ): void {
+    const shouldUseShinySprite =
+      pokemon.sprite_home_shiny !== null
+      && Math.floor(Math.random() * SHINY_ODDS) === 0
+
+    setSelectedPokemonName(
+      localizedPokemonName(pokemon, language),
+    )
+    setIsShiny(shouldUseShinySprite)
+    invalidateResult()
+  }
+
+  function toggleLanguage(): void {
+    const nextLanguage = language === 'de' ? 'en' : 'de'
+
+    setLanguage(nextLanguage)
+
+    if (selectedPokemon !== null) {
+      setSelectedPokemonName(
+        localizedPokemonName(selectedPokemon, nextLanguage),
+      )
+    }
   }
 
   function optimize(): void {
@@ -387,29 +583,38 @@ function App() {
   return (
     <main className="app">
       <section className="optimizer-card">
-        <header>
-          <p className="eyebrow">
-            MISHIRO
-          </p>
+        <header className="app-header">
+          <div className="brand-block">
+            <p className="eyebrow">
+              MISHIRO
+            </p>
 
-          <h1>
-            Defensive Spread Optimizer
-          </h1>
+            <h1>
+              Defensive Spread Optimizer
+            </h1>
 
-          <p className="description">
-            Find the bulkiest defensive spread for your Pokémon.
-          </p>
+            <p className="description">
+              {text.subtitle}
+            </p>
+          </div>
+
+          <div className="language-control">
+            <span>{text.switchPrompt}</span>
+            <button type="button" onClick={toggleLanguage}>
+              {text.switchLanguage}
+            </button>
+          </div>
         </header>
 
         {isLoading && (
           <p className="status-message">
-            Loading Pokémon data…
+            {text.loading}
           </p>
         )}
 
         {errorMessage !== null && (
           <p className="status-message error-message">
-            {errorMessage}
+            {text.loadError}
           </p>
         )}
 
@@ -427,117 +632,175 @@ function App() {
                 <PokemonAutocomplete
                   pokemonList={pokemonList}
                   value={selectedPokemonName}
+                  language={language}
+                  placeholder={text.searchPlaceholder}
                   onChange={handlePokemonChange}
+                  onSelect={handlePokemonSelect}
                   ariaLabelledBy="pokemon-search-heading"
                 />
               </div>
             </section>
 
-            <div className="pokemon-selection-layout">
-              <section className="settings-card nature-card">
-                <div className="nature-select-fields">
-                  <div className="form-field nature-select-field">
-                    <h2
-                      id="increased-nature-heading"
-                      className="settings-heading"
-                    >
-                      Increased Nature Stat
-                    </h2>
+            {selectedPokemon !== null && (
+              <section className="identity-card">
+                <div className="sprite-column">
+                  <div className="sprite-stage">
+                    <img
+                      className={
+                        selectedPokemonSprite === null
+                          ? 'pokemon-sprite missingno-sprite'
+                          : 'pokemon-sprite'
+                      }
+                      src={selectedPokemonSprite ?? MISSINGNO_SPRITE}
+                      alt={localizedPokemonName(
+                        selectedPokemon,
+                        language,
+                      )}
+                      onError={(event) => {
+                        const image = event.currentTarget
 
-                    <select
-                      id="increased-nature-stat"
-                      aria-labelledby="increased-nature-heading"
-                      value={increasedNatureStat}
-                      onChange={(event) => {
-                        setIncreasedNatureStat(event.target.value)
-                        invalidateResult()
+                        if (image.dataset.fallbackApplied === 'true') {
+                          return
+                        }
+
+                        image.dataset.fallbackApplied = 'true'
+                        image.src = MISSINGNO_SPRITE
+                        image.classList.add('missingno-sprite')
                       }}
-                    >
-                      {increasedNatureOptions.map((option) => (
-                        <option
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
-                  <div className="form-field nature-select-field">
-                    <h2
-                      id="decreased-nature-heading"
-                      className="settings-heading"
-                    >
-                      Decreased Nature Stat
-                    </h2>
-
-                    <select
-                      id="decreased-nature-stat"
-                      aria-labelledby="decreased-nature-heading"
-                      value={decreasedNatureStat}
+                  <label className="shiny-control">
+                    <input
+                      type="checkbox"
+                      checked={isShiny}
+                      disabled={selectedPokemon.sprite_home_shiny === null}
                       onChange={(event) => {
-                        setDecreasedNatureStat(event.target.value)
-                        invalidateResult()
+                        setIsShiny(event.target.checked)
                       }}
-                    >
-                      {decreasedNatureOptions.map((option) => (
-                        <option
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    <span>{text.shiny}</span>
+                  </label>
+                </div>
+
+                <div className="identity-details">
+                  <p className="dex-label">
+                    {text.dex}
+                    {' '}
+                    #{String(selectedPokemon.dex).padStart(4, '0')}
+                  </p>
+
+                  <h2>
+                    {localizedPokemonName(selectedPokemon, language)}
+                  </h2>
+
+                  {selectedPokemon.name_de !== selectedPokemon.name_en && (
+                    <p className="other-name">
+                      {localizedPokemonName(
+                        selectedPokemon,
+                        language === 'de' ? 'en' : 'de',
+                      )}
+                    </p>
+                  )}
+
+                  <div className="type-chips">
+                    {selectedPokemon.types.map((type) => (
+                      <span
+                        className="type-chip"
+                        key={type}
+                        style={{
+                          backgroundColor:
+                            TYPE_COLORS[type] ?? '#94a3b8',
+                        }}
+                      >
+                        {TYPE_NAMES[language][type] ?? type}
+                      </span>
+                    ))}
+                  </div>
+
+                  <h3>{text.abilities}</h3>
+
+                  <div className="ability-buttons">
+                    {selectedPokemon.abilities.map((ability) => (
+                      <span key={ability.api_name}>
+                        {language === 'de'
+                          ? ability.name_de || ability.name_en
+                          : ability.name_en || ability.name_de}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </section>
+            )}
 
-              <section
-                className="sprite-card"
-                aria-label="Selected Pokémon"
-              >
-                <img
-                  className={
-                    selectedPokemonSprite === null
-                      ? 'pokemon-sprite missingno-sprite'
-                      : 'pokemon-sprite'
-                  }
-                  src={selectedPokemonSprite ?? MISSINGNO_SPRITE}
-                  alt={
-                    selectedPokemon !== null
-                      ? selectedPokemon.name_en
-                      : 'MissingNo placeholder'
-                  }
-                  onError={(event) => {
-                    const image = event.currentTarget
+            <section className="settings-card nature-card">
+              <div className="nature-select-fields">
+                <div className="form-field nature-select-field">
+                  <h2
+                    id="increased-nature-heading"
+                    className="settings-heading"
+                  >
+                    {text.increasedNatureStat}
+                  </h2>
 
-                    if (image.dataset.fallbackApplied === 'true') {
-                      return
-                    }
+                  <select
+                    id="increased-nature-stat"
+                    aria-labelledby="increased-nature-heading"
+                    value={increasedNatureStat}
+                    onChange={(event) => {
+                      setIncreasedNatureStat(event.target.value)
+                      invalidateResult()
+                    }}
+                  >
+                    <option value="bulk">{text.bulk}</option>
+                    <option value="attack">{text.attack}</option>
+                    <option value="special_attack">
+                      {text.specialAttack}
+                    </option>
+                    <option value="speed">{text.speed}</option>
+                  </select>
+                </div>
 
-                    image.dataset.fallbackApplied = 'true'
-                    image.src = MISSINGNO_SPRITE
-                    image.classList.add('missingno-sprite')
-                  }}
-                />
-              </section>
-            </div>
+                <div className="form-field nature-select-field">
+                  <h2
+                    id="decreased-nature-heading"
+                    className="settings-heading"
+                  >
+                    {text.decreasedNatureStat}
+                  </h2>
+
+                  <select
+                    id="decreased-nature-stat"
+                    aria-labelledby="decreased-nature-heading"
+                    value={decreasedNatureStat}
+                    onChange={(event) => {
+                      setDecreasedNatureStat(event.target.value)
+                      invalidateResult()
+                    }}
+                  >
+                    <option value="attack">{text.attack}</option>
+                    <option value="special_attack">
+                      {text.specialAttack}
+                    </option>
+                    <option value="speed">{text.speed}</option>
+                  </select>
+                </div>
+              </div>
+            </section>
 
             <section className="settings-card combined-controls-card">
               <div className="combined-controls-grid">
                 <div className="control-column">
                   <div className="control-column-heading">
                     <h2 className="settings-heading">
-                      Fixed Investments
+                      {text.fixedInvestments}
                     </h2>
                   </div>
 
                   <div className="control-rows">
                     <div className="control-row">
                       <label htmlFor="fixed-attack">
-                        Attack
+                        {text.attack}
                       </label>
 
                       <input
@@ -562,7 +825,7 @@ function App() {
 
                     <div className="control-row">
                       <label htmlFor="fixed-special-attack">
-                        Sp. Attack
+                        {text.specialAttack}
                       </label>
 
                       <input
@@ -587,7 +850,7 @@ function App() {
 
                     <div className="control-row">
                       <label htmlFor="fixed-speed">
-                        Speed
+                        {text.speed}
                       </label>
 
                       <input
@@ -620,14 +883,14 @@ function App() {
                             : 'remaining-points-note'
                         }
                       >
-                        {remainingDefensivePoints} remaining
+                        {remainingDefensivePoints} {text.remaining}
                       </span>
                     </div>
                   </div>
 
                   {hasInvalidFixedInvestments && (
                     <p className="validation-message">
-                      Fixed investments cannot exceed 66 points in total.
+                      {text.invalidInvestments}
                     </p>
                   )}
                 </div>
@@ -635,14 +898,14 @@ function App() {
                 <div className="control-column">
                   <div className="control-column-heading">
                     <h2 className="settings-heading">
-                      Battle Modifiers
+                      {text.battleModifiers}
                     </h2>
                   </div>
 
                   <div className="control-rows">
                     <div className="control-row">
                       <label htmlFor="held-item">
-                        Held Item
+                        {text.heldItem}
                       </label>
 
                       <select
@@ -654,22 +917,22 @@ function App() {
                         }}
                       >
                         <option value="none">
-                          None
+                          {text.none}
                         </option>
 
                         <option value="eviolite">
-                          Eviolite
+                          {text.eviolite}
                         </option>
 
                         <option value="assault_vest">
-                          Assault Vest
+                          {text.assaultVest}
                         </option>
                       </select>
                     </div>
 
                     <div className="control-row">
                       <label htmlFor="defense-stage">
-                        Def Stage
+                        {text.defenseStage}
                       </label>
 
                       <select
@@ -690,7 +953,7 @@ function App() {
 
                     <div className="control-row">
                       <label htmlFor="special-defense-stage">
-                        SpD Stage
+                        {text.specialDefenseStage}
                       </label>
 
                       <select
@@ -722,7 +985,7 @@ function App() {
               }
               onClick={optimize}
             >
-              Optimize
+              {text.optimize}
             </button>
           </>
         )}
@@ -731,15 +994,16 @@ function App() {
           <section className="result-card final-result-card">
             <div className="final-result-section">
               <h2 className="settings-heading">
-                Nature
+                {text.statAlignment}
               </h2>
 
               <p className="result-nature-name">
                 {result === null
                   ? '-'
-                  : formatNatureName(
+                  : localizedNatureName(
                       result.nature.name_en,
                       result.nature.name_de,
+                      language,
                     )}
               </p>
             </div>
@@ -748,12 +1012,19 @@ function App() {
 
             <div className="final-result-section">
               <h2 className="settings-heading">
-                Final Stats
+                {text.finalStats}
               </h2>
 
               <div className="final-stats-list">
                 {result === null || selectedPokemon === null ? (
-                  finalStatLabels.map((label) => (
+                  [
+                    resultStatLabels.hp,
+                    resultStatLabels.attack,
+                    resultStatLabels.defense,
+                    resultStatLabels.specialAttack,
+                    resultStatLabels.specialDefense,
+                    resultStatLabels.speed,
+                  ].map((label) => (
                     <PlaceholderStatRow
                       key={label}
                       label={label}
@@ -762,14 +1033,14 @@ function App() {
                 ) : (
                   <>
                     <FinalStatRow
-                      label="HP"
+                      label={resultStatLabels.hp}
                       baseValue={selectedPokemon.base_hp}
                       finalValue={result.hp}
                       investmentPoints={result.hp_points}
                     />
 
                     <FinalStatRow
-                      label="Attack"
+                      label={resultStatLabels.attack}
                       baseValue={selectedPokemon.base_atk}
                       finalValue={result.attack}
                       investmentPoints={result.atk_points}
@@ -780,7 +1051,7 @@ function App() {
                     />
 
                     <FinalStatRow
-                      label="Defense"
+                      label={resultStatLabels.defense}
                       baseValue={selectedPokemon.base_def}
                       finalValue={result.raw_defense}
                       investmentPoints={result.def_points}
@@ -793,11 +1064,12 @@ function App() {
                         result.held_item,
                         result.defense_stage,
                         'defense',
+                        language,
                       )}
                     />
 
                     <FinalStatRow
-                      label="Sp. Attack"
+                      label={resultStatLabels.specialAttack}
                       baseValue={selectedPokemon.base_spa}
                       finalValue={result.special_attack}
                       investmentPoints={result.spa_points}
@@ -808,7 +1080,7 @@ function App() {
                     />
 
                     <FinalStatRow
-                      label="Sp. Defense"
+                      label={resultStatLabels.specialDefense}
                       baseValue={selectedPokemon.base_spd}
                       finalValue={result.raw_special_defense}
                       investmentPoints={result.spd_points}
@@ -821,11 +1093,12 @@ function App() {
                         result.held_item,
                         result.special_defense_stage,
                         'special_defense',
+                        language,
                       )}
                     />
 
                     <FinalStatRow
-                      label="Speed"
+                      label={resultStatLabels.speed}
                       baseValue={selectedPokemon.base_spe}
                       finalValue={result.speed}
                       investmentPoints={result.spe_points}

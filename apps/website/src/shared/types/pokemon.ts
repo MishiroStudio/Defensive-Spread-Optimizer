@@ -12,12 +12,22 @@ export interface PokemonSprites {
   home_shiny: string | null
 }
 
+export interface PokemonAbility {
+  api_name: string
+  name_en: string
+  name_de: string
+  is_hidden: boolean
+  slot: number
+}
+
 export interface PokemonForm {
   pokemon_id: number
   api_name: string
   name_en: string
   name_de: string
   is_default: boolean
+  types: string[]
+  abilities: PokemonAbility[]
   base_stats: PokemonBaseStats
   sprites: PokemonSprites
 }
@@ -40,6 +50,9 @@ export interface Pokemon {
 
   name_en: string
   name_de: string
+
+  types: string[]
+  abilities: PokemonAbility[]
 
   sprite_home: string | null
   sprite_home_shiny: string | null

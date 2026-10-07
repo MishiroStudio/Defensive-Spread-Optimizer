@@ -5,92 +5,47 @@ import {
 } from 'react'
 
 import type { Pokemon } from '../types/pokemon'
+import {
+  findPokemonSuggestions,
+  type PokemonDisplayLanguage,
+  type PokemonNameOption,
+} from './pokemonAutocompleteData'
 
 interface PokemonAutocompleteProps {
   pokemonList: Pokemon[]
   value: string
+  language: PokemonDisplayLanguage
+  placeholder: string
   onChange: (value: string) => void
+  onSelect: (pokemon: Pokemon) => void
   ariaLabelledBy: string
-}
-
-interface PokemonNameOption {
-  label: string
-  pokemon: Pokemon
-  language: 'EN' | 'DE'
 }
 
 export function PokemonAutocomplete({
   pokemonList,
   value,
+  language,
+  placeholder,
   onChange,
+  onSelect,
   ariaLabelledBy,
 }: PokemonAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
 
-  const pokemonNameOptions = useMemo(() => {
-    const uniqueNames =
-      new Map<string, PokemonNameOption>()
-
-    for (const pokemon of pokemonList) {
-      const names: PokemonNameOption[] = [
-        {
-          label: pokemon.name_en.trim(),
-          pokemon,
-          language: 'EN',
-        },
-        {
-          label: pokemon.name_de.trim(),
-          pokemon,
-          language: 'DE',
-        },
-      ]
-
-      for (const nameOption of names) {
-        if (nameOption.label.length === 0) {
-          continue
-        }
-
-        const normalizedName =
-          nameOption.label.toLocaleLowerCase()
-
-        if (!uniqueNames.has(normalizedName)) {
-          uniqueNames.set(
-            normalizedName,
-            nameOption,
-          )
-        }
-      }
-    }
-
-    return Array.from(uniqueNames.values())
-  }, [pokemonList])
-
-  const suggestions = useMemo(() => {
-    const query = value
-      .trim()
-      .toLocaleLowerCase()
-
-    if (query.length === 0) {
-      return []
-    }
-
-    return pokemonNameOptions
-      .filter((option) =>
-        option.label
-          .toLocaleLowerCase()
-          .includes(query),
-      )
-      .slice(0, 12)
-  }, [
-    pokemonNameOptions,
-    value,
-  ])
+  const suggestions = useMemo(
+    () => findPokemonSuggestions(
+      pokemonList,
+      value,
+      language,
+    ),
+    [language, pokemonList, value],
+  )
 
   function selectOption(
     option: PokemonNameOption,
   ): void {
-    onChange(option.label)
+    onSelect(option.pokemon)
     setIsOpen(false)
     setActiveIndex(-1)
   }
@@ -137,12 +92,11 @@ export function PokemonAutocomplete({
       )
     }
 
-    if (
-      event.key === 'Enter'
-      && activeIndex >= 0
-    ) {
+    if (event.key === 'Enter') {
       event.preventDefault()
-      selectOption(suggestions[activeIndex])
+      selectOption(
+        suggestions[activeIndex >= 0 ? activeIndex : 0],
+      )
     }
   }
 
@@ -154,7 +108,7 @@ export function PokemonAutocomplete({
         className="pokemon-search"
         type="text"
         value={value}
-        placeholder="Search for a Pokémon"
+        placeholder={placeholder}
         autoComplete="off"
         role="combobox"
         aria-expanded={isOpen}
@@ -182,7 +136,7 @@ export function PokemonAutocomplete({
         >
           {suggestions.map((option, index) => (
             <li
-              key={option.label.toLocaleLowerCase()}
+              key={option.pokemon.pokemon_id}
               role="option"
               aria-selected={index === activeIndex}
             >
@@ -204,9 +158,7 @@ export function PokemonAutocomplete({
                 <span>{option.label}</span>
 
                 <small>
-                  {option.language}
-                  {' · '}
-                  #{option.pokemon.dex}
+                  #{String(option.pokemon.dex).padStart(4, '0')}
                 </small>
               </button>
             </li>

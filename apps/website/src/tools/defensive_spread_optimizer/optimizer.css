@@ -126,10 +126,53 @@ h2 {
 }
 
 .description {
-  margin-bottom: 28px;
+  margin-bottom: 0;
   color: var(--color-text-muted);
   font-size: 1rem;
   line-height: 1.6;
+}
+
+.app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.brand-block {
+  min-width: 0;
+  text-align: left;
+}
+
+.language-control {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: end;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.language-control span {
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+}
+
+.language-control button {
+  min-width: 92px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-control button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .settings-heading {
@@ -152,7 +195,7 @@ h2 {
 
 .search-card,
 .settings-card,
-.sprite-card,
+.identity-card,
 .result-card {
   padding: 20px;
   border: 1px solid var(--color-border);
@@ -285,21 +328,138 @@ h2 {
 }
 
 /* =========================================================
-   Nature und Pokémon-Sprite
+   Pokémon-Identität und Nature-Ausrichtung
    ========================================================= */
 
-.pokemon-selection-layout {
+.identity-card {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(220px, 0.8fr);
-  align-items: stretch;
-  gap: 20px;
+  grid-template-columns: 190px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
   margin-top: 20px;
 }
 
-.pokemon-selection-layout .settings-card {
-  margin-top: 0;
+.sprite-column {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 8px;
+}
+
+.sprite-stage {
+  display: grid;
+  width: 170px;
+  height: 170px;
+  place-items: center;
+  border-radius: 16px;
+  background: radial-gradient(
+    circle,
+    var(--color-surface) 0%,
+    transparent 70%
+  );
+}
+
+.sprite-stage .pokemon-sprite {
+  width: 165px;
+  height: 165px;
+  object-fit: contain;
+}
+
+.sprite-stage .pokemon-sprite.missingno-sprite {
+  width: 125px;
+  height: 125px;
+  image-rendering: pixelated;
+  opacity: 0.82;
+}
+
+.shiny-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.shiny-control input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-accent);
+}
+
+.shiny-control:has(input:disabled) {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.identity-details {
+  min-width: 0;
+  padding-top: 4px;
+  text-align: left;
+}
+
+.dex-label,
+.other-name {
+  margin: 0;
+}
+
+.dex-label {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.identity-details > h2 {
+  margin: 4px 0 0;
+  color: var(--color-text);
+  font-size: clamp(1.7rem, 5vw, 2.35rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.other-name {
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 11px;
+}
+
+.type-chip {
+  padding: 5px 9px;
+  border-radius: 7px;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.identity-details > h3 {
+  margin: 14px 0 7px;
+  color: var(--color-text);
+  font-size: 0.98rem;
+}
+
+.ability-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.ability-buttons span {
+  padding: 7px 12px;
+  border: 2px solid var(--color-control-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .nature-card {
@@ -309,6 +469,7 @@ h2 {
 
 .nature-select-fields {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -317,25 +478,8 @@ h2 {
   margin: 0;
 }
 
-.sprite-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 240px;
-}
-
-.sprite-card .pokemon-sprite {
-  width: 100%;
-  max-width: 220px;
-  height: 220px;
-  object-fit: contain;
-}
-
-.sprite-card .pokemon-sprite.missingno-sprite {
-  max-width: 170px;
-  height: 170px;
-  image-rendering: pixelated;
-  opacity: 0.82;
+.nature-select-field .settings-heading {
+  white-space: normal;
 }
 
 /* =========================================================
@@ -602,27 +746,19 @@ h2 {
    ========================================================= */
 
 @media (max-width: 650px) {
-  .pokemon-selection-layout {
-    grid-template-columns: 1fr;
+  .identity-card {
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 14px;
   }
 
-  .sprite-card {
-    order: 1;
-    min-height: 190px;
+  .sprite-stage {
+    width: 140px;
+    height: 140px;
   }
 
-  .nature-card {
-    order: 2;
-  }
-
-  .sprite-card .pokemon-sprite {
-    max-width: 180px;
-    height: 180px;
-  }
-
-  .sprite-card .pokemon-sprite.missingno-sprite {
-    max-width: 150px;
-    height: 150px;
+  .sprite-stage .pokemon-sprite {
+    width: 138px;
+    height: 138px;
   }
 }
 
@@ -636,6 +772,94 @@ h2 {
     padding: 24px 18px;
     border: 0;
     border-radius: 0;
+  }
+
+  .app-header {
+    gap: 14px;
+  }
+
+  .eyebrow {
+    font-size: 1.38rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .description {
+    font-size: 0.82rem;
+  }
+
+  .language-control button {
+    min-width: 82px;
+    padding: 7px 9px;
+    font-size: 0.76rem;
+  }
+
+  .identity-card {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 10px;
+    padding: 16px 13px;
+  }
+
+  .sprite-stage {
+    width: 98px;
+    height: 98px;
+  }
+
+  .sprite-stage .pokemon-sprite {
+    width: 96px;
+    height: 96px;
+  }
+
+  .sprite-stage .pokemon-sprite.missingno-sprite {
+    width: 78px;
+    height: 78px;
+  }
+
+  .shiny-control {
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+
+  .shiny-control input {
+    width: 17px;
+    height: 17px;
+  }
+
+  .dex-label {
+    font-size: 0.88rem;
+  }
+
+  .identity-details > h2 {
+    font-size: 1.55rem;
+  }
+
+  .other-name {
+    font-size: 0.9rem;
+  }
+
+  .type-chip {
+    padding: 5px 8px;
+    font-size: 0.74rem;
+  }
+
+  .identity-details > h3 {
+    margin: 12px 0 8px;
+    font-size: 0.92rem;
+  }
+
+  .ability-buttons span {
+    max-width: 100%;
+    padding: 7px 9px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+  }
+
+  .nature-select-fields {
+    grid-template-columns: 1fr;
   }
 
   .combined-controls-grid {
@@ -715,6 +939,25 @@ h2 {
 }
 
 @media (max-width: 380px) {
+  .identity-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .sprite-stage {
+    width: 80px;
+    height: 80px;
+  }
+
+  .sprite-stage .pokemon-sprite {
+    width: 78px;
+    height: 78px;
+  }
+
+  .shiny-control {
+    font-size: 0.7rem;
+  }
+
   .control-row {
     grid-template-columns:
       minmax(90px, 0.75fr)

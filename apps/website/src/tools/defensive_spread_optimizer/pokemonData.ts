@@ -27,6 +27,8 @@ export function flattenPokemonData(
       api_name: form.api_name,
       name_en: form.name_en,
       name_de: form.name_de,
+      types: form.types,
+      abilities: form.abilities,
       sprite_home: form.sprites.home,
       sprite_home_shiny: form.sprites.home_shiny,
       base_hp: form.base_stats.hp,

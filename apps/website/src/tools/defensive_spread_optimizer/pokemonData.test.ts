@@ -17,6 +17,16 @@ describe('flattenPokemonData', () => {
             name_en: 'Bulbasaur',
             name_de: 'Bisasam',
             is_default: true,
+            types: ['grass', 'poison'],
+            abilities: [
+              {
+                api_name: 'overgrow',
+                name_en: 'Overgrow',
+                name_de: 'Notdünger',
+                is_hidden: false,
+                slot: 1,
+              },
+            ],
             base_stats: {
               hp: 45,
               atk: 49,
@@ -43,6 +53,16 @@ describe('flattenPokemonData', () => {
         api_name: 'bulbasaur',
         name_en: 'Bulbasaur',
         name_de: 'Bisasam',
+        types: ['grass', 'poison'],
+        abilities: [
+          {
+            api_name: 'overgrow',
+            name_en: 'Overgrow',
+            name_de: 'Notdünger',
+            is_hidden: false,
+            slot: 1,
+          },
+        ],
         sprite_home:
           'assets/sprites/home/normal/bulbasaur.png',
         sprite_home_shiny:
