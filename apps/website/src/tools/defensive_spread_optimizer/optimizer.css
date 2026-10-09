@@ -15,17 +15,17 @@
   --color-surface: #ffffff;
   --color-surface-soft: #f8fafc;
   --color-surface-accent: #fff4e8;
-  --color-surface-glass: rgba(255, 255, 255, 0.92);
+  --color-surface-glass: rgba(255, 255, 255, 0.94);
 
   /* Rahmen */
   --color-border: #e2e8f0;
   --color-control-border: #cbd5e1;
-  --color-card-border: rgba(148, 163, 184, 0.35);
+  --color-card-border: rgba(226, 232, 240, 0.78);
 
   /* Akzent */
   --color-accent: #f28c28;
   --color-accent-muted: #d89a72;
-  --color-accent-focus: rgba(242, 140, 40, 0.18);
+  --color-accent-focus: rgba(242, 140, 40, 0.16);
   --color-accent-shadow: rgba(242, 140, 40, 0.5);
   --color-on-accent: #ffffff;
 
@@ -43,18 +43,65 @@
   --shadow-card: 0 24px 70px rgba(15, 23, 42, 0.14);
   --shadow-dropdown: 0 16px 40px rgba(15, 23, 42, 0.18);
 
-  color: var(--color-text);
+  color-scheme: light;
   font-family:
     Inter,
+    ui-sans-serif,
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #f2f4f8;
+    --color-text-secondary: #d8deea;
+    --color-text-soft: #c3cbd8;
+    --color-text-muted: #aab3c2;
+    --color-heading: #d7dce6;
+    --color-arrow: #7d899d;
+
+    --color-surface: #182033;
+    --color-surface-soft: #151d2d;
+    --color-surface-accent: #3b2a1f;
+    --color-surface-glass: rgba(18, 26, 43, 0.95);
+
+    --color-border: #303b4f;
+    --color-control-border: #46536a;
+    --color-card-border: rgba(48, 59, 79, 0.78);
+
+    --color-accent-muted: #e0a77f;
+    --color-accent-focus: rgba(242, 140, 40, 0.22);
+    --color-accent-shadow: rgba(242, 140, 40, 0.38);
+
+    --color-danger: #fca5a5;
+    --color-increased: #f87171;
+    --color-decreased: #60a5fa;
+
+    --color-page-start: #0b1120;
+    --color-page-middle: #0e1424;
+    --color-page-end: #111827;
+
+    --shadow-card: 0 28px 80px rgba(0, 0, 0, 0.34);
+    --shadow-dropdown: 0 18px 44px rgba(0, 0, 0, 0.42);
+
+    color-scheme: dark;
+  }
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  scroll-behavior: smooth;
 }
 
 #root {
@@ -68,9 +115,10 @@ body {
   background: linear-gradient(
     160deg,
     var(--color-page-start) 0%,
-    var(--color-page-middle) 55%,
+    var(--color-page-middle) 56%,
     var(--color-page-end) 100%
   );
+  background-attachment: fixed;
   color: var(--color-text);
 }
 
@@ -78,6 +126,22 @@ button,
 input,
 select {
   font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-accent-focus);
+  outline-offset: 2px;
 }
 
 .app {
@@ -106,30 +170,37 @@ p {
   margin-top: 0;
 }
 
-h1 {
-  margin-bottom: 10px;
+.eyebrow,
+.app-header h1,
+.description {
+  margin: 0;
+}
+
+.app-header h1 {
+  margin-top: 5px;
   color: var(--color-heading);
-  font-size: clamp(1.8rem, 7vw, 2.6rem);
-  line-height: 1.02;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
 }
 
 h2 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
 .eyebrow {
-  margin: 0 0 6px;
   color: var(--color-accent);
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: clamp(1.55rem, 4vw, 2rem);
+  font-weight: 850;
   letter-spacing: 0.1em;
+  line-height: 1;
 }
 
 .description {
-  margin-bottom: 0;
+  margin-top: 9px;
   color: var(--color-text-muted);
   font-size: 1rem;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .app-header {
@@ -181,9 +252,9 @@ h2 {
   padding: 0;
   color: var(--color-text);
   font-family: inherit;
-  font-size: 1.1rem;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.2;
   letter-spacing: normal;
   text-align: left;
   white-space: nowrap;
@@ -220,7 +291,7 @@ h2 {
 .form-field label,
 .control-row label {
   color: var(--color-text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 750;
   text-align: left;
 }
@@ -242,6 +313,25 @@ h2 {
   text-align: left;
 }
 
+.pokemon-search {
+  font-size: 0.96rem;
+}
+
+.form-field select,
+.form-field input[type="number"],
+.control-row input,
+.control-row select {
+  font-size: 0.84rem;
+}
+
+.pokemon-search::placeholder {
+  color: color-mix(
+    in srgb,
+    var(--color-text-muted) 78%,
+    transparent
+  );
+}
+
 .pokemon-search:focus,
 .form-field select:focus,
 .form-field input[type="number"]:focus,
@@ -258,6 +348,8 @@ h2 {
 .status-message {
   margin: 16px 0;
   color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.5;
 }
 
@@ -268,7 +360,8 @@ h2 {
 
 .validation-message {
   margin: 16px 0 0;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 /* =========================================================
@@ -306,9 +399,9 @@ h2 {
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 11px 12px;
+  padding: 9px 11px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
   color: var(--color-text);
   text-align: left;
@@ -323,8 +416,8 @@ h2 {
 
 .autocomplete-option small {
   flex-shrink: 0;
-  color: var(--color-accent-muted);
-  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
 }
 
 /* =========================================================
@@ -337,6 +430,7 @@ h2 {
   align-items: start;
   gap: 24px;
   margin-top: 20px;
+  padding: 22px;
 }
 
 .sprite-column {
@@ -439,29 +533,6 @@ h2 {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
 }
 
-.identity-details > h3 {
-  margin: 14px 0 7px;
-  color: var(--color-text);
-  font-size: 0.98rem;
-}
-
-.ability-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.ability-buttons span {
-  padding: 7px 12px;
-  border: 2px solid var(--color-control-border);
-  border-radius: 9px;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 0.78rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .nature-card {
   display: flex;
   flex-direction: column;
@@ -469,7 +540,6 @@ h2 {
 
 .nature-select-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -514,7 +584,7 @@ h2 {
 }
 
 .control-column-heading h2 {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 .control-rows {
@@ -548,8 +618,8 @@ h2 {
 .remaining-points-note {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-weight: 650;
+  font-size: 0.72rem;
+  font-weight: 700;
   line-height: 1.2;
   text-align: left;
   white-space: nowrap;
@@ -615,8 +685,9 @@ h2 {
 .result-nature-name {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1.55;
   text-align: left;
 }
 
@@ -628,6 +699,8 @@ h2 {
 .final-stats-list {
   display: grid;
   gap: 8px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .final-stat-row {
@@ -647,8 +720,8 @@ h2 {
 
 .final-stat-label {
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  font-weight: 650;
+  font-size: 0.78rem;
+  font-weight: 750;
   text-align: left;
   white-space: nowrap;
 }
@@ -664,7 +737,7 @@ h2 {
 .nature-arrow {
   margin-left: 4px;
   color: inherit;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 800;
 }
 
@@ -683,12 +756,11 @@ h2 {
   column-gap: 0;
   min-width: 0;
   color: var(--color-text-soft);
-  font-variant-numeric: tabular-nums;
 }
 
 .final-stat-values strong {
   color: var(--color-text);
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .base-stat-value {
@@ -710,8 +782,8 @@ h2 {
 .modifier-note {
   color: var(--color-text-muted);
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 650;
+  font-size: 0.72rem;
+  font-weight: 700;
   line-height: 1.2;
   text-align: left;
   white-space: nowrap;
@@ -745,33 +817,34 @@ h2 {
    Responsive Layout
    ========================================================= */
 
-@media (max-width: 650px) {
+@media (max-width: 760px) {
   .identity-card {
     grid-template-columns: 145px minmax(0, 1fr);
     gap: 14px;
   }
 
   .sprite-stage {
-    width: 140px;
-    height: 140px;
+    width: 145px;
+    height: 145px;
   }
 
   .sprite-stage .pokemon-sprite {
-    width: 138px;
-    height: 138px;
+    width: 140px;
+    height: 140px;
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 540px) {
   .app {
     padding: 0;
   }
 
   .optimizer-card {
     min-height: 100vh;
-    padding: 24px 18px;
+    padding: 24px 18px 40px;
     border: 0;
     border-radius: 0;
+    box-shadow: none;
   }
 
   .app-header {
@@ -782,7 +855,7 @@ h2 {
     font-size: 1.38rem;
   }
 
-  h1 {
+  .app-header h1 {
     font-size: 2rem;
   }
 
@@ -794,6 +867,14 @@ h2 {
     min-width: 82px;
     padding: 7px 9px;
     font-size: 0.76rem;
+  }
+
+  .pokemon-search,
+  .form-field select,
+  .form-field input[type="number"],
+  .control-row input,
+  .control-row select {
+    font-size: 16px;
   }
 
   .identity-card {
@@ -842,24 +923,6 @@ h2 {
   .type-chip {
     padding: 5px 8px;
     font-size: 0.74rem;
-  }
-
-  .identity-details > h3 {
-    margin: 12px 0 8px;
-    font-size: 0.92rem;
-  }
-
-  .ability-buttons span {
-    max-width: 100%;
-    padding: 7px 9px;
-    overflow: hidden;
-    font-size: 0.8rem;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-  }
-
-  .nature-select-fields {
-    grid-template-columns: 1fr;
   }
 
   .combined-controls-grid {
@@ -938,7 +1001,7 @@ h2 {
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 390px) {
   .identity-card {
     grid-template-columns: 82px minmax(0, 1fr);
     gap: 7px;
@@ -955,7 +1018,7 @@ h2 {
   }
 
   .shiny-control {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
   }
 
   .control-row {
@@ -963,5 +1026,18 @@ h2 {
       minmax(90px, 0.75fr)
       minmax(0, 1.25fr);
     gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

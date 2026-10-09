@@ -226,6 +226,7 @@
 .editor-actions button,
 .modal-actions button,
 .change-pokemon-button,
+.section-action-button,
 .section-danger-button {
   min-height: 36px;
   padding: 7px 11px;
@@ -265,6 +266,17 @@
   color: var(--danger) !important;
 }
 
+.section-action-button {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--control-border));
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  color: var(--accent);
+}
+
+.section-action-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--control-border));
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+}
+
 button:disabled {
   cursor: default;
   opacity: 0.48;
@@ -302,6 +314,7 @@ button:disabled {
   font-size: 1rem;
 }
 
+.section-action-button,
 .section-danger-button {
   min-height: 27px;
   padding: 3px 8px;

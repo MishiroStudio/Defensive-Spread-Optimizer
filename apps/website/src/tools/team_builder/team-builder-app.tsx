@@ -81,7 +81,7 @@ const COPY = {
     deleteTeam: "Team löschen",
     team: "Team",
     bench: "Ersatzbank",
-    resetTeam: "Team zurücksetzen",
+    newTeam: "Neues Team",
     resetBench: "Ersatzbank zurücksetzen",
     addPokemon: "Pokémon hinzufügen",
     changePokemon: "Pokémon ändern",
@@ -116,7 +116,7 @@ const COPY = {
     deleteTeam: "Delete team",
     team: "Team",
     bench: "Bench",
-    resetTeam: "Reset team",
+    newTeam: "New team",
     resetBench: "Reset bench",
     addPokemon: "Add Pokémon",
     changePokemon: "Change Pokémon",
@@ -1088,9 +1088,63 @@ export default function TeamBuilderApp() {
     if (duplicate) loadSavedTeam(duplicate, selectedFolder.id);
   };
 
-  const resetTeam = () => {
-    if (!team.some(Boolean) && !bench.length) return;
-    if (!window.confirm(language === "de" ? "Aktives Team und Ersatzbank zurücksetzen? Gespeicherte Teams bleiben erhalten." : "Reset the active team and bench? Saved teams remain unchanged.")) return;
+  const startNewTeam = () => {
+    let teamToSave = team;
+    let benchToSave = bench;
+
+    // A still-open editor belongs to the current team and must be included
+    // before that team is put aside.
+    if (editor && draft) {
+      const savedDraft = copyMember(draft);
+      if (editor.area === "team") {
+        teamToSave = team.map((member, index) => index === editor.index ? savedDraft : member);
+      } else {
+        benchToSave = editor.index === bench.length
+          ? [...bench, savedDraft]
+          : bench.map((member, index) => index === editor.index ? savedDraft : member);
+      }
+    }
+
+    const hasPokemon = teamToSave.some(Boolean) || benchToSave.length > 0;
+    let savedName = teamName.trim();
+    if (!savedName && hasPokemon) {
+      savedName = window.prompt(
+        language === "de"
+          ? "Wie soll das aktuelle Team gespeichert werden?"
+          : "What should the current team be called?",
+        "",
+      )?.trim() ?? "";
+      if (!savedName) return;
+    }
+
+    if (autoSaveTimer.current !== null) {
+      window.clearTimeout(autoSaveTimer.current);
+      autoSaveTimer.current = null;
+    }
+
+    if (savedName) {
+      const targetFolderId = loadedTeamId && loadedFolderId
+        ? loadedFolderId
+        : selectedFolderId;
+      if (!libraryRef.current.folders.some((folder) => folder.id === targetFolderId)) {
+        notify(language === "de" ? "Der ausgewählte Ordner existiert nicht mehr." : "The selected folder no longer exists.");
+        return;
+      }
+      const [next] = upsertTeam(
+        libraryRef.current,
+        targetFolderId,
+        {
+          name: savedName,
+          regulation_id: regulationId,
+          active_slots: teamToSave.map(persistedMember),
+          bench: benchToSave.map((member) => persistedMember(member)!),
+        },
+        loadedTeamId,
+      );
+      libraryRef.current = next;
+      setLibrary(next);
+    }
+
     setTeam(EMPTY_TEAM());
     setBench([]);
     setTeamName("");
@@ -1099,6 +1153,10 @@ export default function TeamBuilderApp() {
     setLoadedFolderId(undefined);
     setEditor(null);
     setDraft(null);
+    dragSourceRef.current = null;
+    setDragSource(null);
+    setDropTarget(null);
+    setFeedback("");
   };
 
   const resetBench = () => {
@@ -1263,7 +1321,7 @@ export default function TeamBuilderApp() {
           const target = (event.target as HTMLElement).closest<HTMLElement>("[data-drop-area]");
           if (target) setDropTarget({ area: target.dataset.dropArea as RosterLocation["area"], index: Number(target.dataset.dropIndex) });
         }}>
-          <SectionHeader title={COPY[language].team} action={<button type="button" className="section-danger-button" disabled={!team.some(Boolean) && !bench.length} onClick={resetTeam}>{COPY[language].resetTeam}</button>} />
+          <SectionHeader title={COPY[language].team} action={<button type="button" className="section-action-button" onClick={startNewTeam}>{COPY[language].newTeam}</button>} />
           {team.map((member, index) => <div className="roster-card-host" key={`team-${index}`}>{renderLocation({ area: "team", index }, member)}</div>)}
 
           <SectionHeader title={COPY[language].bench} action={<button type="button" className="section-danger-button" disabled={!bench.length} onClick={resetBench}>{COPY[language].resetBench}</button>} />

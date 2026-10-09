@@ -13,7 +13,6 @@ const charizard: Pokemon = {
   name_en: 'Charizard',
   name_de: 'Glurak',
   types: ['fire', 'flying'],
-  abilities: [],
   sprite_home: null,
   sprite_home_shiny: null,
   base_hp: 78,

@@ -100,7 +100,6 @@ const COPY = {
     searchPlaceholder: 'Nach einem Pokémon suchen',
     shiny: 'Shiny',
     dex: 'Nationaldex',
-    abilities: 'Fähigkeiten',
     increasedNatureStat: 'Erhöhter Statuswert',
     decreasedNatureStat: 'Verringerter Statuswert',
     bulk: 'Bulk',
@@ -132,7 +131,6 @@ const COPY = {
     searchPlaceholder: 'Search for a Pokémon',
     shiny: 'Shiny',
     dex: 'National Dex',
-    abilities: 'Abilities',
     increasedNatureStat: 'Increased Nature Stat',
     decreasedNatureStat: 'Decreased Nature Stat',
     bulk: 'Bulk',
@@ -714,18 +712,6 @@ function App() {
                         }}
                       >
                         {TYPE_NAMES[language][type] ?? type}
-                      </span>
-                    ))}
-                  </div>
-
-                  <h3>{text.abilities}</h3>
-
-                  <div className="ability-buttons">
-                    {selectedPokemon.abilities.map((ability) => (
-                      <span key={ability.api_name}>
-                        {language === 'de'
-                          ? ability.name_de || ability.name_en
-                          : ability.name_en || ability.name_de}
                       </span>
                     ))}
                   </div>

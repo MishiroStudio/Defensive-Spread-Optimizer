@@ -52,7 +52,6 @@ export interface Pokemon {
   name_de: string
 
   types: string[]
-  abilities: PokemonAbility[]
 
   sprite_home: string | null
   sprite_home_shiny: string | null
