@@ -1,7 +1,8 @@
 """Build the nested Pokédex data file from PokéAPI.
 
-Version 5: curated form names, explicit cosmetic-form retention and
-Champions-specific ability fallbacks.
+Version 7: curated form names, explicit cosmetic-form retention, Champions-
+specific ability fallbacks, and resilient weight imports from PokéAPI with a
+Pokémon Showdown fallback.
 
 This importer writes the shared nested Pokémon dataset used by all
 Cordy's Lab applications.
@@ -11,6 +12,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -21,6 +24,9 @@ from urllib3.util.retry import Retry
 
 
 API_BASE_URL = "https://pokeapi.co/api/v2"
+SHOWDOWN_POKEDEX_URL = (
+    "https://play.pokemonshowdown.com/data/pokedex.json"
+)
 PROJECT_DIRECTORY = Path(__file__).resolve().parent.parent
 DATA_DIRECTORY = PROJECT_DIRECTORY / "data"
 OUTPUT_FILE = DATA_DIRECTORY / "pokemon_v2.json"
@@ -241,10 +247,73 @@ session = create_session()
 
 @lru_cache(maxsize=None)
 def get_json(url: str) -> dict[str, Any]:
-    """Load and cache one JSON resource from PokéAPI."""
+    """Load and cache one JSON resource."""
     response = session.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
     response.raise_for_status()
     return response.json()
+
+
+@dataclass(slots=True)
+class WeightImportReport:
+    """Track the source and completeness of imported Pokémon weights."""
+
+    pokeapi_count: int = 0
+    showdown_count: int = 0
+    missing: list[str] = field(default_factory=list)
+
+    def record(self, api_name: str, source: str | None) -> None:
+        if source == "PokeAPI":
+            self.pokeapi_count += 1
+        elif source == "Showdown":
+            self.showdown_count += 1
+        elif api_name not in self.missing:
+            self.missing.append(api_name)
+
+
+_showdown_warning_printed = False
+
+
+@lru_cache(maxsize=1)
+def get_showdown_pokedex() -> dict[str, Any] | None:
+    """Load Showdown's structured Pokédex data for weight fallbacks."""
+    global _showdown_warning_printed
+
+    try:
+        return get_json(SHOWDOWN_POKEDEX_URL)
+    except (requests.RequestException, ValueError) as error:
+        if not _showdown_warning_printed:
+            print(
+                "  Warning: could not load Pokémon Showdown weight fallback: "
+                f"{error}"
+            )
+            _showdown_warning_printed = True
+        return None
+
+
+def get_showdown_id(api_name: str) -> str:
+    """Convert a PokéAPI form identifier to Showdown's compact ID."""
+    return re.sub(r"[^a-z0-9]", "", api_name.casefold())
+
+
+def get_showdown_weight_kg(api_name: str) -> float | None:
+    """Return a form's Showdown weight, if Showdown has one."""
+    pokedex = get_showdown_pokedex()
+    if pokedex is None:
+        return None
+
+    entry = pokedex.get(get_showdown_id(api_name))
+    if not isinstance(entry, dict):
+        return None
+
+    value = entry.get("weightkg")
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or value <= 0
+    ):
+        return None
+
+    return round(float(value), 1)
 
 
 def get_resource_id(resource: dict[str, Any] | None) -> int | None:
@@ -457,6 +526,39 @@ def get_base_stats(pokemon_data: dict[str, Any]) -> dict[str, int]:
     return base_stats
 
 
+def get_weight_kg(pokemon_data: dict[str, Any]) -> float | None:
+    """Convert PokéAPI's hectogram weight to kilograms when available."""
+    value = pokemon_data.get("weight")
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or value <= 0
+    ):
+        return None
+    return round(float(value) / 10, 1)
+
+
+def resolve_weight_kg(
+    pokemon_data: dict[str, Any],
+) -> tuple[float | None, str | None]:
+    """Resolve a form's weight and identify the source used.
+
+    PokéAPI is preferred. Pokémon Showdown is used only when PokéAPI does
+    not provide a usable value, so the importer remains useful for new or
+    incomplete upstream forms without silently inventing data.
+    """
+    api_name = str(pokemon_data.get("name", ""))
+    pokeapi_weight = get_weight_kg(pokemon_data)
+    if pokeapi_weight is not None:
+        return pokeapi_weight, "PokeAPI"
+
+    showdown_weight = get_showdown_weight_kg(api_name)
+    if showdown_weight is not None:
+        return showdown_weight, "Showdown"
+
+    return None, None
+
+
 def get_types(pokemon_data: dict[str, Any]) -> list[str]:
     """Return the form's type identifiers in slot order."""
     return [
@@ -649,6 +751,7 @@ def build_form(
     variety: dict[str, Any],
     pokemon_data: dict[str, Any],
     distinguish_form: bool,
+    weight_report: WeightImportReport | None = None,
 ) -> dict[str, Any]:
     """Build one nested form entry."""
     name_en, name_de = get_form_display_names(
@@ -659,6 +762,9 @@ def build_form(
 
     normal_url, shiny_url = get_home_sprite_urls(pokemon_data)
     filename = f"{pokemon_data['name']}.png"
+    weight_kg, weight_source = resolve_weight_kg(pokemon_data)
+    if weight_report is not None:
+        weight_report.record(pokemon_data["name"], weight_source)
 
     return {
         "pokemon_id": pokemon_data["id"],
@@ -668,6 +774,7 @@ def build_form(
         "is_default": variety["is_default"],
         "types": get_types(pokemon_data),
         "base_stats": get_base_stats(pokemon_data),
+        "weight_kg": weight_kg,
         "abilities": get_abilities(pokemon_data),
         "sprites": {
             "home": download_sprite(
@@ -684,6 +791,7 @@ def build_form(
 
 def build_species(
     species_data: dict[str, Any],
+    weight_report: WeightImportReport | None = None,
 ) -> tuple[dict[str, Any], int]:
     """Build one National Pokédex entry with all its varieties."""
     varieties = species_data.get("varieties", [])
@@ -711,6 +819,7 @@ def build_species(
             variety,
             pokemon_data,
             distinguish_form,
+            weight_report,
         )
         for variety, pokemon_data in selected_varieties
     ]
@@ -774,6 +883,19 @@ def validate_pokemon_data(pokemon_list: list[dict[str, Any]]) -> None:
             if api_name in api_names:
                 raise ValueError(f"Duplicate API name: {api_name}")
 
+            weight_kg = form.get("weight_kg")
+            if (
+                weight_kg is not None
+                and (
+                    not isinstance(weight_kg, (int, float))
+                    or isinstance(weight_kg, bool)
+                    or weight_kg <= 0
+                )
+            ):
+                raise ValueError(
+                    f"Invalid weight_kg for {api_name}: {weight_kg!r}"
+                )
+
             pokemon_ids.add(pokemon_id)
             api_names.add(api_name)
 
@@ -797,8 +919,8 @@ def write_json_atomically(
 
 def import_pokemon(
     limit: int | None = None,
-) -> tuple[Path, int, int, int]:
-    """Load the Pokédex and return output path, species count, form count."""
+) -> tuple[Path, int, int, int, WeightImportReport]:
+    """Load the Pokédex and return output path plus import statistics."""
     species_index = get_json(
         f"{API_BASE_URL}/pokemon-species?limit=10000&offset=0"
     )
@@ -811,6 +933,7 @@ def import_pokemon(
 
     pokemon_list = []
     skipped_form_count = 0
+    weight_report = WeightImportReport()
     species_total = len(species_resources)
 
     for position, species_resource in enumerate(species_resources, start=1):
@@ -819,7 +942,10 @@ def import_pokemon(
             f"{species_resource['name']}"
         )
         species_data = get_json(species_resource["url"])
-        species_entry, skipped_count = build_species(species_data)
+        species_entry, skipped_count = build_species(
+            species_data,
+            weight_report,
+        )
         pokemon_list.append(species_entry)
         skipped_form_count += skipped_count
 
@@ -835,6 +961,7 @@ def import_pokemon(
         len(pokemon_list),
         form_count,
         skipped_form_count,
+        weight_report,
     )
 
 
@@ -863,6 +990,7 @@ def main() -> None:
         species_count,
         form_count,
         skipped_form_count,
+        weight_report,
     ) = import_pokemon(limit=arguments.limit)
 
     print()
@@ -873,6 +1001,16 @@ def main() -> None:
     print(
         f"Skipped {skipped_form_count} mechanically identical forms."
     )
+    print(
+        "Weights: "
+        f"{weight_report.pokeapi_count} from PokéAPI, "
+        f"{weight_report.showdown_count} from Showdown, "
+        f"{len(weight_report.missing)} missing."
+    )
+    if weight_report.missing:
+        print("Forms without a resolved weight:")
+        for api_name in weight_report.missing:
+            print(f"  - {api_name}")
     print(f"Saved to: {output_file}")
 
 

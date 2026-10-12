@@ -423,6 +423,19 @@ CHAMPIONS_ABILITY_OVERRIDES: dict[str, dict[str, Any]] = {
             "Schadens zu. Alle anderen Effekte werden trotzdem ausgelöst."
         ),
     },
+    "unseen-fist": {
+        "name_en": "Unseen Fist",
+        "name_de": "Verborgene Faust",
+        "description_en": (
+            "Contact moves can strike through Protect/Detect, dealing 1/4 "
+            "of the damage that the move would otherwise deal."
+        ),
+        "description_de": (
+            "Kontaktattacken treffen durch Schutzschild und ähnliche "
+            "Schutz-Attacken hindurch, verursachen dabei aber nur 1/4 des "
+            "normalen Schadens."
+        ),
+    },
     "dragonize": {
         "name_en": "Dragonize",
         "name_de": "Drachenschicht",

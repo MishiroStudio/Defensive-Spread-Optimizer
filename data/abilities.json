@@ -2076,8 +2076,8 @@
         "api_name": "unseen-fist",
         "name_en": "Unseen Fist",
         "name_de": "Verborgene Faust",
-        "description_en": "Contact moves can strike through Protect/Detect.",
-        "description_de": "Wenn das Pokémon eine direkte Attacke einsetzt, trifft diese auch dann, wenn sich das Ziel selbst schützt."
+        "description_en": "Contact moves can strike through Protect/Detect, dealing 1/4 of the damage that the move would otherwise deal.",
+        "description_de": "Kontaktattacken treffen durch Schutzschild und ähnliche Schutz-Attacken hindurch, verursachen dabei aber nur 1/4 des normalen Schadens."
     },
     {
         "ability_id": 261,

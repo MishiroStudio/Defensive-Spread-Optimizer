@@ -68,6 +68,7 @@ class PokemonForm:
     is_default: bool
     types: tuple[str, ...]
     base_stats: BaseStats
+    weight_kg: float | None
     abilities: tuple[Ability, ...]
     sprites: Sprites
 
@@ -81,6 +82,11 @@ class PokemonForm:
             is_default=bool(data["is_default"]),
             types=tuple(str(item) for item in data["types"]),
             base_stats=BaseStats.from_dict(data["base_stats"]),
+            weight_kg=(
+                float(data["weight_kg"])
+                if data.get("weight_kg") is not None
+                else None
+            ),
             abilities=tuple(
                 Ability.from_dict(item) for item in data["abilities"]
             ),
