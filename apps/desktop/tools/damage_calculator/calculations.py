@@ -4,12 +4,24 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 LEVEL = 50
 RANDOM_ROLLS = tuple(range(85, 101))
 SPREAD_DAMAGE_MULTIPLIER = 0.75
 CRITICAL_DAMAGE_MULTIPLIER = 1.5
+
+
+@dataclass(frozen=True)
+class DamageResult:
+    """All per-attack damage values that can be shared by the UI."""
+
+    outcomes: tuple[tuple[int, float], ...] | None
+    damage_range: tuple[int, int] | None
+    percent_range: tuple[float, float] | None
+    self_damage: dict[str, Any] | None = None
+    multipliers: tuple[tuple[str, float], ...] = ()
 
 TERRAIN_MOVE_TYPES = {
     "electric": "electric",
@@ -134,6 +146,22 @@ RECOVERY_BERRIES = {
     "iapapa-berry": ("half", "eighth"),
 }
 END_TURN_RECOVERY_ITEMS = {"leftovers", "black-sludge"}
+CONTACT_DAMAGE_ABILITIES = {"rough-skin", "iron-barbs"}
+CONTACT_DAMAGE_ITEMS = {"rocky-helmet"}
+CONTACT_SUPPRESSING_ABILITIES = {"long-reach"}
+CONTACT_SUPPRESSING_ITEMS = {"protective-pads"}
+RECOIL_BLOCKING_ABILITIES = {"rock-head"}
+LIFE_ORB_ITEM = "life-orb"
+
+# Self-HP loss that is encoded in the move description rather than in the
+# regular ``recoil`` field.  These moves are successful attacks, but consume
+# a fixed fraction of the user's maximum HP after use.
+SELF_MAX_HP_LOSS_MOVES = {
+    "struggle": (1, 4),
+    "mindblown": (1, 2),
+    "steelbeam": (1, 2),
+    "chloroblast": (1, 2),
+}
 
 TYPE_CHANGING_ABILITIES = {
     "aerilate": ("flying", 1.3),
@@ -142,16 +170,14 @@ TYPE_CHANGING_ABILITIES = {
     "galvanize": ("electric", 1.2),
 }
 
-# These effects need weather, status, HP, or previous-turn controls that are
-# not part of the current UI. The abilities remain selectable, but their
-# conditional mechanics are deliberately neutral in this calculation version.
+# These effects need state that is not part of the current UI. The abilities
+# remain selectable, but their conditional mechanics are deliberately neutral
+# in this calculation version.
 CONDITIONAL_ABILITIES = {
-    "solar-power", "blaze", "overgrow", "torrent", "swarm", "sand-force",
     "chlorophyll", "swift-swim", "sand-rush", "slush-rush", "unburden",
     "guts", "marvel-scale", "quick-feet", "toxic-boost", "flare-boost",
     "moxie", "beast-boost", "soul-heart", "defiant", "competitive", "weak-armor",
     "steam-engine", "anger-shell", "berserk", "defeatist", "slow-start",
-    "multiscale", "shadow-shield",
 }
 
 # Moves whose damage formula uses a non-standard offensive or defensive stat.
@@ -291,6 +317,65 @@ def _move_effects(move: Mapping[str, Any]) -> Mapping[str, Any]:
     return effects if isinstance(effects, Mapping) else {}
 
 
+def _fraction_value(value: Any) -> tuple[int, int] | None:
+    """Read a positive ``[numerator, denominator]`` fraction from move data."""
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        return None
+    try:
+        numerator, denominator = int(value[0]), int(value[1])
+    except (TypeError, ValueError):
+        return None
+    if numerator <= 0 or denominator <= 0:
+        return None
+    return numerator, denominator
+
+
+def _round_half_up_fraction(value: int, numerator: int, denominator: int) -> int:
+    """Round a positive fraction the way the imported move data specifies."""
+    return max(1, math.floor((value * numerator) / denominator + 0.5))
+
+
+def _move_recoil_fraction(move: Mapping[str, Any]) -> tuple[int, int] | None:
+    return _fraction_value(_move_effects(move).get("recoil"))
+
+
+def _life_orb_recoil_applies(
+    move: Mapping[str, Any],
+    attacker_ability: str | None,
+    attacker_item: str | None,
+) -> bool:
+    """Return whether this damaging move causes Life Orb's HP loss."""
+    if attacker_item != LIFE_ORB_ITEM:
+        return False
+    if attacker_ability == "magic-guard":
+        return False
+    # Sheer Force removes Life Orb's recoil when it suppresses a move's
+    # secondary effect, while a move without a secondary effect still costs
+    # the normal Life Orb HP.
+    if attacker_ability == "sheer-force" and _move_effects(move).get("secondary_effects"):
+        return False
+    return True
+
+
+def _self_max_hp_loss(
+    move: Mapping[str, Any],
+    attacker_ability: str | None,
+    attacker_max_hp: int,
+) -> int:
+    """Return fixed user HP loss for supported self-damaging moves."""
+    move_name = str(move.get("api_name") or "").casefold()
+    fraction = SELF_MAX_HP_LOSS_MOVES.get(move_name)
+    if fraction is None:
+        return 0
+    if move_name == "chloroblast" and attacker_ability in {"magic-guard", "rock-head"}:
+        return 0
+    if move_name in {"mindblown", "steelbeam"} and attacker_ability == "magic-guard":
+        return 0
+    # Struggle explicitly ignores Rock Head in the source move description.
+    numerator, denominator = fraction
+    return max(1, math.ceil(attacker_max_hp * numerator / denominator))
+
+
 def _critical_hit_is_active(
     move: Mapping[str, Any],
     requested: bool,
@@ -376,6 +461,24 @@ def _switch_out_power_multiplier(
 
 def _move_properties(move: Mapping[str, Any]) -> set[str]:
     return {str(value).casefold() for value in move.get("properties", [])}
+
+
+def _defender_ability_blocks_move(
+    ability_id: str | None,
+    move: Mapping[str, Any],
+    move_type: str,
+) -> bool:
+    """Return whether a defensive ability makes this move deal no damage."""
+    properties = _move_properties(move)
+    if ability_id in {"flash-fire", "well-baked-body"} and move_type == "fire":
+        return True
+    if ability_id == "dry-skin" and move_type == "water":
+        return True
+    if ability_id == "soundproof" and "sound" in properties:
+        return True
+    if ability_id == "bulletproof" and properties & {"bullet", "ball", "bomb"}:
+        return True
+    return False
 
 
 def _move_bypasses_protection(move: Mapping[str, Any]) -> bool:
@@ -970,18 +1073,33 @@ def type_effectiveness(
     defender_ability: str | None = None,
     defender_item: str | None = None,
     gravity: bool = False,
+    move_properties: set[str] | None = None,
+    defender_at_full_hp: bool = True,
 ) -> float:
     """Return the combined type multiplier for a move against a Pokémon."""
     chart = TYPE_EFFECTIVENESS.get(move_type, {})
     if move_type == "ground" and not gravity:
         if defender_ability in {"levitate", "eelevate"} or defender_item in AIR_BALLOON_ITEMS:
             return 0.0
+    if move_properties is not None:
+        if defender_ability == "soundproof" and "sound" in move_properties:
+            return 0.0
+        if defender_ability == "bulletproof" and move_properties & {"bullet", "ball", "bomb"}:
+            return 0.0
+    if defender_ability in {"flash-fire", "well-baked-body"} and move_type == "fire":
+        return 0.0
+    if defender_ability == "dry-skin" and move_type == "water":
+        return 0.0
     result = 1.0
     for defending_type in defender_types:
         if move_type == "ground" and gravity and defending_type == "flying":
             result *= 1.0
         else:
             result *= chart.get(defending_type, 1.0)
+    if result > 0 and defender_ability == "wonder-guard" and result <= 1:
+        return 0.0
+    if result > 0 and defender_ability == "tera-shell" and defender_at_full_hp:
+        result = min(result, 0.5)
     return result
 
 
@@ -1047,6 +1165,7 @@ def calculate_effectiveness(
     attacker_item: str | None = None,
     defender_item: str | None = None,
     field_modifiers: Mapping[str, Any] | None = None,
+    defender_at_full_hp: bool = True,
 ) -> float:
     """Return the displayed type-effectiveness multiplier for one move.
 
@@ -1057,9 +1176,6 @@ def calculate_effectiveness(
     attacker_ability = _calculation_ability(attacker_ability)
     defender_ability = _calculation_ability(defender_ability)
     effects = _move_effects(move)
-    if effects.get("fixed_damage") is not None or effects.get("dynamic_damage"):
-        # Fixed/current-HP damage callbacks do not use STAB or the type chart.
-        return 1.0
     field = field_modifiers if isinstance(field_modifiers, Mapping) else {}
     terrain = _field_id(field.get("terrain"))
     weather = _field_id(field.get("weather"))
@@ -1088,12 +1204,29 @@ def calculate_effectiveness(
         attacker_grounded,
     )
 
+    if effects.get("fixed_damage") is not None or effects.get("dynamic_damage"):
+        # Fixed/current-HP callbacks do not use the type chart, but defensive
+        # immunities such as Flash Fire, Dry Skin, Soundproof, and Bulletproof
+        # still prevent the move from dealing damage.
+        if _defender_ability_blocks_move(defender_ability, move, move_type):
+            return 0.0
+        if defender_ability == "wonder-guard":
+            return type_effectiveness(
+                move_type,
+                list(defender_form.get("types") or []),
+                defender_item=effective_defender_item,
+                gravity=gravity,
+            )
+        return 1.0
+
     return type_effectiveness(
         move_type,
         list(defender_form.get("types") or []),
         defender_ability=defender_ability,
         defender_item=effective_defender_item,
         gravity=gravity,
+        move_properties=_move_properties(move),
+        defender_at_full_hp=defender_at_full_hp,
     )
 
 
@@ -1114,38 +1247,114 @@ def _ability_attack_multiplier(
     category: str,
     move_type: str,
     move: Mapping[str, Any] | None = None,
+    *,
+    weather: str | None = None,
+    attacker_current_hp: int | None = None,
+    attacker_max_hp: int | None = None,
+    effectiveness: float = 1.0,
+    defender_side: Mapping[str, Any] | None = None,
+    attacker_side: Mapping[str, Any] | None = None,
 ) -> float:
+    multiplier = 1.0
+    properties = _move_properties(move or {})
     if ability_id in {"huge-power", "pure-power"} and category == "physical":
-        return 2.0
+        multiplier *= 2.0
     if ability_id in {"hustle", "gorilla-tactics"} and category == "physical":
-        return 1.5
+        multiplier *= 1.5
     if ability_id == "water-bubble":
-        return 2.0 if move_type == "water" else 1.0
+        multiplier *= 2.0 if move_type == "water" else 1.0
     if ability_id == "dragons-maw" and move_type == "dragon":
-        return 1.5
+        multiplier *= 1.5
     if ability_id == "steelworker" and move_type == "steel":
-        return 1.5
+        multiplier *= 1.5
     if ability_id == "rocky-payload" and move_type == "rock":
-        return 1.5
+        multiplier *= 1.5
     if ability_id == "transistor" and move_type == "electric":
-        return 1.3
-    if ability_id == "tough-claws" and move and "contact" in {str(value) for value in move.get("properties", [])}:
-        return 1.3
-    return 1.0
+        multiplier *= 1.3
+    if ability_id == "tough-claws" and "contact" in properties:
+        multiplier *= 1.3
+    if ability_id == "mega-launcher" and properties & {"pulse", "aura"}:
+        multiplier *= 1.5
+    if ability_id == "iron-fist" and "punch" in properties:
+        multiplier *= 1.2
+    if ability_id == "strong-jaw" and "bite" in properties:
+        multiplier *= 1.5
+    if ability_id == "sharpness" and "slicing" in properties:
+        multiplier *= 1.5
+    if ability_id == "sand-force" and weather == "sand" and move_type in {"rock", "ground", "steel"}:
+        multiplier *= 1.3
+    if ability_id == "solar-power" and weather == "sun" and category == "special":
+        multiplier *= 1.5
+    if (
+        ability_id in {"blaze", "overgrow", "torrent", "swarm"}
+        and attacker_current_hp is not None
+        and attacker_max_hp
+        and attacker_current_hp * 3 <= attacker_max_hp
+        and move_type
+        == {
+            "blaze": "fire",
+            "overgrow": "grass",
+            "torrent": "water",
+            "swarm": "bug",
+        }[ability_id]
+    ):
+        multiplier *= 1.5
+    if ability_id == "neuroforce" and effectiveness > 1:
+        multiplier *= 1.25
+    if ability_id == "reckless" and move is not None and _move_recoil_fraction(move):
+        multiplier *= 1.2
+    if ability_id == "stakeout" and defender_side and defender_side.get("switch_out"):
+        multiplier *= 2.0
+    if ability_id == "punk-rock" and "sound" in properties:
+        multiplier *= 1.3
+    if (
+        ability_id == "flash-fire"
+        and move_type == "fire"
+        and attacker_side
+        and attacker_side.get("flash_fire_boost")
+    ):
+        multiplier *= 1.5
+    return multiplier
 
 
-def _ability_damage_multiplier(ability_id: str | None, category: str, move_type: str, effectiveness: float) -> float:
+def _ability_damage_multiplier(
+    ability_id: str | None,
+    category: str,
+    move_type: str,
+    effectiveness: float,
+    move: Mapping[str, Any] | None = None,
+    *,
+    defender_at_full_hp: bool = False,
+) -> float:
+    multiplier = 1.0
     if ability_id == "thick-fat" and move_type in {"fire", "ice"}:
-        return 0.5
+        multiplier *= 0.5
     if ability_id == "fur-coat" and category == "physical":
-        return 0.5
+        multiplier *= 0.5
     if ability_id in {"filter", "solid-rock", "prism-armor"} and effectiveness > 1:
-        return 0.75
-    if ability_id in {"multiscale", "shadow-shield"}:
-        return 0.5
+        multiplier *= 0.75
+    if ability_id in {"multiscale", "shadow-shield"} and defender_at_full_hp:
+        multiplier *= 0.5
     if ability_id == "water-bubble" and move_type == "fire":
-        return 0.5
-    return 1.0
+        multiplier *= 0.5
+    if ability_id == "dry-skin" and move_type == "fire":
+        multiplier *= 1.25
+    if ability_id == "heatproof" and move_type == "fire":
+        multiplier *= 0.5
+    if ability_id == "ice-scales" and category == "special":
+        multiplier *= 0.5
+    if ability_id == "purifying-salt" and move_type == "ghost":
+        multiplier *= 0.5
+    if ability_id == "fluffy":
+        if move_type == "fire":
+            multiplier *= 2.0
+        if move is not None and "contact" in _move_properties(move):
+            multiplier *= 0.5
+    if ability_id == "punk-rock" and move is not None and "sound" in _move_properties(move):
+        multiplier *= 0.5
+    if ability_id == "wonder-guard" and 0 < effectiveness <= 1:
+        multiplier *= 0.0
+    return multiplier
 
 
 def calculate_damage_range(
@@ -1222,6 +1431,7 @@ def calculate_damage_rolls(
     move_hit_index: int = 0,
     power_override: float | None = None,
     _allow_multi_hit: bool = False,
+    _multiplier_details: list[tuple[str, float]] | None = None,
 ) -> tuple[int, ...] | None:
     """Calculate the 16 standard damage rolls for one hit.
 
@@ -1230,10 +1440,11 @@ def calculate_damage_rolls(
     manual and always-critical moves, current-HP-dependent power/fixed damage, Helping Hand, Friend Guard, Reflect, Light Screen,
     Aurora Veil, Protect and their move/ability exceptions, and the
     damage-relevant terrain, weather, room, Gravity, and switching-target
-    effects supplied through ``field_modifiers``. Multi-hit moves are
-    intentionally handled by ``calculate_damage_outcomes``; the private
-    ``_allow_multi_hit`` flag is used by that helper to calculate one hit at a
-    time.
+    effects supplied through ``field_modifiers``. The calculation also
+    resolves the supported move-group, HP/weather-threshold, critical-hit,
+    immunity, and defensive-damage abilities. Multi-hit moves are intentionally
+    handled by ``calculate_damage_outcomes``; the private ``_allow_multi_hit``
+    flag is used by that helper to calculate one hit at a time.
     """
     attacker_ability = _calculation_ability(attacker_ability)
     defender_ability = _calculation_ability(defender_ability)
@@ -1291,6 +1502,29 @@ def calculate_damage_rolls(
     if category not in {"physical", "special"}:
         return None
 
+    weather_for_attacker = (
+        None
+        if _utility_umbrella_active(effective_attacker_item, magic_room)
+        else weather
+    )
+    weather_for_defender = (
+        None
+        if _utility_umbrella_active(effective_defender_item, magic_room)
+        else weather
+    )
+    move_type, type_ability_boost = _resolve_move_type(
+        move,
+        attacker_ability,
+        terrain,
+        weather_for_attacker,
+        attacker_grounded,
+    )
+    if move_name == "terablast" and _side_bool(attacker_side, "terastallized"):
+        tera_type = str(attacker_side.get("tera_type") or "").casefold().strip()
+        if tera_type:
+            move_type = tera_type
+            type_ability_boost = 1.0
+
     if effects.get("fixed_damage") is not None or effects.get("dynamic_damage"):
         fixed_damage = _fixed_damage_value(effects)
         if fixed_damage is None and effects.get("dynamic_damage"):
@@ -1308,6 +1542,17 @@ def calculate_damage_rolls(
                 return None
         if fixed_damage is None:
             return None
+        if _defender_ability_blocks_move(defender_ability, move, move_type):
+            return tuple(0 for _ in RANDOM_ROLLS)
+        if defender_ability == "wonder-guard":
+            fixed_type_effectiveness = type_effectiveness(
+                move_type,
+                list(defender_form.get("types") or []),
+                defender_item=effective_defender_item,
+                gravity=gravity,
+            )
+            if fixed_type_effectiveness <= 1:
+                return tuple(0 for _ in RANDOM_ROLLS)
         protection_multiplier = _protection_damage_multiplier(
             move,
             attacker_ability,
@@ -1409,69 +1654,63 @@ def calculate_damage_rolls(
             "spd",
             1,
         )
+    effective_attacker_stat_stages = (
+        None if defender_ability == "unaware" else attacker_stat_stages
+    )
+    effective_defender_stat_stages_for_damage = (
+        None if attacker_ability == "unaware" else effective_defender_stat_stages
+    )
     attack = _battle_stat(
         attacker_stats,
         attack_key,
-        attacker_stat_stages,
+        effective_attacker_stat_stages,
         stage_key=attack_stage_key,
         ignore_negative_stage=critical_hit,
     )
     defense = _battle_stat(
         defender_stats,
         defense_key,
-        effective_defender_stat_stages,
+        effective_defender_stat_stages_for_damage,
         stage_key=defense_stage_key,
         ignore_positive_stage=critical_hit,
     )
-    weather_for_attacker = (
-        None
-        if _utility_umbrella_active(effective_attacker_item, magic_room)
-        else weather
-    )
-    weather_for_defender = (
-        None
-        if _utility_umbrella_active(effective_defender_item, magic_room)
-        else weather
-    )
-    move_type, type_ability_boost = _resolve_move_type(
-        move,
-        attacker_ability,
-        terrain,
-        weather_for_attacker,
-        attacker_grounded,
-    )
-    if move_name == "terablast" and _side_bool(attacker_side, "terastallized"):
-        tera_type = str(attacker_side.get("tera_type") or "").casefold().strip()
-        if tera_type:
-            move_type = tera_type
-            type_ability_boost = 1.0
     is_spread_move = bool(move.get("is_spread_move"))
+    power_multipliers: list[tuple[str, float]] = []
 
     if move_name == "steelroller" and terrain is None:
         return tuple(0 for _ in RANDOM_ROLLS)
 
     if move_name == "weatherball" and weather_for_attacker in WEATHER_BALL_TYPES:
         power = float(power) * 2
+        power_multipliers.append(("weather_ball", 2.0))
     elif move_name == "terrainpulse" and terrain in TERRAIN_PULSE_TYPES and attacker_grounded:
         power = float(power) * 2
+        power_multipliers.append(("terrain_pulse", 2.0))
 
     # Charge doubles the power of the user's next Electric-type attack.
     if attacker_side.get("charge") and move_type == "electric":
         power = float(power) * 2
+        power_multipliers.append(("charge", 2.0))
 
     if move_name in {"solarbeam", "solarblade"} and weather_for_attacker in {"rain", "sand", "snow"}:
         power = float(power) * 0.5
+        power_multipliers.append(("weather_power", 0.5))
     elif move_name == "expandingforce" and terrain == "psychic" and attacker_grounded:
         power = float(power) * 1.5
+        power_multipliers.append(("terrain_power", 1.5))
         is_spread_move = True
     elif move_name == "mistyexplosion" and terrain == "misty" and attacker_grounded:
         power = float(power) * 1.5
+        power_multipliers.append(("terrain_power", 1.5))
     elif move_name == "gravapple" and gravity:
         power = float(power) * 1.5
+        power_multipliers.append(("gravity_power", 1.5))
     elif move_name == "risingvoltage" and terrain == "electric" and defender_grounded:
         power = float(power) * 2
+        power_multipliers.append(("terrain_power", 2.0))
     elif move_name == "psyblade" and terrain == "electric":
         power = float(power) * 1.5
+        power_multipliers.append(("terrain_power", 1.5))
 
     if (
         attacker_grounded
@@ -1479,14 +1718,17 @@ def calculate_damage_rolls(
         and move_type == TERRAIN_MOVE_TYPES[terrain]
     ):
         power = float(power) * 1.3
+        power_multipliers.append(("terrain_stab", 1.3))
     if terrain == "misty" and defender_grounded and move_type == "dragon":
         power = float(power) * 0.5
+        power_multipliers.append(("misty_terrain", 0.5))
     if (
         terrain == "grassy"
         and defender_grounded
         and move_name in GRASSY_TERRAIN_WEAKENED_MOVES
     ):
         power = float(power) * 0.5
+        power_multipliers.append(("grassy_terrain", 0.5))
 
     weather_damage_multiplier = 1.0
     if move_name == "hydrosteam" and weather_for_attacker == "sun":
@@ -1501,10 +1743,26 @@ def calculate_damage_rolls(
             weather_damage_multiplier = 1.5
         elif move_type == "fire":
             weather_damage_multiplier = 0.5
+    stat_ability_boost = 1.0
     if attacker_ability in {"huge-power", "pure-power", "hustle", "gorilla-tactics"} and category == "physical":
-        attack = math.floor(attack * _ability_attack_multiplier(attacker_ability, category, move_type, move))
+        stat_ability_boost = _ability_attack_multiplier(
+            attacker_ability,
+            category,
+            move_type,
+            move,
+            weather=weather_for_attacker,
+            attacker_current_hp=attacker_hp,
+            attacker_max_hp=attacker_max_hp,
+            defender_side=defender_side,
+            attacker_side=attacker_side,
+        )
+        attack = math.floor(attack * stat_ability_boost)
     if attacker_ability == "guts" and attacker_burned and category == "physical":
-        attack = math.floor(attack * 1.5)
+        stat_ability_boost = 1.5
+        attack = math.floor(attack * stat_ability_boost)
+    if attacker_ability == "solar-power" and weather_for_attacker == "sun" and category == "special":
+        stat_ability_boost = 1.5
+        attack = math.floor(attack * stat_ability_boost)
     if effective_attacker_item == "light-ball" and str(attacker_form.get("api_name")) == "pikachu":
         attack = math.floor(attack * 2)
     if effective_defender_item == "eviolite":
@@ -1531,6 +1789,8 @@ def calculate_damage_rolls(
         defender_ability=defender_ability,
         defender_item=effective_defender_item,
         gravity=gravity,
+        move_properties=_move_properties(move),
+        defender_at_full_hp=defender_is_at_full_hp,
     )
     if effectiveness == 0:
         return tuple(0 for _ in RANDOM_ROLLS)
@@ -1546,9 +1806,20 @@ def calculate_damage_rolls(
     stab = 1.5 if force_stab or move_type in attacker_form.get("types", []) else 1.0
     if attacker_ability == "adaptability" and stab > 1:
         stab = 2.0
-    ability_boost = _ability_attack_multiplier(attacker_ability, category, move_type, move)
+    ability_boost = _ability_attack_multiplier(
+        attacker_ability,
+        category,
+        move_type,
+        move,
+        weather=weather_for_attacker,
+        attacker_current_hp=attacker_hp,
+        attacker_max_hp=attacker_max_hp,
+        effectiveness=effectiveness,
+        defender_side=defender_side,
+        attacker_side=attacker_side,
+    )
     # Attack stats above already include these boosts.
-    if attacker_ability in {"huge-power", "pure-power", "hustle", "gorilla-tactics"} or (attacker_ability == "guts" and attacker_burned):
+    if attacker_ability in {"huge-power", "pure-power", "hustle", "gorilla-tactics", "solar-power"} or (attacker_ability == "guts" and attacker_burned):
         ability_boost = 1.0
     ability_boost *= type_ability_boost
     item_boost = _attack_item_multiplier(effective_attacker_item, category)
@@ -1580,9 +1851,9 @@ def calculate_damage_rolls(
         category,
         move_type,
         effectiveness,
+        move,
+        defender_at_full_hp=defender_is_at_full_hp,
     )
-    if not defender_is_at_full_hp and defender_ability in {"multiscale", "shadow-shield"}:
-        defender_ability_boost = 1.0
     if effective_defender_item in RESIST_BERRIES and RESIST_BERRIES[effective_defender_item] == move_type and effectiveness > 1:
         defender_ability_boost *= 0.5
 
@@ -1601,12 +1872,23 @@ def calculate_damage_rolls(
         battle_mode,
     )
     friend_guard_boost = 0.75 if defender_side.get("friend_guard") else 1.0
-    critical_boost = CRITICAL_DAMAGE_MULTIPLIER if critical_hit else 1.0
+    critical_boost = (
+        3.0 if attacker_ability == "sniper" else CRITICAL_DAMAGE_MULTIPLIER
+    ) if critical_hit else 1.0
     special_move_boost = (
         4 / 3
         if move_name in {"collisioncourse", "electrodrift"} and effectiveness > 1
         else 1.0
     )
+    steely_spirit_boost = (
+        1.5
+        if move_type == "steel"
+        and (attacker_side.get("steely_spirit") or attacker_ability == "steely-spirit")
+        else 1.0
+    )
+    aura_multiplier = 0.75 if defender_ability == "aura-break" else 4 / 3
+    fairy_aura_boost = aura_multiplier if field.get("fairy_aura") and move_type == "fairy" else 1.0
+    dark_aura_boost = aura_multiplier if field.get("dark_aura") and move_type == "dark" else 1.0
     modifiers = (
         stab
         * effectiveness
@@ -1621,11 +1903,105 @@ def calculate_damage_rolls(
         * protection_multiplier
         * critical_boost
         * special_move_boost
+        * steely_spirit_boost
+        * fairy_aura_boost
+        * dark_aura_boost
     )
+    if _multiplier_details is not None:
+        ability_detail = ability_boost
+        if math.isclose(ability_detail, 1.0, rel_tol=1e-9, abs_tol=1e-9):
+            ability_detail = stat_ability_boost
+        details = [
+            *power_multipliers,
+            ("stab", stab),
+            ("effectiveness", effectiveness),
+            (f"ability:{attacker_ability}" if ability_detail != 1 and attacker_ability else "ability", ability_detail),
+            (f"item:{effective_attacker_item}" if item_boost != 1 and effective_attacker_item else "item", item_boost),
+            (f"defender_ability:{defender_ability}" if defender_ability_boost != 1 and defender_ability else "defender_ability", defender_ability_boost),
+            ("spread", spread_boost),
+            (f"weather:{weather_for_defender or weather_for_attacker}" if weather_damage_multiplier != 1 else "weather", weather_damage_multiplier),
+            ("helping_hand", helping_hand_boost),
+            ("screen", screen_boost),
+            ("friend_guard", friend_guard_boost),
+            ("protect", protection_multiplier),
+            ("critical", critical_boost),
+            ("special_move", special_move_boost),
+            ("steely_spirit", steely_spirit_boost),
+            ("fairy_aura", fairy_aura_boost),
+            ("dark_aura", dark_aura_boost),
+        ]
+        _multiplier_details.extend(
+            (str(key), float(value))
+            for key, value in details
+            if not math.isclose(float(value), 1.0, rel_tol=1e-9, abs_tol=1e-9)
+        )
     return tuple(
         max(1, math.floor(base * (random_roll / 100) * modifiers))
         for random_roll in RANDOM_ROLLS
     )
+
+
+def calculate_damage_multipliers(
+    move: Mapping[str, Any],
+    attacker_form: Mapping[str, Any],
+    defender_form: Mapping[str, Any],
+    attacker_stats: Mapping[str, int],
+    defender_stats: Mapping[str, int],
+    *,
+    attacker_ability: str | None = None,
+    defender_ability: str | None = None,
+    attacker_item: str | None = None,
+    defender_item: str | None = None,
+    attacker_stat_stages: Mapping[str, int] | None = None,
+    defender_stat_stages: Mapping[str, int] | None = None,
+    attacker_burned: bool = False,
+    defender_at_full_hp: bool = True,
+    attacker_current_hp: int | None = None,
+    defender_current_hp: int | None = None,
+    battle_mode: str = "doubles",
+    field_modifiers: Mapping[str, Any] | None = None,
+    critical_hit: bool = False,
+    critical_hit_count: int | None = None,
+    selected_hit_count: int | None = None,
+) -> tuple[tuple[str, float], ...]:
+    """Return the non-neutral factors used for the displayed damage range.
+
+    The trace is collected by the same one-hit formula as the actual damage
+    rolls. For a multi-hit attack, the first hit is used as the representative
+    factor list; the hit and Crit counters still affect whether that hit is a
+    critical hit.
+    """
+    details: list[tuple[str, float]] = []
+    move_name = str(move.get("api_name") or "").casefold()
+    is_multi_hit = bool(_move_effects(move).get("multi_hit") or move_name == "beatup")
+    first_hit_is_critical = bool(
+        critical_hit
+        or (critical_hit_count is not None and int(critical_hit_count) > 0)
+    )
+    calculate_damage_rolls(
+        move,
+        attacker_form,
+        defender_form,
+        attacker_stats,
+        defender_stats,
+        attacker_ability=attacker_ability,
+        defender_ability=defender_ability,
+        attacker_item=attacker_item,
+        defender_item=defender_item,
+        attacker_stat_stages=attacker_stat_stages,
+        defender_stat_stages=defender_stat_stages,
+        attacker_burned=attacker_burned,
+        defender_at_full_hp=defender_at_full_hp,
+        attacker_current_hp=attacker_current_hp,
+        defender_current_hp=defender_current_hp,
+        battle_mode=battle_mode,
+        field_modifiers=field_modifiers,
+        critical_hit=first_hit_is_critical,
+        move_hit_index=0,
+        _allow_multi_hit=is_multi_hit,
+        _multiplier_details=details,
+    )
+    return tuple(details)
 
 
 def _damage_roll_variants(
@@ -1801,11 +2177,13 @@ def multi_hit_count_range(
     attacker_form: Mapping[str, Any] | None = None,
     attacker_side: Mapping[str, Any] | None = None,
 ) -> tuple[int, int] | None:
-    """Return the effective minimum and maximum hit count for a move.
+    """Return the editable hit-counter range for a multi-hit move.
 
     This is the public UI-facing counterpart to ``_multi_hit_distribution``.
-    Skill Link and Loaded Dice are included so the displayed count matches the
-    distribution used by the damage and KO calculations.
+    Skill Link and Loaded Dice determine the maximum shown, while the lower
+    bound is deliberately one so a partial/missed sequence can be inspected.
+    The normal in-game distribution remains unchanged when no explicit count
+    is supplied.
     """
     distribution = _multi_hit_distribution(
         move,
@@ -1819,14 +2197,11 @@ def multi_hit_count_range(
     counts = [int(count) for count, _probability in distribution]
     if not counts:
         return None
-    # Fixed-count moves (for example Triple Axel or Double Kick) still need
-    # an editable hit counter in the UI so a missed/partial sequence can be
-    # evaluated.  Keep their normal game default in the distribution, but let
-    # the explicit UI selection cover every count from one hit to the fixed
-    # maximum.  Variable multi-hit moves retain their legal lower bound.
-    if len(counts) == 1 and counts[0] > 1:
-        return 1, max(counts)
-    return min(counts), max(counts)
+    # The normal game distribution is kept above for calculations without an
+    # explicit counter.  The UI counter represents the number of successful
+    # hits being inspected, so it must also allow partial sequences: a move
+    # that normally starts at two hits can still be evaluated at one hit.
+    return 1, max(counts)
 
 
 def _selected_multi_hit_distribution(
@@ -1853,14 +2228,9 @@ def _selected_multi_hit_distribution(
     except (TypeError, ValueError):
         return ()
     allowed_counts = {int(count) for count, _probability in distribution}
-    if selected not in allowed_counts:
-        # A fixed multi-hit move normally has exactly one outcome, but the
-        # calculator's explicit hit counter can model fewer successful hits.
-        if len(allowed_counts) != 1:
-            return ()
-        fixed_maximum = next(iter(allowed_counts))
-        if not 1 <= selected <= fixed_maximum:
-            return ()
+    maximum = max(allowed_counts, default=0)
+    if not 1 <= selected <= maximum:
+        return ()
     return ((selected, 1.0),)
 
 
@@ -1992,24 +2362,30 @@ def calculate_damage_outcomes(
 
     for hit_count, hit_count_probability in multi_hit:
         # State: current target HP, current item, accumulated damage, and a
-        # terminal flag.  Terminal paths are retained because a move stops as
-        # soon as a hit KOs the target.
+        # terminal flag.  Damage ranges intentionally keep adding the
+        # selected number of hits after the target would have fainted.  This
+        # gives the UI a useful theoretical 9/10-hit range for a move that
+        # already KOs on hit 8.  The separate KO simulation still stops at
+        # the first KO and remains the source of KO chances.
         states: dict[tuple[int, str | None, int, bool], float] = {
             (starting_hp, initial_item, 0, False): float(hit_count_probability)
         }
         for hit_index in range(hit_count):
             next_states: dict[tuple[int, str | None, int, bool], float] = {}
             for (current_hp, current_item, total_damage, terminal), state_probability in states.items():
-                if terminal:
-                    key = (current_hp, current_item, total_damage, True)
-                    next_states[key] = next_states.get(key, 0.0) + state_probability
-                    continue
                 if _move_effects(move).get("always_critical"):
                     hit_is_critical = True
                 elif critical_hit_count is not None:
                     hit_is_critical = hit_index < critical_hit_count
                 else:
                     hit_is_critical = bool(critical_hit)
+                # After a previous hit has KO'd the target, subsequent hits
+                # are evaluated against a one-HP, non-full target without a
+                # held item.  These hits are only for the displayed
+                # theoretical total; no recovery or berry can occur after a
+                # KO.
+                calculation_hp = 1 if terminal else current_hp
+                calculation_item = None if terminal else current_item
                 variants = _damage_roll_variants(
                     move,
                     attacker_form,
@@ -2019,15 +2395,17 @@ def calculate_damage_outcomes(
                     attacker_ability=attacker_ability,
                     defender_ability=defender_ability,
                     attacker_item=attacker_item,
-                    defender_item=current_item,
+                    defender_item=calculation_item,
                     attacker_stat_stages=attacker_stat_stages,
                     defender_stat_stages=defender_stat_stages,
                     attacker_burned=attacker_burned,
                     defender_at_full_hp=bool(
-                        defender_at_full_hp and current_hp >= defender_max_hp
+                        not terminal
+                        and defender_at_full_hp
+                        and current_hp >= defender_max_hp
                     ),
                     attacker_current_hp=attacker_hp,
-                    defender_current_hp=current_hp,
+                    defender_current_hp=calculation_hp,
                     battle_mode=battle_mode,
                     field_modifiers=field_modifiers,
                     critical_hit=hit_is_critical,
@@ -2044,10 +2422,10 @@ def calculate_damage_outcomes(
                     )
                     for damage in rolls:
                         damage = int(damage)
-                        new_hp = current_hp - damage
+                        new_hp = calculation_hp - damage
                         new_total = total_damage + damage
-                        if new_hp <= 0:
-                            key = (0, current_item, new_total, True)
+                        if terminal or new_hp <= 0:
+                            key = (0, None, new_total, True)
                             next_states[key] = next_states.get(key, 0.0) + roll_probability
                             continue
                         new_hp, new_item = _post_hit_berry_effects(
@@ -2072,6 +2450,242 @@ def calculate_damage_outcomes(
         for damage, probability in sorted(distribution.items())
         if probability > 0
     )
+
+
+def _hit_count_bounds(
+    move: Mapping[str, Any],
+    attacker_ability: str | None,
+    attacker_item: str | None,
+    selected_hit_count: int | None,
+    *,
+    attacker_form: Mapping[str, Any] | None = None,
+    attacker_side: Mapping[str, Any] | None = None,
+) -> tuple[int, int]:
+    """Return the hit-count bounds needed for per-hit self damage."""
+    if selected_hit_count is not None:
+        try:
+            selected = max(1, int(selected_hit_count))
+        except (TypeError, ValueError):
+            selected = 1
+        return selected, selected
+    distribution = _multi_hit_distribution(
+        move,
+        attacker_ability,
+        attacker_item,
+        attacker_form=attacker_form,
+        attacker_side=attacker_side,
+    )
+    if not distribution:
+        return 1, 1
+    counts = [int(count) for count, _probability in distribution]
+    return min(counts), max(counts)
+
+
+def calculate_self_damage_details(
+    move: Mapping[str, Any],
+    attacker_form: Mapping[str, Any],
+    defender_form: Mapping[str, Any],
+    attacker_stats: Mapping[str, int],
+    *,
+    attacker_ability: str | None = None,
+    defender_ability: str | None = None,
+    attacker_item: str | None = None,
+    defender_item: str | None = None,
+    field_modifiers: Mapping[str, Any] | None = None,
+    selected_hit_count: int | None = None,
+    damage_outcomes: tuple[tuple[int, float], ...] | None = None,
+) -> dict[str, Any] | None:
+    """Return self-damage components caused by one successful move use.
+
+    The target-damage distribution is passed in from the UI so recoil follows
+    the exact same rolls, item effects, Crits, multi-hit count and berries as
+    the displayed attack.  The returned ``total`` is the range of HP lost by
+    the attacker; ``components`` keeps the reasons separate for the detail
+    text and for future KO-state simulation.
+    """
+    if damage_outcomes is None:
+        return None
+    damage_values = [max(0, int(damage)) for damage, _probability in damage_outcomes]
+    if not damage_values:
+        return None
+
+    field = field_modifiers if isinstance(field_modifiers, Mapping) else {}
+    attacker_side = _field_side(field, "attacker_side")
+    room = _field_id(field.get("room"))
+    weather = _field_id(field.get("weather"))
+    effective_attacker_item = None if room == "magic-room" else attacker_item
+    effective_defender_item = None if room == "magic-room" else defender_item
+    attacker_ability = _calculation_ability(attacker_ability)
+    defender_ability = _calculation_ability(defender_ability)
+    components: list[tuple[str, tuple[int, int]]] = []
+    target_was_damaged = any(value > 0 for value in damage_values)
+
+    recoil_fraction = _move_recoil_fraction(move)
+    if recoil_fraction and target_was_damaged and attacker_ability not in RECOIL_BLOCKING_ABILITIES:
+        numerator, denominator = recoil_fraction
+        recoil_values = [
+            _round_half_up_fraction(value, numerator, denominator)
+            for value in damage_values
+            if value > 0
+        ]
+        if recoil_values:
+            components.append(("move_recoil", (min(recoil_values), max(recoil_values))))
+
+    attacker_max_hp = _max_hp(attacker_stats)
+    if target_was_damaged and _life_orb_recoil_applies(
+        move,
+        attacker_ability,
+        effective_attacker_item,
+    ):
+        life_orb_damage = max(1, attacker_max_hp // 10)
+        components.append(("life_orb", (life_orb_damage, life_orb_damage)))
+
+    fixed_self_damage = _self_max_hp_loss(
+        move,
+        attacker_ability,
+        attacker_max_hp,
+    )
+    if fixed_self_damage:
+        components.append(("self_hp_loss", (fixed_self_damage, fixed_self_damage)))
+
+    if attacker_ability == "solar-power" and weather == "sun" and not _utility_umbrella_active(
+        effective_attacker_item,
+        room == "magic-room",
+    ):
+        solar_power_damage = max(1, attacker_max_hp // 8)
+        components.append(("solar_power", (solar_power_damage, solar_power_damage)))
+
+    properties = {str(value).casefold() for value in move.get("properties", [])}
+    contact_allowed = (
+        "contact" in properties
+        and target_was_damaged
+        and attacker_ability not in CONTACT_SUPPRESSING_ABILITIES
+        and effective_attacker_item not in CONTACT_SUPPRESSING_ITEMS
+        and attacker_ability != "magic-guard"
+    )
+    if contact_allowed:
+        minimum_hits, maximum_hits = _hit_count_bounds(
+            move,
+            attacker_ability,
+            effective_attacker_item,
+            selected_hit_count,
+            attacker_form=attacker_form,
+            attacker_side=attacker_side,
+        )
+        contact_components: list[tuple[str, int]] = []
+        if defender_ability in CONTACT_DAMAGE_ABILITIES:
+            contact_components.append((defender_ability, max(1, attacker_max_hp // 8)))
+        if effective_defender_item in CONTACT_DAMAGE_ITEMS:
+            contact_components.append((effective_defender_item, max(1, attacker_max_hp // 6)))
+        for component_key, damage_per_hit in contact_components:
+            components.append(
+                (
+                    component_key,
+                    (damage_per_hit * minimum_hits, damage_per_hit * maximum_hits),
+                )
+            )
+
+    if not components:
+        return None
+    minimum = sum(ranges[0] for _key, ranges in components)
+    maximum = sum(ranges[1] for _key, ranges in components)
+    return {
+        "total": (minimum, maximum),
+        "components": tuple(components),
+    }
+
+
+def calculate_damage_result(
+    move: Mapping[str, Any],
+    attacker_form: Mapping[str, Any],
+    defender_form: Mapping[str, Any],
+    attacker_stats: Mapping[str, int],
+    defender_stats: Mapping[str, int],
+    *,
+    attacker_ability: str | None = None,
+    defender_ability: str | None = None,
+    attacker_item: str | None = None,
+    defender_item: str | None = None,
+    attacker_stat_stages: Mapping[str, int] | None = None,
+    defender_stat_stages: Mapping[str, int] | None = None,
+    attacker_burned: bool = False,
+    defender_at_full_hp: bool = True,
+    attacker_current_hp: int | None = None,
+    defender_current_hp: int | None = None,
+    battle_mode: str = "doubles",
+    field_modifiers: Mapping[str, Any] | None = None,
+    critical_hit: bool = False,
+    critical_hit_count: int | None = None,
+    selected_hit_count: int | None = None,
+) -> DamageResult:
+    """Calculate the shared per-attack values once for all UI consumers."""
+    outcomes = calculate_damage_outcomes(
+        move,
+        attacker_form,
+        defender_form,
+        attacker_stats,
+        defender_stats,
+        attacker_ability=attacker_ability,
+        defender_ability=defender_ability,
+        attacker_item=attacker_item,
+        defender_item=defender_item,
+        attacker_stat_stages=attacker_stat_stages,
+        defender_stat_stages=defender_stat_stages,
+        attacker_burned=attacker_burned,
+        defender_at_full_hp=defender_at_full_hp,
+        attacker_current_hp=attacker_current_hp,
+        defender_current_hp=defender_current_hp,
+        battle_mode=battle_mode,
+        field_modifiers=field_modifiers,
+        critical_hit=critical_hit,
+        critical_hit_count=critical_hit_count,
+        selected_hit_count=selected_hit_count,
+    )
+    if not outcomes:
+        return DamageResult(None, None, None, None, ())
+
+    damages = tuple(int(damage) for damage, _probability in outcomes)
+    damage_range = (min(damages), max(damages))
+    percent_range = damage_percent_range(
+        damage_range,
+        _max_hp(defender_stats),
+    )
+    self_damage = calculate_self_damage_details(
+        move,
+        attacker_form,
+        defender_form,
+        attacker_stats,
+        attacker_ability=attacker_ability,
+        defender_ability=defender_ability,
+        attacker_item=attacker_item,
+        defender_item=defender_item,
+        field_modifiers=field_modifiers,
+        selected_hit_count=selected_hit_count,
+        damage_outcomes=outcomes,
+    )
+    multipliers = calculate_damage_multipliers(
+        move,
+        attacker_form,
+        defender_form,
+        attacker_stats,
+        defender_stats,
+        attacker_ability=attacker_ability,
+        defender_ability=defender_ability,
+        attacker_item=attacker_item,
+        defender_item=defender_item,
+        attacker_stat_stages=attacker_stat_stages,
+        defender_stat_stages=defender_stat_stages,
+        attacker_burned=attacker_burned,
+        defender_at_full_hp=defender_at_full_hp,
+        attacker_current_hp=attacker_current_hp,
+        defender_current_hp=defender_current_hp,
+        battle_mode=battle_mode,
+        field_modifiers=field_modifiers,
+        critical_hit=critical_hit,
+        critical_hit_count=critical_hit_count,
+        selected_hit_count=selected_hit_count,
+    )
+    return DamageResult(outcomes, damage_range, percent_range, self_damage, multipliers)
 
 
 def _healing_amount(specification: int | str, max_hp: int) -> int:
@@ -2125,6 +2739,9 @@ def _end_turn_hp_update(
     terrain: str | None,
     defender_grounded: bool,
     defender_side: Mapping[str, Any],
+    *,
+    weather: str | None = None,
+    defender_ability: str | None = None,
 ) -> int:
     """Apply the persistent end-of-turn HP effects relevant to KO timing."""
     if hp <= 0:
@@ -2148,6 +2765,18 @@ def _end_turn_hp_update(
         hp = max(0, hp - salt_cure_damage)
     if defender_side.get("nightmare"):
         hp = max(0, hp - max(1, max_hp // 4))
+    if _status_is_burned(defender_side.get("status")):
+        burn_damage = max(1, max_hp // 16)
+        if defender_ability == "heatproof":
+            burn_damage = max(1, burn_damage // 2)
+        hp = max(0, hp - burn_damage)
+    if defender_ability == "dry-skin":
+        if weather == "sun":
+            hp = max(0, hp - max(1, max_hp // 8))
+        elif weather == "rain":
+            hp = min(max_hp, hp + max(1, max_hp // 8))
+    if defender_ability == "solar-power" and weather == "sun":
+        hp = max(0, hp - max(1, max_hp // 8))
     return hp
 
 
@@ -2372,6 +3001,35 @@ def _ko_effect_keys(
         effects.append("salt_cure")
     if defender_side.get("nightmare"):
         effects.append("nightmare")
+
+    if (
+        _move_recoil_fraction(move)
+        and attacker_ability not in RECOIL_BLOCKING_ABILITIES
+    ):
+        effects.append("move_recoil")
+    if (
+        category in {"physical", "special"}
+        and not has_fixed_damage
+        and _life_orb_recoil_applies(
+            move,
+            attacker_ability,
+            effective_attacker_item,
+        )
+    ):
+        effects.append("life_orb")
+    if _self_max_hp_loss(move, attacker_ability, 100):
+        effects.append("self_hp_loss")
+    move_properties = {str(value).casefold() for value in move.get("properties", [])}
+    if (
+        "contact" in move_properties
+        and attacker_ability not in CONTACT_SUPPRESSING_ABILITIES
+        and effective_attacker_item not in CONTACT_SUPPRESSING_ITEMS
+        and attacker_ability != "magic-guard"
+    ):
+        if defender_ability in CONTACT_DAMAGE_ABILITIES:
+            effects.append(str(defender_ability))
+        if effective_item in CONTACT_DAMAGE_ITEMS:
+            effects.append(str(effective_item))
     return tuple(dict.fromkeys(effects))
 
 
@@ -2442,17 +3100,6 @@ def calculate_ko_summary(
         effective_defender_item,
         gravity,
     )
-    effectiveness = calculate_effectiveness(
-        move,
-        attacker_form,
-        defender_form,
-        attacker_ability=attacker_ability,
-        defender_ability=defender_ability,
-        attacker_item=attacker_item,
-        defender_item=defender_item,
-        field_modifiers=field_modifiers,
-    )
-
     target_starts_full = bool(defender_at_full_hp and defender_start_hp >= defender_hp)
     hazard_damage = 0
     hazard_details: tuple[tuple[str, int], ...] = ()
@@ -2465,6 +3112,18 @@ def calculate_ko_summary(
             gravity,
             defender_side,
         )
+    target_is_full_for_ability = bool(target_starts_full and hazard_damage == 0)
+    effectiveness = calculate_effectiveness(
+        move,
+        attacker_form,
+        defender_form,
+        attacker_ability=attacker_ability,
+        defender_ability=defender_ability,
+        attacker_item=attacker_item,
+        defender_item=defender_item,
+        field_modifiers=field_modifiers,
+        defender_at_full_hp=target_is_full_for_ability,
+    )
     considered_effects = _ko_effect_keys(
         move,
         attacker_form,
@@ -2477,7 +3136,7 @@ def calculate_ko_summary(
         effectiveness,
         battle_mode,
         field_modifiers,
-        target_starts_full,
+        target_is_full_for_ability,
         critical_hit=critical_hit,
         critical_hit_count=critical_hit_count,
     )
@@ -2505,6 +3164,11 @@ def calculate_ko_summary(
     weather_for_attacker = (
         None
         if _utility_umbrella_active(effective_attacker_item, room == "magic-room")
+        else weather
+    )
+    weather_for_defender = (
+        None
+        if _utility_umbrella_active(effective_defender_item, room == "magic-room")
         else weather
     )
     move_type_for_charge, _ = _resolve_move_type(
@@ -2584,11 +3248,16 @@ def calculate_ko_summary(
             )
         return roll_cache[cache_key]
 
-    # State values are (current HP, held item, charge still available).  The
+    sturdy_available = bool(
+        defender_ability_for_grounding == "sturdy" and target_is_full_for_ability
+    )
+
+    # State values are (current HP, held item, charge still available, Sturdy
+    # still available).  The
     # probabilities are kept as floats because variable hit-count moves have
     # non-binary 35/35/15/15 probabilities.
-    states: dict[tuple[int, str | None, bool], float] = {
-        (starting_hp, effective_defender_item, charge_available): 1.0,
+    states: dict[tuple[int, str | None, bool, bool], float] = {
+        (starting_hp, effective_defender_item, charge_available, sturdy_available): 1.0,
     }
     type_effectiveness_applies = (
         move_effects.get("fixed_damage") is None
@@ -2598,10 +3267,10 @@ def calculate_ko_summary(
     for attack_number in range(1, max_hits + 1):
         next_states: dict[tuple[int, str | None, bool], float] = {}
         successful_probability = 0.0
-        for (state_hp, state_item, state_charge), state_probability in states.items():
+        for (state_hp, state_item, state_charge, state_sturdy), state_probability in states.items():
             for hit_count, hit_count_probability in hit_count_distribution:
-                hit_states: dict[tuple[int, str | None], float] = {
-                    (state_hp, state_item): state_probability * hit_count_probability,
+                hit_states: dict[tuple[int, str | None, bool], float] = {
+                    (state_hp, state_item, state_sturdy): state_probability * hit_count_probability,
                 }
                 for hit_index in range(hit_count):
                     next_hit_states: dict[tuple[int, str | None], float] = {}
@@ -2611,7 +3280,7 @@ def calculate_ko_summary(
                         hit_is_critical = hit_index < critical_hit_count
                     else:
                         hit_is_critical = bool(critical_hit)
-                    for (current_hp, current_item), hit_state_probability in hit_states.items():
+                    for (current_hp, current_item, current_sturdy), hit_state_probability in hit_states.items():
                         variants = rolls_for(
                             current_item,
                             current_hp,
@@ -2636,9 +3305,14 @@ def calculate_ko_summary(
                                 damage = int(damage)
                                 new_hp = current_hp - damage
                                 path_probability = roll_probability
+                                sturdy_after_hit = current_sturdy
                                 if new_hp <= 0:
-                                    successful_probability += path_probability
-                                    continue
+                                    if sturdy_after_hit and current_hp >= defender_hp:
+                                        new_hp = 1
+                                        sturdy_after_hit = False
+                                    else:
+                                        successful_probability += path_probability
+                                        continue
                                 new_hp, new_item = _post_hit_berry_effects(
                                     new_hp,
                                     defender_hp,
@@ -2649,13 +3323,13 @@ def calculate_ko_summary(
                                 )
                                 if move_name == "knockoff" and damage > 0:
                                     new_item = None
-                                next_key = (new_hp, new_item)
+                                next_key = (new_hp, new_item, sturdy_after_hit)
                                 next_hit_states[next_key] = next_hit_states.get(next_key, 0.0) + path_probability
                     hit_states = next_hit_states
                     if not hit_states:
                         break
 
-                for (surviving_hp, surviving_item), path_probability in hit_states.items():
+                for (surviving_hp, surviving_item, surviving_sturdy), path_probability in hit_states.items():
                     end_hp = _end_turn_hp_update(
                         surviving_hp,
                         defender_hp,
@@ -2664,6 +3338,8 @@ def calculate_ko_summary(
                         _field_id(field.get("terrain")),
                         defender_grounded,
                         defender_side,
+                        weather=weather_for_defender,
+                        defender_ability=defender_ability_for_grounding,
                     )
                     if end_hp <= 0:
                         successful_probability += path_probability
@@ -2673,7 +3349,7 @@ def calculate_ko_summary(
                     if move_name == "finalgambit":
                         continue
                     next_charge = state_charge and not charge_consumed_by_move
-                    next_key = (end_hp, surviving_item, next_charge)
+                    next_key = (end_hp, surviving_item, next_charge, surviving_sturdy)
                     next_states[next_key] = next_states.get(next_key, 0.0) + path_probability
 
         if successful_probability > 0:

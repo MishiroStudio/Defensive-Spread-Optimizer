@@ -1,0 +1,653 @@
+/* speed-tier-trainer.css — Speed Tier Trainer PWA V1 */
+:root {
+  --trainer-page-start: #eef2ff;
+  --trainer-page-middle: #f8fafc;
+  --trainer-page-end: #e2e8f0;
+  --trainer-surface: #ffffff;
+  --trainer-surface-soft: #f7f8fa;
+  --trainer-surface-accent: #fff3e5;
+  --trainer-text: #222222;
+  --trainer-muted: #667085;
+  --trainer-border: #d9dde5;
+  --trainer-accent: #f28c28;
+  --trainer-accent-hover: #ff9f40;
+  --trainer-success: #2e7d32;
+  --trainer-warning: #c66a00;
+  --trainer-decreased: #3276b1;
+  --trainer-danger: #c94c4c;
+  --trainer-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --trainer-page-start: #0b1120;
+    --trainer-page-middle: #0e1424;
+    --trainer-page-end: #111827;
+    --trainer-surface: #182033;
+    --trainer-surface-soft: #151d2d;
+    --trainer-surface-accent: #332619;
+    --trainer-text: #f2f4f8;
+    --trainer-muted: #aab3c2;
+    --trainer-border: #39465c;
+    --trainer-success: #69c47b;
+    --trainer-warning: #ffb35c;
+    --trainer-decreased: #76b5ea;
+    --trainer-danger: #ff7b7b;
+    --trainer-shadow: 0 28px 80px rgba(0, 0, 0, 0.36);
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  margin: 0;
+  background: linear-gradient(
+    160deg,
+    var(--trainer-page-start) 0%,
+    var(--trainer-page-middle) 56%,
+    var(--trainer-page-end) 100%
+  );
+  color: var(--trainer-text);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--trainer-accent) 26%, transparent);
+  outline-offset: 2px;
+}
+
+.trainer-app-shell {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+  place-items: start center;
+}
+
+.trainer-card {
+  width: min(100%, 720px);
+  padding: 26px;
+  border: 1px solid color-mix(in srgb, var(--trainer-border) 80%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--trainer-surface) 96%, transparent);
+  box-shadow: var(--trainer-shadow);
+}
+
+.trainer-status-card {
+  display: grid;
+  min-height: 280px;
+  place-items: center;
+  color: var(--trainer-muted);
+  text-align: center;
+}
+
+.trainer-error {
+  color: var(--trainer-danger);
+  font-weight: 750;
+}
+
+.trainer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.trainer-brand,
+.trainer-header h1 {
+  margin: 0;
+}
+
+.trainer-brand {
+  color: var(--trainer-accent);
+  font-size: clamp(1.55rem, 6vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.trainer-header h1 {
+  margin-top: 7px;
+  color: var(--trainer-muted);
+  font-size: clamp(1.1rem, 4vw, 1.35rem);
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.trainer-header-actions {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.trainer-language,
+.trainer-install {
+  padding: 6px 3px;
+  border: 0;
+  background: transparent;
+  color: var(--trainer-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.trainer-install {
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--trainer-accent) 55%, var(--trainer-border));
+  border-radius: 9px;
+  background: var(--trainer-surface-accent);
+}
+
+.trainer-language:hover,
+.trainer-install:hover {
+  color: var(--trainer-accent-hover);
+}
+
+.trainer-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(112px, 0.9fr) auto;
+  gap: 9px;
+  margin-top: 26px;
+  align-items: end;
+}
+
+.trainer-settings label {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.trainer-settings label > span {
+  overflow: hidden;
+  color: var(--trainer-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.trainer-settings select,
+.trainer-form-selector select,
+.trainer-answer-row input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--trainer-border);
+  border-radius: 10px;
+  background: var(--trainer-surface);
+  color: var(--trainer-text);
+}
+
+.trainer-settings select {
+  height: 42px;
+  padding: 0 34px 0 11px;
+  font-size: 0.88rem;
+}
+
+.trainer-primary-button,
+.trainer-secondary-button,
+.trainer-reveal-button {
+  min-height: 42px;
+  border-radius: 10px;
+  font-weight: 850;
+}
+
+.trainer-primary-button {
+  padding: 9px 16px;
+  border: 1px solid var(--trainer-accent);
+  background: var(--trainer-accent);
+  color: #1b120a;
+}
+
+.trainer-primary-button:hover {
+  border-color: var(--trainer-accent-hover);
+  background: var(--trainer-accent-hover);
+}
+
+.trainer-primary-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.trainer-secondary-button {
+  height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--trainer-border);
+  background: var(--trainer-surface);
+  color: var(--trainer-text);
+  white-space: nowrap;
+}
+
+.trainer-secondary-button:hover {
+  border-color: var(--trainer-accent);
+}
+
+.trainer-score {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.trainer-stat-card {
+  display: grid;
+  min-width: 0;
+  min-height: 70px;
+  align-content: center;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--trainer-border);
+  border-radius: 13px;
+  background: var(--trainer-surface-soft);
+}
+
+.trainer-stat-card span {
+  overflow: hidden;
+  color: var(--trainer-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.025em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.trainer-stat-card strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.trainer-quiz-card {
+  display: grid;
+  justify-items: center;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid var(--trainer-border);
+  border-radius: 18px;
+  background: var(--trainer-surface-soft);
+}
+
+.trainer-sprite {
+  display: block;
+  width: 118px;
+  height: 118px;
+  object-fit: contain;
+}
+
+.trainer-quiz-card > h2 {
+  margin: 5px 0 0;
+  color: var(--trainer-text);
+  font-size: clamp(1.55rem, 7vw, 2rem);
+  line-height: 1.1;
+  text-align: center;
+}
+
+.trainer-form-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(100%, 310px);
+  margin-top: 14px;
+}
+
+.trainer-form-selector span {
+  color: var(--trainer-muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.trainer-form-selector select {
+  height: 38px;
+  padding: 0 32px 0 10px;
+  font-size: 0.85rem;
+}
+
+.trainer-prompt {
+  margin: 20px 0 0;
+  color: var(--trainer-muted);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.trainer-answer-row {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.trainer-answer-row input {
+  width: 112px;
+  height: 48px;
+  padding: 0 10px;
+  font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+  text-align: center;
+}
+
+.trainer-answer-row input::placeholder {
+  color: color-mix(in srgb, var(--trainer-muted) 60%, transparent);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.trainer-answer-row .trainer-primary-button {
+  min-width: 148px;
+}
+
+.trainer-validation {
+  margin: 8px 0 0;
+  color: var(--trainer-danger);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.trainer-result {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid var(--trainer-border);
+  border-radius: 15px;
+  background: var(--trainer-surface);
+}
+
+.trainer-result-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.trainer-result-heading h3,
+.trainer-result-heading p {
+  margin: 0;
+}
+
+.trainer-result-heading h3 {
+  font-size: 1.2rem;
+}
+
+.trainer-result-heading p {
+  margin-top: 7px;
+  color: var(--trainer-muted);
+  font-size: 0.9rem;
+}
+
+.trainer-result-exact {
+  color: var(--trainer-success);
+}
+
+.trainer-result-low,
+.trainer-result-high {
+  color: var(--trainer-warning);
+}
+
+.trainer-result-revealed {
+  color: var(--trainer-muted);
+}
+
+.trainer-base-speed {
+  display: grid;
+  min-width: 102px;
+  min-height: 72px;
+  place-items: center;
+  align-content: center;
+  border: 1px solid var(--trainer-accent);
+  border-radius: 12px;
+  background: var(--trainer-surface-accent);
+}
+
+.trainer-base-speed span {
+  color: var(--trainer-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.trainer-base-speed strong {
+  color: var(--trainer-accent);
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.trainer-speed-table {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr 1fr;
+  gap: 1px;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid var(--trainer-border);
+  border-radius: 11px;
+  background: var(--trainer-border);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trainer-speed-table > * {
+  display: grid;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0;
+  padding: 7px;
+  place-items: center;
+  background: var(--trainer-surface);
+  text-align: center;
+}
+
+.trainer-speed-table > :nth-child(3n + 1) {
+  justify-items: start;
+  text-align: left;
+}
+
+.trainer-speed-table > strong {
+  background: var(--trainer-surface-soft);
+  font-weight: 850;
+}
+
+.trainer-speed-table > b {
+  font-weight: 800;
+}
+
+.trainer-speed-table > span {
+  font-weight: 750;
+}
+
+.trainer-speed-table .trainer-increased {
+  color: var(--trainer-accent);
+}
+
+.trainer-speed-table .trainer-decreased {
+  color: var(--trainer-decreased);
+}
+
+.trainer-action-slot {
+  display: grid;
+  width: min(100%, 260px);
+  min-height: 44px;
+  margin-top: 14px;
+}
+
+.trainer-reveal-button {
+  border: 0;
+  background: transparent;
+  color: var(--trainer-accent);
+}
+
+.trainer-reveal-button:hover {
+  color: var(--trainer-accent-hover);
+}
+
+.trainer-source-note {
+  margin: 12px 0 0;
+  color: var(--trainer-muted);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.trainer-modal-backdrop {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  inset: 0;
+  padding: 20px;
+  place-items: center;
+  background: rgba(8, 15, 29, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.trainer-install-dialog {
+  width: min(100%, 390px);
+  padding: 24px;
+  border: 1px solid var(--trainer-border);
+  border-radius: 18px;
+  background: var(--trainer-surface);
+  box-shadow: var(--trainer-shadow);
+  text-align: center;
+}
+
+.trainer-install-dialog h2,
+.trainer-install-dialog p {
+  margin: 0;
+}
+
+.trainer-install-dialog h2 {
+  font-size: 1.3rem;
+}
+
+.trainer-install-dialog p {
+  margin-top: 12px;
+  color: var(--trainer-muted);
+  line-height: 1.55;
+}
+
+.trainer-install-dialog button {
+  width: 100%;
+  margin-top: 18px;
+}
+
+@media (max-width: 620px) {
+  .trainer-app-shell {
+    padding: 0;
+  }
+
+  .trainer-card {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding:
+      max(18px, env(safe-area-inset-top))
+      max(14px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .trainer-settings {
+    grid-template-columns: minmax(0, 1.45fr) minmax(108px, 0.8fr);
+  }
+
+  .trainer-settings .trainer-secondary-button {
+    grid-column: 1 / -1;
+  }
+
+  .trainer-score {
+    gap: 6px;
+  }
+
+  .trainer-stat-card {
+    min-height: 64px;
+    padding: 8px;
+  }
+
+  .trainer-stat-card span {
+    font-size: 0.57rem;
+  }
+
+  .trainer-stat-card strong {
+    font-size: 1.2rem;
+  }
+
+  .trainer-quiz-card {
+    padding: 18px 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .trainer-header {
+    gap: 8px;
+  }
+
+  .trainer-brand {
+    font-size: 1.38rem;
+  }
+
+  .trainer-header h1 {
+    font-size: 0.95rem;
+  }
+
+  .trainer-language,
+  .trainer-install {
+    font-size: 0.68rem;
+  }
+
+  .trainer-settings {
+    margin-top: 20px;
+  }
+
+  .trainer-answer-row input {
+    width: 96px;
+  }
+
+  .trainer-answer-row .trainer-primary-button {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .trainer-speed-table {
+    font-size: 0.7rem;
+  }
+
+  .trainer-speed-table > * {
+    padding: 6px 4px;
+  }
+}

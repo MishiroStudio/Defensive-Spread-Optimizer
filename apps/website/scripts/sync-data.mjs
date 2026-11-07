@@ -29,6 +29,7 @@ const dataFiles = [
   'learnsets.json',
   'abilities.json',
   'regulations.json',
+  'usage_stats.json',
   'items.json',
 ]
 

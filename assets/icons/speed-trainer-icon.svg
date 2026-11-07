@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">MISHIRO Speed Tier Trainer</title>
+  <desc id="description">An orange app icon with a white speedometer and a dark needle.</desc>
+  <rect width="512" height="512" fill="#f28c28"/>
+  <path
+    d="M115 327a155 155 0 0 1 282 0"
+    fill="none"
+    stroke="#fff"
+    stroke-linecap="round"
+    stroke-width="42"
+  />
+  <path d="M256 132v34M160 174l24 28M352 174l-24 28M115 263h38M359 263h38" stroke="#fff" stroke-linecap="round" stroke-width="19"/>
+  <path d="M256 281 350 207 282 307Z" fill="#242424"/>
+  <circle cx="256" cy="310" r="43" fill="#fff" stroke="#242424" stroke-width="18"/>
+  <circle cx="256" cy="310" r="15" fill="#f28c28"/>
+  <path d="M178 381h156" stroke="#fff" stroke-linecap="round" stroke-width="30"/>
+</svg>

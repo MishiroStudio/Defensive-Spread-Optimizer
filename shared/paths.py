@@ -35,3 +35,4 @@ DATA_DIR = PROJECT_ROOT / "data"
 ASSETS_DIR = PROJECT_ROOT / "assets"
 
 POKEMON_V2_FILE = DATA_DIR / "pokemon_v2.json"
+USAGE_STATS_FILE = DATA_DIR / "usage_stats.json"

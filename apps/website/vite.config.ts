@@ -1,4 +1,4 @@
-// vite.config.ts — Pokédex/Optimizer V10
+// vite.config.ts — Cordy's Lab PWA V11
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -20,6 +20,9 @@ export default defineConfig({
         teamBuilder: fileURLToPath(
           new URL('./team-builder/index.html', import.meta.url),
         ),
+        speedTrainer: fileURLToPath(
+          new URL('./speed-trainer/index.html', import.meta.url),
+        ),
       },
     },
   },
@@ -39,7 +42,11 @@ export default defineConfig({
         'icons/pokedex-apple-touch-icon.png',
         'icons/pokedex-192x192.png',
         'icons/pokedex-512x512.png',
+        'icons/speed-trainer-apple-touch-icon.png',
+        'icons/speed-trainer-192x192.png',
+        'icons/speed-trainer-512x512.png',
         'team-builder.webmanifest',
+        'speed-trainer.webmanifest',
         'assets/sprites/missingno.png',
       ],
 
