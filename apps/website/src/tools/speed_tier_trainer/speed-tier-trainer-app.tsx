@@ -1,4 +1,4 @@
-// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V3
+// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V4
 import {
   useEffect,
   useMemo,
@@ -181,6 +181,7 @@ export default function SpeedTierTrainerApp() {
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [loadError, setLoadError] = useState("");
   const answerInputRef = useRef<HTMLInputElement>(null);
+  const actionSlotRef = useRef<HTMLDivElement>(null);
 
   const text = COPY[language];
 
@@ -213,9 +214,16 @@ export default function SpeedTierTrainerApp() {
   useEffect(() => {
     if (!result) return undefined;
     const frame = window.requestAnimationFrame(() => {
+      const actionSlot = actionSlotRef.current;
+      if (!actionSlot) return;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
+      const viewport = window.visualViewport;
+      const viewportBottom = (viewport?.offsetTop ?? 0)
+        + (viewport?.height ?? window.innerHeight);
+      const offset = actionSlot.getBoundingClientRect().bottom - (viewportBottom - 8);
+      if (Math.abs(offset) < 2) return;
+      window.scrollBy({
+        top: offset,
         behavior: reducedMotion ? "auto" : "smooth",
       });
     });
@@ -514,7 +522,10 @@ export default function SpeedTierTrainerApp() {
             </section>
           )}
 
-          <div className={`trainer-action-slot${session.isComplete ? " trainer-action-slot-complete" : ""}`}>
+          <div
+            ref={actionSlotRef}
+            className={`trainer-action-slot${session.isComplete ? " trainer-action-slot-complete" : ""}`}
+          >
             {result && session.isComplete ? (
               <section className="trainer-round-complete" aria-live="polite">
                 <h3>{text.roundComplete}</h3>

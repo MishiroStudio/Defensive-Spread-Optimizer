@@ -1,4 +1,4 @@
-/* speed-tier-trainer.css — Speed Tier Trainer PWA V2 */
+/* speed-tier-trainer.css — Speed Tier Trainer PWA V4 */
 :root {
   --trainer-page-start: #eef2ff;
   --trainer-page-middle: #f8fafc;
@@ -601,7 +601,109 @@ select:focus-visible {
   }
 
   .trainer-quiz-card {
-    padding: 18px 14px;
+    padding: 14px 12px;
+  }
+
+  .trainer-sprite {
+    width: 92px;
+    height: 92px;
+  }
+
+  .trainer-quiz-card > h2 {
+    margin-top: 2px;
+    font-size: clamp(1.4rem, 6vw, 1.75rem);
+  }
+
+  .trainer-form-selector {
+    margin-top: 10px;
+  }
+
+  .trainer-form-selector select {
+    height: 34px;
+  }
+
+  .trainer-prompt {
+    margin-top: 12px;
+    font-size: 0.92rem;
+  }
+
+  .trainer-answer-row {
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .trainer-answer-row input {
+    width: 96px;
+    height: 42px;
+    font-size: 1.25rem;
+  }
+
+  .trainer-answer-row .trainer-primary-button {
+    min-width: 132px;
+    min-height: 42px;
+    padding: 7px 12px;
+    font-size: 0.9rem;
+  }
+
+  .trainer-result {
+    margin-top: 12px;
+    padding: 11px;
+  }
+
+  .trainer-result > .trainer-form-selector {
+    margin-bottom: 10px;
+  }
+
+  .trainer-result-heading {
+    gap: 10px;
+  }
+
+  .trainer-result-heading h3 {
+    font-size: 1.1rem;
+  }
+
+  .trainer-result-heading p {
+    margin-top: 5px;
+    font-size: 0.84rem;
+  }
+
+  .trainer-base-speed {
+    min-width: 88px;
+    min-height: 58px;
+    border-radius: 10px;
+  }
+
+  .trainer-base-speed span {
+    font-size: 0.57rem;
+  }
+
+  .trainer-base-speed strong {
+    font-size: 1.55rem;
+  }
+
+  .trainer-speed-table {
+    margin-top: 10px;
+    font-size: 0.75rem;
+  }
+
+  .trainer-speed-table > * {
+    min-height: 35px;
+    padding: 6px;
+  }
+
+  .trainer-action-slot {
+    width: min(100%, 240px);
+    min-height: 40px;
+    margin-top: 8px;
+  }
+
+  .trainer-action-slot > .trainer-primary-button {
+    min-height: 40px;
+    padding: 7px 14px;
+  }
+
+  .trainer-action-slot-complete {
+    width: 100%;
   }
 
   .trainer-round-actions {
