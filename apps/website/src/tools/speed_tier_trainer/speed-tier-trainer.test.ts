@@ -1,3 +1,4 @@
+// speed-tier-trainer.test.ts — Speed Tier Trainer PWA V2
 import { describe, expect, it } from "vitest";
 
 import type {
@@ -7,6 +8,7 @@ import type {
 import {
   TrainerCatalog,
   TrainerSession,
+  USAGE_LIMITS,
   calculateSpeedValues,
   type TrainerBundle,
   type UsageDataset,
@@ -52,7 +54,7 @@ function usageDataset(
 }
 
 function bundle(): TrainerBundle {
-  const regularSpecies: PokemonSpecies[] = Array.from({ length: 12 }, (_, index) => {
+  const regularSpecies: PokemonSpecies[] = Array.from({ length: 30 }, (_, index) => {
     const pokemonId = index + 1;
     return {
       dex: pokemonId,
@@ -138,14 +140,18 @@ describe("Speed Tier Trainer catalog", () => {
     ]);
   });
 
-  it("uses the ranked Showdown pool for Top 10 and National Dex", () => {
+  it("uses the ranked Showdown pool for Top 10, Top 25, and National Dex", () => {
     const catalog = new TrainerCatalog(bundle());
-    const expected = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3];
+    const expectedTop10 = [30, 29, 28, 27, 26, 25, 24, 23, 22, 21];
+    const expectedTop25 = Array.from({ length: 25 }, (_, index) => 30 - index);
 
     expect(catalog.entriesForScope("reg-m-c", 10).map((entry) => entry.pokemon_id))
-      .toEqual(expected);
+      .toEqual(expectedTop10);
     expect(catalog.entriesForScope("all", 10).map((entry) => entry.pokemon_id))
-      .toEqual(expected);
+      .toEqual(expectedTop10);
+    expect(catalog.entriesForScope("reg-m-c", 25).map((entry) => entry.pokemon_id))
+      .toEqual(expectedTop25);
+    expect(USAGE_LIMITS).toEqual([100, 50, 25, 10]);
   });
 
   it("offers Floette's Eternal Flower and Mega forms together", () => {
@@ -164,21 +170,32 @@ describe("Speed Tier Trainer calculations and session", () => {
       minimumDecreased: 63,
       maximumNeutral: 102,
       maximumIncreased: 112,
+      choiceScarfNeutral: 153,
+      choiceScarfIncreased: 168,
     });
   });
 
-  it("scores guesses, reveals, and alternative forms", () => {
+  it("recalculates an answered question immediately after a Mega form switch", () => {
     const base = { ...form(1, "base", 80), national_dex: 1, evolves_from_species_id: null };
     const mega = { ...form(2, "base-mega", 100), national_dex: 1, evolves_from_species_id: null };
-    const session = new TrainerSession([base], () => 0);
+    const session = new TrainerSession([base], { random: () => 0 });
 
-    expect(session.submit(100, mega)).toMatchObject({
-      pokemon: mega,
+    expect(session.submit(80, base)).toMatchObject({
+      pokemon: base,
       difference: 0,
       direction: "exact",
     });
     expect(session.exact).toBe(1);
     expect(session.accuracy).toBe(1);
+
+    expect(session.recalculateCurrentResult(mega)).toMatchObject({
+      pokemon: mega,
+      guess: 80,
+      difference: -20,
+      direction: "low",
+    });
+    expect(session.exact).toBe(0);
+    expect(session.incorrectPokemon).toEqual([mega]);
     expect(() => session.submit(100, mega)).toThrow();
 
     session.advance();
@@ -191,13 +208,36 @@ describe("Speed Tier Trainer calculations and session", () => {
     expect(session.currentStreak).toBe(0);
   });
 
+  it("finishes a limited round and exposes only its incorrect Pokémon", () => {
+    const pokemon = [1, 2, 3].map((id) => ({
+      ...form(id, `pokemon-${id}`, 50 + id),
+      national_dex: id,
+      evolves_from_species_id: null,
+    }));
+    const session = new TrainerSession(pokemon, { finite: true, random: () => 0 });
+
+    session.submit(session.current.base_stats.spe);
+    session.advance();
+    const firstIncorrect = session.current;
+    session.submit(1);
+    session.advance();
+    const secondIncorrect = session.current;
+    session.submit(null);
+
+    expect(session.isComplete).toBe(true);
+    expect(session.exact).toBe(1);
+    expect(session.incorrectPokemon).toEqual([firstIncorrect, secondIncorrect]);
+    expect(session.roundPokemon).toEqual(pokemon);
+    expect(() => session.advance()).toThrow("Runde ist bereits abgeschlossen");
+  });
+
   it("runs endlessly without repeats inside a deck or at its boundary", () => {
     const pokemon = [1, 2, 3].map((id) => ({
       ...form(id),
       national_dex: id,
       evolves_from_species_id: null,
     }));
-    const session = new TrainerSession(pokemon, () => 0);
+    const session = new TrainerSession(pokemon, { random: () => 0 });
     const firstDeck: number[] = [];
 
     for (let index = 0; index < pokemon.length; index += 1) {

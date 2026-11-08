@@ -1,4 +1,4 @@
-// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V1
+// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V2
 import {
   useEffect,
   useMemo,
@@ -19,20 +19,10 @@ import {
 } from "./speed-tier-trainer-data";
 import type { Language, PokemonForm } from "../pokedex/pokedex-data";
 
-interface InstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-interface NavigatorWithStandalone extends Navigator {
-  standalone?: boolean;
-}
-
 const COPY = {
   de: {
     subtitle: "Speed Tier Trainer",
     switchLanguage: "Switch to English",
-    install: "App installieren",
     scope: "Pokémon-Auswahl",
     usage: "Nutzungsfilter",
     all: "Alle",
@@ -62,21 +52,19 @@ const COPY = {
     alignment: "Ausrichtung",
     maximum: "Maximum · 32 SP",
     minimum: "Minimum · 0 SP",
+    choiceScarf: "Wahlschal · 32 SP",
     speedShort: "Init",
+    roundComplete: "Runde abgeschlossen",
+    roundScore: (correct: number, total: number) => `${correct} von ${total} richtig`,
+    playAgain: "Alle erneut spielen",
+    retryWrong: (count: number) => `Nur falsche erneut (${count})`,
+    allCorrect: "Alle Pokémon waren richtig!",
     loading: "Trainer wird geladen …",
     loadError: "Der Speed Tier Trainer konnte nicht geladen werden.",
-    usageSource: (month: string, cutoff: number) => (
-      `Showdown Usage · ${month} · Rating ${cutoff}`
-    ),
-    installTitle: "Speed Trainer installieren",
-    installIos: "Tippe in Safari auf Teilen und anschließend auf „Zum Home-Bildschirm“.",
-    installOther: "Öffne das Browser-Menü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.",
-    close: "Schließen",
   },
   en: {
     subtitle: "Speed Tier Trainer",
     switchLanguage: "Wechsel zu Deutsch",
-    install: "Install app",
     scope: "Pokémon pool",
     usage: "Usage filter",
     all: "All",
@@ -106,16 +94,15 @@ const COPY = {
     alignment: "Alignment",
     maximum: "Maximum · 32 SP",
     minimum: "Minimum · 0 SP",
+    choiceScarf: "Choice Scarf · 32 SP",
     speedShort: "Spe",
+    roundComplete: "Round complete",
+    roundScore: (correct: number, total: number) => `${correct} of ${total} correct`,
+    playAgain: "Play all again",
+    retryWrong: (count: number) => `Retry incorrect only (${count})`,
+    allCorrect: "Every Pokémon was correct!",
     loading: "Loading trainer …",
     loadError: "The Speed Tier Trainer could not be loaded.",
-    usageSource: (month: string, cutoff: number) => (
-      `Showdown usage · ${month} · rating ${cutoff}`
-    ),
-    installTitle: "Install Speed Trainer",
-    installIos: "In Safari, tap Share and then “Add to Home Screen”.",
-    installOther: "Open the browser menu and choose “Install app” or “Add to Home screen”.",
-    close: "Close",
   },
 } as const;
 
@@ -126,12 +113,9 @@ function initialLanguage(): Language {
 
 function parseUsageLimit(value: string): UsageLimit {
   const parsed = Number(value);
-  return parsed === 10 || parsed === 50 || parsed === 100 ? parsed : null;
-}
-
-function isStandalone(): boolean {
-  return window.matchMedia("(display-mode: standalone)").matches
-    || Boolean((window.navigator as NavigatorWithStandalone).standalone);
+  return parsed === 10 || parsed === 25 || parsed === 50 || parsed === 100
+    ? parsed
+    : null;
 }
 
 function pokemonSprite(pokemon: PokemonForm): string {
@@ -150,6 +134,36 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+function PokemonFormSelector({
+  activePokemon,
+  label,
+  language,
+  onChange,
+  variants,
+}: {
+  activePokemon: PokemonForm;
+  label: string;
+  language: Language;
+  onChange: (pokemonId: number) => void;
+  variants: PokemonForm[];
+}) {
+  return (
+    <label className="trainer-form-selector">
+      <span>{label}</span>
+      <select
+        value={activePokemon.pokemon_id}
+        onChange={(event) => onChange(Number(event.target.value))}
+      >
+        {variants.map((pokemon) => (
+          <option key={pokemon.pokemon_id} value={pokemon.pokemon_id}>
+            {displayName(pokemon, language)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export default function SpeedTierTrainerApp() {
   const [language, setLanguage] = useState<Language>(initialLanguage);
   const [catalog, setCatalog] = useState<TrainerCatalog | null>(null);
@@ -157,15 +171,13 @@ export default function SpeedTierTrainerApp() {
   const [selectedUsageLimit, setSelectedUsageLimit] = useState<UsageLimit>(null);
   const [gameScopeKey, setGameScopeKey] = useState("");
   const [session, setSession] = useState<TrainerSession | null>(null);
+  const [fullGamePool, setFullGamePool] = useState<readonly PokemonForm[]>([]);
   const [, setRevision] = useState(0);
   const [activePokemon, setActivePokemon] = useState<PokemonForm | null>(null);
   const [answer, setAnswer] = useState("");
   const [validationError, setValidationError] = useState(false);
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(isStandalone);
-  const [showInstallHelp, setShowInstallHelp] = useState(false);
 
   const text = COPY[language];
 
@@ -180,6 +192,7 @@ export default function SpeedTierTrainerApp() {
         setSelectedScopeKey(initialScope);
         setGameScopeKey(initialScope);
         setSession(nextSession);
+        setFullGamePool(nextSession.roundPokemon);
         setActivePokemon(nextSession.current);
       })
       .catch((error: unknown) => {
@@ -195,43 +208,45 @@ export default function SpeedTierTrainerApp() {
   }, [language]);
 
   useEffect(() => {
-    const onBeforeInstall = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
-    };
-    const onInstalled = () => {
-      setInstalled(true);
-      setInstallPrompt(null);
-    };
-    window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
+    if (!result) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [result]);
 
   const currentPokemon = session?.current ?? null;
   const formVariants = useMemo(() => {
     if (!catalog || !currentPokemon || !gameScopeKey) return [];
     return catalog.megaVariants(currentPokemon, gameScopeKey);
   }, [catalog, currentPokemon, gameScopeKey]);
-  const selectedUsageDataset = catalog?.usageDatasetForScope(selectedScopeKey) ?? null;
   const speedValues = result ? calculateSpeedValues(result.pokemon.base_stats.spe) : null;
+
+  const activateRound = (
+    pokemon: readonly PokemonForm[],
+    scopeKey: string,
+    finite: boolean,
+  ) => {
+    const nextSession = new TrainerSession(pokemon, { finite });
+    setSession(nextSession);
+    setGameScopeKey(scopeKey);
+    setActivePokemon(nextSession.current);
+    setAnswer("");
+    setValidationError(false);
+    setResult(null);
+    setRevision((value) => value + 1);
+  };
 
   const beginGame = () => {
     if (!catalog || !selectedScopeKey) return;
     try {
-      const nextSession = new TrainerSession(
-        catalog.entriesForScope(selectedScopeKey, selectedUsageLimit),
-      );
-      setSession(nextSession);
-      setGameScopeKey(selectedScopeKey);
-      setActivePokemon(nextSession.current);
-      setAnswer("");
-      setValidationError(false);
-      setResult(null);
-      setRevision((value) => value + 1);
+      const nextPool = catalog.entriesForScope(selectedScopeKey, selectedUsageLimit);
+      setFullGamePool(nextPool);
+      activateRound(nextPool, selectedScopeKey, selectedUsageLimit !== null);
     } catch (error: unknown) {
       setLoadError(error instanceof Error ? error.message : text.loadError);
     }
@@ -269,14 +284,25 @@ export default function SpeedTierTrainerApp() {
     setRevision((value) => value + 1);
   };
 
-  const requestInstall = async () => {
-    if (!installPrompt) {
-      setShowInstallHelp(true);
-      return;
+  const changeActivePokemon = (pokemonId: number) => {
+    if (!catalog || !session) return;
+    const nextPokemon = catalog.entryById(pokemonId);
+    if (!nextPokemon) return;
+    setActivePokemon(nextPokemon);
+    if (result && session.currentAnswered) {
+      setResult(session.recalculateCurrentResult(nextPokemon));
+      setRevision((value) => value + 1);
     }
-    await installPrompt.prompt();
-    await installPrompt.userChoice;
-    setInstallPrompt(null);
+  };
+
+  const replayAll = () => {
+    if (!session || fullGamePool.length === 0) return;
+    activateRound(fullGamePool, gameScopeKey, true);
+  };
+
+  const replayIncorrect = () => {
+    if (!session || session.incorrectPokemon.length === 0) return;
+    activateRound(session.incorrectPokemon, gameScopeKey, true);
   };
 
   if (loadError) {
@@ -302,7 +328,7 @@ export default function SpeedTierTrainerApp() {
   const accuracy = session.answered > 0
     ? `${Math.round(session.accuracy * 100)}%`
     : "—";
-  const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  const incorrectCount = session.incorrectPokemon.length;
 
   return (
     <main className="trainer-app-shell">
@@ -312,20 +338,13 @@ export default function SpeedTierTrainerApp() {
             <p className="trainer-brand">MISHIRO</p>
             <h1>{text.subtitle}</h1>
           </div>
-          <div className="trainer-header-actions">
-            {!installed && (
-              <button type="button" className="trainer-install" onClick={() => void requestInstall()}>
-                {text.install}
-              </button>
-            )}
-            <button
-              type="button"
-              className="trainer-language"
-              onClick={() => setLanguage(language === "de" ? "en" : "de")}
-            >
-              {text.switchLanguage}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="trainer-language"
+            onClick={() => setLanguage(language === "de" ? "en" : "de")}
+          >
+            {text.switchLanguage}
+          </button>
         </header>
 
         <section className="trainer-settings" aria-label={text.scope}>
@@ -346,9 +365,6 @@ export default function SpeedTierTrainerApp() {
             <span>{text.usage}</span>
             <select
               value={selectedUsageLimit ?? "all"}
-              title={selectedUsageDataset
-                ? text.usageSource(selectedUsageDataset.month, selectedUsageDataset.rating_cutoff)
-                : ""}
               onChange={(event) => setSelectedUsageLimit(parseUsageLimit(event.target.value))}
             >
               <option value="all">{text.all}</option>
@@ -384,24 +400,14 @@ export default function SpeedTierTrainerApp() {
           />
           <h2>{displayName(activePokemon, language)}</h2>
 
-          {formVariants.length > 1 && (
-            <label className="trainer-form-selector">
-              <span>{text.form}</span>
-              <select
-                value={activePokemon.pokemon_id}
-                disabled={result !== null}
-                onChange={(event) => {
-                  const nextPokemon = catalog.entryById(Number(event.target.value));
-                  if (nextPokemon) setActivePokemon(nextPokemon);
-                }}
-              >
-                {formVariants.map((pokemon) => (
-                  <option key={pokemon.pokemon_id} value={pokemon.pokemon_id}>
-                    {displayName(pokemon, language)}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {formVariants.length > 1 && !result && (
+            <PokemonFormSelector
+              activePokemon={activePokemon}
+              label={text.form}
+              language={language}
+              onChange={changeActivePokemon}
+              variants={formVariants}
+            />
           )}
 
           <p className="trainer-prompt">{text.prompt}</p>
@@ -429,6 +435,15 @@ export default function SpeedTierTrainerApp() {
 
           {result && speedValues && (
             <section className="trainer-result" aria-live="polite">
+              {formVariants.length > 1 && (
+                <PokemonFormSelector
+                  activePokemon={activePokemon}
+                  label={text.form}
+                  language={language}
+                  onChange={changeActivePokemon}
+                  variants={formVariants}
+                />
+              )}
               <div className="trainer-result-heading">
                 <div>
                   <h3 className={`trainer-result-${result.direction}`}>
@@ -458,12 +473,34 @@ export default function SpeedTierTrainerApp() {
                 <span className="trainer-decreased">
                   {speedValues.minimumDecreased} (−{text.speedShort})
                 </span>
+                <b>{text.choiceScarf}</b>
+                <span>{speedValues.choiceScarfNeutral}</span>
+                <span className="trainer-increased">
+                  {speedValues.choiceScarfIncreased} (+{text.speedShort})
+                </span>
               </div>
             </section>
           )}
 
-          <div className="trainer-action-slot">
-            {result ? (
+          <div className={`trainer-action-slot${session.isComplete ? " trainer-action-slot-complete" : ""}`}>
+            {result && session.isComplete ? (
+              <section className="trainer-round-complete" aria-live="polite">
+                <h3>{text.roundComplete}</h3>
+                <p>{text.roundScore(session.exact, session.answered)}</p>
+                <div className="trainer-round-actions">
+                  <button type="button" className="trainer-primary-button" onClick={replayAll}>
+                    {text.playAgain}
+                  </button>
+                  {incorrectCount > 0 ? (
+                    <button type="button" className="trainer-secondary-button" onClick={replayIncorrect}>
+                      {text.retryWrong(incorrectCount)}
+                    </button>
+                  ) : (
+                    <span className="trainer-all-correct">{text.allCorrect}</span>
+                  )}
+                </div>
+              </section>
+            ) : result ? (
               <button type="button" className="trainer-primary-button" onClick={nextQuestion}>
                 {text.next}
               </button>
@@ -474,31 +511,7 @@ export default function SpeedTierTrainerApp() {
             )}
           </div>
         </section>
-
-        {selectedUsageDataset && (
-          <p className="trainer-source-note">
-            {text.usageSource(selectedUsageDataset.month, selectedUsageDataset.rating_cutoff)}
-          </p>
-        )}
       </section>
-
-      {showInstallHelp && (
-        <div className="trainer-modal-backdrop" role="presentation" onClick={() => setShowInstallHelp(false)}>
-          <section
-            className="trainer-install-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="install-dialog-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="install-dialog-title">{text.installTitle}</h2>
-            <p>{isIos ? text.installIos : text.installOther}</p>
-            <button type="button" className="trainer-primary-button" onClick={() => setShowInstallHelp(false)}>
-              {text.close}
-            </button>
-          </section>
-        </div>
-      )}
     </main>
   );
 }

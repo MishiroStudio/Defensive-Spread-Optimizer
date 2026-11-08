@@ -1,4 +1,4 @@
-// speed-tier-trainer-data.ts — Speed Tier Trainer PWA V1
+// speed-tier-trainer-data.ts — Speed Tier Trainer PWA V2
 import { calculateOtherStat } from "../../shared/calculations/stats";
 import type {
   Language,
@@ -9,7 +9,7 @@ import type {
 } from "../pokedex/pokedex-data";
 import { publicPath } from "../pokedex/public-path";
 
-export type UsageLimit = 10 | 50 | 100 | null;
+export type UsageLimit = 10 | 25 | 50 | 100 | null;
 export type AnswerDirection = "exact" | "low" | "high" | "revealed";
 
 export interface UsageEntry {
@@ -61,6 +61,13 @@ export interface SpeedValues {
   minimumDecreased: number;
   maximumNeutral: number;
   maximumIncreased: number;
+  choiceScarfNeutral: number;
+  choiceScarfIncreased: number;
+}
+
+export interface TrainerSessionOptions {
+  finite?: boolean;
+  random?: () => number;
 }
 
 const MEGA_BASE_OVERRIDES: Record<string, string> = {
@@ -68,19 +75,36 @@ const MEGA_BASE_OVERRIDES: Record<string, string> = {
   "pyroar-mega": "pyroar-male",
 };
 
-export const USAGE_LIMITS = [100, 50, 10] as const;
+export const USAGE_LIMITS = [100, 50, 25, 10] as const;
 
 export function displayName(pokemon: PokemonForm, language: Language): string {
   return language === "en" ? pokemon.name_en : pokemon.name_de;
 }
 
 export function calculateSpeedValues(baseSpeed: number): SpeedValues {
+  const maximumNeutral = calculateOtherStat(baseSpeed, 32, 1);
+  const maximumIncreased = calculateOtherStat(baseSpeed, 32, 1.1);
   return {
     minimumNeutral: calculateOtherStat(baseSpeed, 0, 1),
     minimumDecreased: calculateOtherStat(baseSpeed, 0, 0.9),
-    maximumNeutral: calculateOtherStat(baseSpeed, 32, 1),
-    maximumIncreased: calculateOtherStat(baseSpeed, 32, 1.1),
+    maximumNeutral,
+    maximumIncreased,
+    choiceScarfNeutral: Math.floor(maximumNeutral * 1.5),
+    choiceScarfIncreased: Math.floor(maximumIncreased * 1.5),
   };
+}
+
+export function answerResultFor(
+  pokemon: PokemonForm,
+  guess: number | null,
+): AnswerResult {
+  const difference = guess === null ? null : guess - pokemon.base_stats.spe;
+  const direction: AnswerDirection = difference === null
+    ? "revealed"
+    : difference === 0
+      ? "exact"
+      : difference < 0 ? "low" : "high";
+  return { pokemon, guess, difference, direction };
 }
 
 export async function loadTrainerBundle(
@@ -241,6 +265,9 @@ export class TrainerSession {
   private deck: PokemonForm[];
   private index = 0;
   private answeredCurrent = false;
+  private results: AnswerResult[] = [];
+
+  readonly finite: boolean;
 
   answered = 0;
   guessed = 0;
@@ -249,10 +276,14 @@ export class TrainerSession {
   currentStreak = 0;
   bestStreak = 0;
 
-  constructor(pokemon: readonly PokemonForm[], random: () => number = Math.random) {
+  constructor(
+    pokemon: readonly PokemonForm[],
+    options: TrainerSessionOptions = {},
+  ) {
     if (pokemon.length === 0) throw new Error("Die ausgewählte Pokémon-Gruppe ist leer.");
     this.pool = [...pokemon];
-    this.random = random;
+    this.random = options.random ?? Math.random;
+    this.finite = options.finite ?? false;
     this.deck = shuffledDeck(this.pool, this.random);
   }
 
@@ -264,6 +295,26 @@ export class TrainerSession {
     return this.answeredCurrent;
   }
 
+  get isComplete(): boolean {
+    return this.finite
+      && this.answeredCurrent
+      && this.index === this.deck.length - 1;
+  }
+
+  get roundPokemon(): readonly PokemonForm[] {
+    return [...this.pool];
+  }
+
+  get incorrectPokemon(): readonly PokemonForm[] {
+    const incorrect = new Map<number, PokemonForm>();
+    for (const result of this.results) {
+      if (result.direction !== "exact") {
+        incorrect.set(result.pokemon.pokemon_id, result.pokemon);
+      }
+    }
+    return [...incorrect.values()];
+  }
+
   get questionNumber(): number {
     return this.answeredCurrent ? this.answered : this.answered + 1;
   }
@@ -272,36 +323,56 @@ export class TrainerSession {
     return this.answered > 0 ? this.exact / this.answered : 0;
   }
 
+  private recalculateStats(): void {
+    this.answered = this.results.length;
+    this.guessed = 0;
+    this.exact = 0;
+    this.totalAbsoluteError = 0;
+    this.currentStreak = 0;
+    this.bestStreak = 0;
+
+    for (const result of this.results) {
+      if (result.difference !== null) {
+        this.guessed += 1;
+        this.totalAbsoluteError += Math.abs(result.difference);
+      }
+      if (result.direction === "exact") {
+        this.exact += 1;
+        this.currentStreak += 1;
+        this.bestStreak = Math.max(this.bestStreak, this.currentStreak);
+      } else {
+        this.currentStreak = 0;
+      }
+    }
+  }
+
   submit(guess: number | null, pokemon: PokemonForm = this.current): AnswerResult {
     if (this.answeredCurrent) throw new Error("Die aktuelle Frage wurde bereits beantwortet.");
     if (guess !== null && (!Number.isInteger(guess) || guess < 1 || guess > 255)) {
       throw new Error("Die Antwort muss zwischen 1 und 255 liegen.");
     }
 
-    const difference = guess === null ? null : guess - pokemon.base_stats.spe;
-    const direction: AnswerDirection = difference === null
-      ? "revealed"
-      : difference === 0
-        ? "exact"
-        : difference < 0 ? "low" : "high";
-    this.answered += 1;
-    if (difference !== null) {
-      this.guessed += 1;
-      this.totalAbsoluteError += Math.abs(difference);
-    }
-    if (difference === 0) {
-      this.exact += 1;
-      this.currentStreak += 1;
-      this.bestStreak = Math.max(this.bestStreak, this.currentStreak);
-    } else {
-      this.currentStreak = 0;
-    }
+    const result = answerResultFor(pokemon, guess);
+    this.results.push(result);
+    this.recalculateStats();
     this.answeredCurrent = true;
-    return { pokemon, guess, difference, direction };
+    return result;
+  }
+
+  recalculateCurrentResult(pokemon: PokemonForm): AnswerResult {
+    if (!this.answeredCurrent || this.results.length === 0) {
+      throw new Error("Die aktuelle Frage wurde noch nicht beantwortet.");
+    }
+    const previous = this.results.at(-1)!;
+    const result = answerResultFor(pokemon, previous.guess);
+    this.results[this.results.length - 1] = result;
+    this.recalculateStats();
+    return result;
   }
 
   advance(): void {
     if (!this.answeredCurrent) throw new Error("Die aktuelle Frage ist noch nicht beantwortet.");
+    if (this.isComplete) throw new Error("Die Runde ist bereits abgeschlossen.");
     const previous = this.current;
     this.index += 1;
     if (this.index >= this.deck.length) {
