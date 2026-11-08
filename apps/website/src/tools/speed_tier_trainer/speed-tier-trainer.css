@@ -1,4 +1,4 @@
-/* speed-tier-trainer.css — Speed Tier Trainer PWA V4 */
+/* speed-tier-trainer.css — Speed Tier Trainer PWA V5 */
 :root {
   --trainer-page-start: #eef2ff;
   --trainer-page-middle: #f8fafc;
@@ -493,6 +493,7 @@ select:focus-visible {
   width: min(100%, 260px);
   min-height: 44px;
   margin-top: 14px;
+  margin-bottom: var(--trainer-keyboard-space, 0px);
 }
 
 .trainer-action-slot-complete {

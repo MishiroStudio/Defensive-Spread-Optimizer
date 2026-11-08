@@ -1,4 +1,4 @@
-// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V4
+// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V5
 import {
   useEffect,
   useMemo,
@@ -213,21 +213,43 @@ export default function SpeedTierTrainerApp() {
 
   useEffect(() => {
     if (!result) return undefined;
-    const frame = window.requestAnimationFrame(() => {
-      const actionSlot = actionSlotRef.current;
-      if (!actionSlot) return;
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const viewport = window.visualViewport;
-      const viewportBottom = (viewport?.offsetTop ?? 0)
-        + (viewport?.height ?? window.innerHeight);
-      const offset = actionSlot.getBoundingClientRect().bottom - (viewportBottom - 8);
-      if (Math.abs(offset) < 2) return;
-      window.scrollBy({
-        top: offset,
-        behavior: reducedMotion ? "auto" : "smooth",
+    const actionSlot = actionSlotRef.current;
+    if (!actionSlot) return undefined;
+    const viewport = window.visualViewport;
+    let frame = 0;
+
+    const positionActionSlot = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const layoutHeight = Math.max(
+          document.documentElement.clientHeight,
+          window.innerHeight,
+        );
+        const viewportBottom = (viewport?.offsetTop ?? 0)
+          + (viewport?.height ?? window.innerHeight);
+        const keyboardSpace = Math.max(0, layoutHeight - viewportBottom);
+        actionSlot.style.setProperty("--trainer-keyboard-space", `${keyboardSpace}px`);
+
+        frame = window.requestAnimationFrame(() => {
+          const offset = actionSlot.getBoundingClientRect().bottom - (viewportBottom - 8);
+          if (Math.abs(offset) < 2) return;
+          window.scrollBy({ top: offset, behavior: "auto" });
+        });
       });
-    });
-    return () => window.cancelAnimationFrame(frame);
+    };
+
+    positionActionSlot();
+    viewport?.addEventListener("resize", positionActionSlot);
+    viewport?.addEventListener("scroll", positionActionSlot);
+    const retry = window.setTimeout(positionActionSlot, 300);
+
+    return () => {
+      window.clearTimeout(retry);
+      window.cancelAnimationFrame(frame);
+      viewport?.removeEventListener("resize", positionActionSlot);
+      viewport?.removeEventListener("scroll", positionActionSlot);
+      actionSlot.style.removeProperty("--trainer-keyboard-space");
+    };
   }, [result]);
 
   const currentPokemon = session?.current ?? null;
@@ -360,6 +382,9 @@ export default function SpeedTierTrainerApp() {
   const accuracy = session.answered > 0
     ? `${Math.round(session.accuracy * 100)}%`
     : "—";
+  const questionProgress = session.finite
+    ? `${session.questionNumber}/${session.roundPokemon.length}`
+    : session.questionNumber;
   const incorrectCount = session.incorrectPokemon.length;
 
   return (
@@ -411,7 +436,7 @@ export default function SpeedTierTrainerApp() {
         </section>
 
         <section className="trainer-score" aria-label="Score">
-          <StatCard label={text.question} value={session.questionNumber} />
+          <StatCard label={text.question} value={questionProgress} />
           <StatCard label={text.correctCount} value={session.exact} />
           <StatCard label={text.accuracy} value={accuracy} />
           <StatCard label={text.streak} value={session.currentStreak} />
