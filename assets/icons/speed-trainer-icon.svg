@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
   <title id="title">MISHIRO Speed Tier Trainer</title>
-  <desc id="description">An orange app icon with a white speedometer and a dark needle.</desc>
-  <rect width="512" height="512" fill="#f28c28"/>
+  <desc id="description">A red and white app icon with a dark blue speedometer and a light blue center.</desc>
+  <rect width="512" height="256" fill="#ef3340"/>
+  <rect y="256" width="512" height="256" fill="#fff"/>
   <path
-    d="M115 327a155 155 0 0 1 282 0"
+    d="M86 326a170 170 0 0 1 340 0"
     fill="none"
-    stroke="#fff"
+    stroke="#0b1120"
     stroke-linecap="round"
-    stroke-width="42"
+    stroke-width="36"
   />
-  <path d="M256 132v34M160 174l24 28M352 174l-24 28M115 263h38M359 263h38" stroke="#fff" stroke-linecap="round" stroke-width="19"/>
-  <path d="M256 281 350 207 282 307Z" fill="#242424"/>
-  <circle cx="256" cy="310" r="43" fill="#fff" stroke="#242424" stroke-width="18"/>
-  <circle cx="256" cy="310" r="15" fill="#f28c28"/>
-  <path d="M178 381h156" stroke="#fff" stroke-linecap="round" stroke-width="30"/>
+  <path d="M256 196v22M164 234l16 16M348 234l-16 16" stroke="#0b1120" stroke-linecap="round" stroke-width="14"/>
+  <path d="M246 321 309 213 266 331Z" fill="#0b1120"/>
+  <circle cx="256" cy="326" r="38" fill="#0b1120"/>
+  <circle cx="256" cy="326" r="13" fill="#38bdf8"/>
 </svg>

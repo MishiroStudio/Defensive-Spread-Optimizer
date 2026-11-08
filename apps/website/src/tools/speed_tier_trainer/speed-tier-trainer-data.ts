@@ -1,4 +1,4 @@
-// speed-tier-trainer-data.ts — Speed Tier Trainer PWA V2
+// speed-tier-trainer-data.ts — Speed Tier Trainer PWA V3
 import { calculateOtherStat } from "../../shared/calculations/stats";
 import type {
   Language,
@@ -75,7 +75,7 @@ const MEGA_BASE_OVERRIDES: Record<string, string> = {
   "pyroar-mega": "pyroar-male",
 };
 
-export const USAGE_LIMITS = [100, 50, 25, 10] as const;
+export const USAGE_LIMITS = [10, 25, 50, 100] as const;
 
 export function displayName(pokemon: PokemonForm, language: Language): string {
   return language === "en" ? pokemon.name_en : pokemon.name_de;
@@ -356,17 +356,6 @@ export class TrainerSession {
     this.results.push(result);
     this.recalculateStats();
     this.answeredCurrent = true;
-    return result;
-  }
-
-  recalculateCurrentResult(pokemon: PokemonForm): AnswerResult {
-    if (!this.answeredCurrent || this.results.length === 0) {
-      throw new Error("Die aktuelle Frage wurde noch nicht beantwortet.");
-    }
-    const previous = this.results.at(-1)!;
-    const result = answerResultFor(pokemon, previous.guess);
-    this.results[this.results.length - 1] = result;
-    this.recalculateStats();
     return result;
   }
 

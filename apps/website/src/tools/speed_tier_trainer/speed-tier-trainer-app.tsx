@@ -1,9 +1,11 @@
-// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V2
+// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V3
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 
 import { publicPath } from "../pokedex/public-path";
@@ -24,13 +26,13 @@ const COPY = {
     subtitle: "Speed Tier Trainer",
     switchLanguage: "Switch to English",
     scope: "Pokémon-Auswahl",
-    usage: "Nutzungsfilter",
+    usage: "Filter",
     all: "Alle",
     top: (limit: number) => `Top ${limit}`,
     newGame: "Neues Spiel",
     question: "Frage",
     correctCount: "Richtig",
-    accuracy: "Trefferquote",
+    accuracy: "Quote",
     streak: "Serie",
     form: "Form",
     prompt: "Wie hoch ist der Initiative-Basiswert?",
@@ -66,7 +68,7 @@ const COPY = {
     subtitle: "Speed Tier Trainer",
     switchLanguage: "Wechsel zu Deutsch",
     scope: "Pokémon pool",
-    usage: "Usage filter",
+    usage: "Filter",
     all: "All",
     top: (limit: number) => `Top ${limit}`,
     newGame: "New game",
@@ -178,6 +180,7 @@ export default function SpeedTierTrainerApp() {
   const [validationError, setValidationError] = useState(false);
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [loadError, setLoadError] = useState("");
+  const answerInputRef = useRef<HTMLInputElement>(null);
 
   const text = COPY[language];
 
@@ -224,7 +227,23 @@ export default function SpeedTierTrainerApp() {
     if (!catalog || !currentPokemon || !gameScopeKey) return [];
     return catalog.megaVariants(currentPokemon, gameScopeKey);
   }, [catalog, currentPokemon, gameScopeKey]);
-  const speedValues = result ? calculateSpeedValues(result.pokemon.base_stats.spe) : null;
+  const speedValues = result && activePokemon
+    ? calculateSpeedValues(activePokemon.base_stats.spe)
+    : null;
+
+  const focusAnswerInput = () => {
+    const input = answerInputRef.current;
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    window.requestAnimationFrame(() => {
+      input.focus({ preventScroll: true });
+      input.select();
+    });
+  };
+
+  const preserveAnswerFocus = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (document.activeElement === answerInputRef.current) event.preventDefault();
+  };
 
   const activateRound = (
     pokemon: readonly PokemonForm[],
@@ -247,20 +266,37 @@ export default function SpeedTierTrainerApp() {
       const nextPool = catalog.entriesForScope(selectedScopeKey, selectedUsageLimit);
       setFullGamePool(nextPool);
       activateRound(nextPool, selectedScopeKey, selectedUsageLimit !== null);
+      focusAnswerInput();
     } catch (error: unknown) {
       setLoadError(error instanceof Error ? error.message : text.loadError);
     }
   };
 
   const acceptResult = (nextResult: AnswerResult) => {
+    answerInputRef.current?.focus({ preventScroll: true });
     setResult(nextResult);
     setValidationError(false);
     setRevision((value) => value + 1);
   };
 
+  const nextQuestion = () => {
+    if (!session || !session.currentAnswered || session.isComplete) return;
+    session.advance();
+    setActivePokemon(session.current);
+    setAnswer("");
+    setValidationError(false);
+    setResult(null);
+    setRevision((value) => value + 1);
+    focusAnswerInput();
+  };
+
   const submitAnswer = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-    if (!session || session.currentAnswered || !activePokemon) return;
+    if (!session || !activePokemon) return;
+    if (session.currentAnswered) {
+      nextQuestion();
+      return;
+    }
     const guess = Number(answer.trim());
     if (!/^\d+$/.test(answer.trim()) || !Number.isInteger(guess) || guess < 1 || guess > 255) {
       setValidationError(true);
@@ -274,35 +310,23 @@ export default function SpeedTierTrainerApp() {
     acceptResult(session.submit(null, activePokemon));
   };
 
-  const nextQuestion = () => {
-    if (!session || !session.currentAnswered) return;
-    session.advance();
-    setActivePokemon(session.current);
-    setAnswer("");
-    setValidationError(false);
-    setResult(null);
-    setRevision((value) => value + 1);
-  };
-
   const changeActivePokemon = (pokemonId: number) => {
     if (!catalog || !session) return;
     const nextPokemon = catalog.entryById(pokemonId);
     if (!nextPokemon) return;
     setActivePokemon(nextPokemon);
-    if (result && session.currentAnswered) {
-      setResult(session.recalculateCurrentResult(nextPokemon));
-      setRevision((value) => value + 1);
-    }
   };
 
   const replayAll = () => {
     if (!session || fullGamePool.length === 0) return;
     activateRound(fullGamePool, gameScopeKey, true);
+    focusAnswerInput();
   };
 
   const replayIncorrect = () => {
     if (!session || session.incorrectPokemon.length === 0) return;
     activateRound(session.incorrectPokemon, gameScopeKey, true);
+    focusAnswerInput();
   };
 
   if (loadError) {
@@ -413,21 +437,29 @@ export default function SpeedTierTrainerApp() {
           <p className="trainer-prompt">{text.prompt}</p>
           <form className="trainer-answer-row" onSubmit={submitAnswer}>
             <input
+              ref={answerInputRef}
               type="text"
               inputMode="numeric"
-              enterKeyHint={result ? "next" : "done"}
+              enterKeyHint={result ? "next" : "go"}
               pattern="[0-9]*"
               maxLength={3}
+              autoComplete="off"
               value={answer}
               placeholder={text.placeholder}
               aria-label={text.prompt}
-              disabled={result !== null}
+              aria-readonly={result !== null}
               onChange={(event) => {
+                if (result) return;
                 setAnswer(event.target.value.replace(/[^0-9]/g, ""));
                 setValidationError(false);
               }}
             />
-            <button type="submit" className="trainer-primary-button" disabled={result !== null}>
+            <button
+              type="submit"
+              className="trainer-primary-button"
+              disabled={result !== null}
+              onPointerDown={preserveAnswerFocus}
+            >
               {text.check}
             </button>
           </form>
@@ -455,7 +487,7 @@ export default function SpeedTierTrainerApp() {
                 </div>
                 <div className="trainer-base-speed">
                   <span>{text.baseSpeed}</span>
-                  <strong>{result.pokemon.base_stats.spe}</strong>
+                  <strong>{activePokemon.base_stats.spe}</strong>
                 </div>
               </div>
 
@@ -488,11 +520,21 @@ export default function SpeedTierTrainerApp() {
                 <h3>{text.roundComplete}</h3>
                 <p>{text.roundScore(session.exact, session.answered)}</p>
                 <div className="trainer-round-actions">
-                  <button type="button" className="trainer-primary-button" onClick={replayAll}>
+                  <button
+                    type="button"
+                    className="trainer-primary-button"
+                    onPointerDown={preserveAnswerFocus}
+                    onClick={replayAll}
+                  >
                     {text.playAgain}
                   </button>
                   {incorrectCount > 0 ? (
-                    <button type="button" className="trainer-secondary-button" onClick={replayIncorrect}>
+                    <button
+                      type="button"
+                      className="trainer-secondary-button"
+                      onPointerDown={preserveAnswerFocus}
+                      onClick={replayIncorrect}
+                    >
                       {text.retryWrong(incorrectCount)}
                     </button>
                   ) : (
@@ -501,11 +543,21 @@ export default function SpeedTierTrainerApp() {
                 </div>
               </section>
             ) : result ? (
-              <button type="button" className="trainer-primary-button" onClick={nextQuestion}>
+              <button
+                type="button"
+                className="trainer-primary-button"
+                onPointerDown={preserveAnswerFocus}
+                onClick={nextQuestion}
+              >
                 {text.next}
               </button>
             ) : (
-              <button type="button" className="trainer-reveal-button" onClick={revealAnswer}>
+              <button
+                type="button"
+                className="trainer-reveal-button"
+                onPointerDown={preserveAnswerFocus}
+                onClick={revealAnswer}
+              >
                 {text.reveal}
               </button>
             )}

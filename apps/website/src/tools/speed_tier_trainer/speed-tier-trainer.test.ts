@@ -151,7 +151,7 @@ describe("Speed Tier Trainer catalog", () => {
       .toEqual(expectedTop10);
     expect(catalog.entriesForScope("reg-m-c", 25).map((entry) => entry.pokemon_id))
       .toEqual(expectedTop25);
-    expect(USAGE_LIMITS).toEqual([100, 50, 25, 10]);
+    expect(USAGE_LIMITS).toEqual([10, 25, 50, 100]);
   });
 
   it("offers Floette's Eternal Flower and Mega forms together", () => {
@@ -175,7 +175,7 @@ describe("Speed Tier Trainer calculations and session", () => {
     });
   });
 
-  it("recalculates an answered question immediately after a Mega form switch", () => {
+  it("keeps an answered question unchanged while another form is compared", () => {
     const base = { ...form(1, "base", 80), national_dex: 1, evolves_from_species_id: null };
     const mega = { ...form(2, "base-mega", 100), national_dex: 1, evolves_from_species_id: null };
     const session = new TrainerSession([base], { random: () => 0 });
@@ -188,14 +188,10 @@ describe("Speed Tier Trainer calculations and session", () => {
     expect(session.exact).toBe(1);
     expect(session.accuracy).toBe(1);
 
-    expect(session.recalculateCurrentResult(mega)).toMatchObject({
-      pokemon: mega,
-      guess: 80,
-      difference: -20,
-      direction: "low",
-    });
-    expect(session.exact).toBe(0);
-    expect(session.incorrectPokemon).toEqual([mega]);
+    expect(calculateSpeedValues(mega.base_stats.spe)).not.toEqual(calculateSpeedValues(base.base_stats.spe));
+    expect(session.exact).toBe(1);
+    expect(session.accuracy).toBe(1);
+    expect(session.incorrectPokemon).toEqual([]);
     expect(() => session.submit(100, mega)).toThrow();
 
     session.advance();
