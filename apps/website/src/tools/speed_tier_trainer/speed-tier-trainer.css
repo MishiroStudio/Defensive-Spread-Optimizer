@@ -1,4 +1,4 @@
-/* speed-tier-trainer.css — Speed Tier Trainer PWA V6 */
+/* speed-tier-trainer.css — Speed Tier Trainer PWA V7 */
 :root {
   --trainer-page-start: #eef2ff;
   --trainer-page-middle: #f8fafc;
@@ -244,18 +244,17 @@ select:focus-visible {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  width: min(100%, 560px);
-  margin: 18px auto 0;
+  margin-top: 18px;
 }
 
 .trainer-stat-card {
   display: grid;
   min-width: 0;
-  min-height: 70px;
+  min-height: 62px;
   align-content: center;
   justify-items: center;
   gap: 2px;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid var(--trainer-border);
   border-radius: 13px;
   background: var(--trainer-surface-soft);
@@ -589,12 +588,11 @@ select:focus-visible {
 
   .trainer-score {
     gap: 6px;
-    width: min(100%, 328px);
   }
 
   .trainer-stat-card {
-    min-height: 64px;
-    padding: 8px;
+    min-height: 52px;
+    padding: 6px;
   }
 
   .trainer-stat-card span {
@@ -610,13 +608,13 @@ select:focus-visible {
   }
 
   .trainer-sprite {
-    width: 92px;
-    height: 92px;
+    width: 82px;
+    height: 82px;
   }
 
   .trainer-quiz-card > h2 {
     margin-top: 2px;
-    font-size: clamp(1.4rem, 6vw, 1.75rem);
+    font-size: clamp(1.25rem, 5.5vw, 1.55rem);
   }
 
   .trainer-form-selector {
@@ -638,16 +636,20 @@ select:focus-visible {
   }
 
   .trainer-answer-row input {
-    width: 84px;
-    height: 42px;
-    font-size: 1.25rem;
+    width: 76px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+
+  .trainer-answer-row input::placeholder {
+    font-size: 0.76rem;
   }
 
   .trainer-answer-row .trainer-primary-button {
-    min-width: 120px;
-    min-height: 42px;
-    padding: 7px 12px;
-    font-size: 0.9rem;
+    min-width: 108px;
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
   }
 
   .trainer-result {
@@ -674,16 +676,16 @@ select:focus-visible {
 
   .trainer-base-speed {
     min-width: 78px;
-    min-height: 54px;
+    min-height: 46px;
     border-radius: 10px;
   }
 
   .trainer-base-speed span {
-    font-size: 0.57rem;
+    font-size: 0.52rem;
   }
 
   .trainer-base-speed strong {
-    font-size: 1.45rem;
+    font-size: 1.25rem;
   }
 
   .trainer-speed-table {
@@ -738,11 +740,11 @@ select:focus-visible {
   }
 
   .trainer-answer-row input {
-    width: 84px;
+    width: 76px;
   }
 
   .trainer-answer-row .trainer-primary-button {
-    min-width: 120px;
+    min-width: 108px;
     flex: 0 0 auto;
   }
 
