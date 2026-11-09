@@ -1,4 +1,4 @@
-// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V5
+// speed-tier-trainer-app.tsx — Speed Tier Trainer PWA V6
 import {
   useEffect,
   useMemo,
@@ -213,43 +213,14 @@ export default function SpeedTierTrainerApp() {
 
   useEffect(() => {
     if (!result) return undefined;
-    const actionSlot = actionSlotRef.current;
-    if (!actionSlot) return undefined;
-    const viewport = window.visualViewport;
-    let frame = 0;
-
-    const positionActionSlot = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        const layoutHeight = Math.max(
-          document.documentElement.clientHeight,
-          window.innerHeight,
-        );
-        const viewportBottom = (viewport?.offsetTop ?? 0)
-          + (viewport?.height ?? window.innerHeight);
-        const keyboardSpace = Math.max(0, layoutHeight - viewportBottom);
-        actionSlot.style.setProperty("--trainer-keyboard-space", `${keyboardSpace}px`);
-
-        frame = window.requestAnimationFrame(() => {
-          const offset = actionSlot.getBoundingClientRect().bottom - (viewportBottom - 8);
-          if (Math.abs(offset) < 2) return;
-          window.scrollBy({ top: offset, behavior: "auto" });
-        });
+    const timer = window.setTimeout(() => {
+      actionSlotRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+        inline: "nearest",
       });
-    };
-
-    positionActionSlot();
-    viewport?.addEventListener("resize", positionActionSlot);
-    viewport?.addEventListener("scroll", positionActionSlot);
-    const retry = window.setTimeout(positionActionSlot, 300);
-
-    return () => {
-      window.clearTimeout(retry);
-      window.cancelAnimationFrame(frame);
-      viewport?.removeEventListener("resize", positionActionSlot);
-      viewport?.removeEventListener("scroll", positionActionSlot);
-      actionSlot.style.removeProperty("--trainer-keyboard-space");
-    };
+    }, 80);
+    return () => window.clearTimeout(timer);
   }, [result]);
 
   const currentPokemon = session?.current ?? null;
@@ -266,7 +237,6 @@ export default function SpeedTierTrainerApp() {
     if (!input) return;
     input.focus({ preventScroll: true });
     window.requestAnimationFrame(() => {
-      input.focus({ preventScroll: true });
       input.select();
     });
   };
@@ -290,16 +260,24 @@ export default function SpeedTierTrainerApp() {
     setRevision((value) => value + 1);
   };
 
-  const beginGame = () => {
-    if (!catalog || !selectedScopeKey) return;
+  const startGame = (scopeKey: string, usageLimit: UsageLimit) => {
+    if (!catalog || !scopeKey) return;
     try {
-      const nextPool = catalog.entriesForScope(selectedScopeKey, selectedUsageLimit);
+      const nextPool = catalog.entriesForScope(scopeKey, usageLimit);
       setFullGamePool(nextPool);
-      activateRound(nextPool, selectedScopeKey, selectedUsageLimit !== null);
+      activateRound(nextPool, scopeKey, usageLimit !== null);
       focusAnswerInput();
     } catch (error: unknown) {
       setLoadError(error instanceof Error ? error.message : text.loadError);
     }
+  };
+
+  const beginGame = () => startGame(selectedScopeKey, selectedUsageLimit);
+
+  const changeUsageLimit = (value: string) => {
+    const nextUsageLimit = parseUsageLimit(value);
+    setSelectedUsageLimit(nextUsageLimit);
+    startGame(selectedScopeKey, nextUsageLimit);
   };
 
   const acceptResult = (nextResult: AnswerResult) => {
@@ -422,7 +400,7 @@ export default function SpeedTierTrainerApp() {
             <span>{text.usage}</span>
             <select
               value={selectedUsageLimit ?? "all"}
-              onChange={(event) => setSelectedUsageLimit(parseUsageLimit(event.target.value))}
+              onChange={(event) => changeUsageLimit(event.target.value)}
             >
               <option value="all">{text.all}</option>
               {USAGE_LIMITS.map((limit) => (

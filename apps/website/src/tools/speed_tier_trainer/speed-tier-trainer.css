@@ -1,4 +1,4 @@
-/* speed-tier-trainer.css — Speed Tier Trainer PWA V5 */
+/* speed-tier-trainer.css — Speed Tier Trainer PWA V6 */
 :root {
   --trainer-page-start: #eef2ff;
   --trainer-page-middle: #f8fafc;
@@ -244,7 +244,8 @@ select:focus-visible {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 18px;
+  width: min(100%, 560px);
+  margin: 18px auto 0;
 }
 
 .trainer-stat-card {
@@ -252,11 +253,13 @@ select:focus-visible {
   min-width: 0;
   min-height: 70px;
   align-content: center;
+  justify-items: center;
   gap: 2px;
   padding: 10px;
   border: 1px solid var(--trainer-border);
   border-radius: 13px;
   background: var(--trainer-surface-soft);
+  text-align: center;
 }
 
 .trainer-stat-card span {
@@ -493,7 +496,7 @@ select:focus-visible {
   width: min(100%, 260px);
   min-height: 44px;
   margin-top: 14px;
-  margin-bottom: var(--trainer-keyboard-space, 0px);
+  scroll-margin-bottom: 8px;
 }
 
 .trainer-action-slot-complete {
@@ -586,6 +589,7 @@ select:focus-visible {
 
   .trainer-score {
     gap: 6px;
+    width: min(100%, 328px);
   }
 
   .trainer-stat-card {
@@ -634,13 +638,13 @@ select:focus-visible {
   }
 
   .trainer-answer-row input {
-    width: 96px;
+    width: 84px;
     height: 42px;
     font-size: 1.25rem;
   }
 
   .trainer-answer-row .trainer-primary-button {
-    min-width: 132px;
+    min-width: 120px;
     min-height: 42px;
     padding: 7px 12px;
     font-size: 0.9rem;
@@ -669,8 +673,8 @@ select:focus-visible {
   }
 
   .trainer-base-speed {
-    min-width: 88px;
-    min-height: 58px;
+    min-width: 78px;
+    min-height: 54px;
     border-radius: 10px;
   }
 
@@ -679,7 +683,7 @@ select:focus-visible {
   }
 
   .trainer-base-speed strong {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
   }
 
   .trainer-speed-table {
@@ -734,12 +738,12 @@ select:focus-visible {
   }
 
   .trainer-answer-row input {
-    width: 96px;
+    width: 84px;
   }
 
   .trainer-answer-row .trainer-primary-button {
-    min-width: 0;
-    flex: 1;
+    min-width: 120px;
+    flex: 0 0 auto;
   }
 
   .trainer-speed-table {

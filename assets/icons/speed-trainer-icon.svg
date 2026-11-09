@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
   <title id="title">MISHIRO Speed Tier Trainer</title>
-  <desc id="description">A red and white app icon with a dark blue speedometer and a light blue center.</desc>
+  <desc id="description">A red and white app icon with a white-faced dark blue speedometer and a light blue center.</desc>
   <rect width="512" height="256" fill="#ef3340"/>
   <rect y="256" width="512" height="256" fill="#fff"/>
+  <path d="M86 326a170 170 0 0 1 340 0Z" fill="#fff"/>
   <path
     d="M86 326a170 170 0 0 1 340 0"
     fill="none"
