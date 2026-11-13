@@ -32,6 +32,7 @@ from apps.desktop.tools.damage_calculator.calculations import (
     calculate_damage_result,
     calculate_effectiveness,
     calculate_ko_summary,
+    dynamic_power_counter_range,
     multi_hit_count_range,
 )
 
@@ -163,6 +164,7 @@ class DamageCalculatorWindow(QWidget):
                     "power_trick": False,
                     "friend_guard": False,
                     "aurora_veil": False,
+                    "stockpile": 0,
                 },
                 {
                     "stealth_rock": False,
@@ -181,12 +183,14 @@ class DamageCalculatorWindow(QWidget):
                     "power_trick": False,
                     "friend_guard": False,
                     "aurora_veil": False,
+                    "stockpile": 0,
                 },
             ],
         }
         self._modifier_option_buttons: dict[str, dict[str, QPushButton]] = {}
         self._modifier_buttons_by_key: dict[str, list[QPushButton]] = {}
         self._modifier_spike_buttons: list[dict[int, QPushButton]] = [{}, {}]
+        self._modifier_stockpile_buttons: list[dict[int, QPushButton]] = [{}, {}]
         self._modifier_side_buttons: list[dict[str, QPushButton]] = [{}, {}]
         self._modifier_gravity_button: QPushButton | None = None
         self._modifier_global_buttons: dict[str, QPushButton] = {}
@@ -296,6 +300,7 @@ class DamageCalculatorWindow(QWidget):
         self.result_detail_panels: list[list[QFrame]] = [[], []]
         self.result_detail_fields: list[list[dict[str, Any]]] = [[], []]
         self.result_hit_count_inputs: list[list[QSpinBox]] = [[], []]
+        self.result_stack_labels: list[list[QLabel]] = [[], []]
         self.result_crit_buttons: list[list[QPushButton]] = [[], []]
         self.result_crit_count_inputs: list[list[QSpinBox]] = [[], []]
         self.result_crit_active: list[list[bool]] = [[False] * 4, [False] * 4]
@@ -334,6 +339,10 @@ class DamageCalculatorWindow(QWidget):
                 percent.setObjectName("damagePercent")
                 percent.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 percent.setMinimumWidth(68)
+                stack_label = QLabel(DAMAGE_UI_TEXT[self.language]["stacks"])
+                stack_label.setObjectName("stackLabel")
+                stack_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                stack_label.hide()
                 hit_count = QSpinBox()
                 hit_count.setObjectName("hitCount")
                 hit_count.setRange(1, 1)
@@ -369,6 +378,7 @@ class DamageCalculatorWindow(QWidget):
                     self._result_hit_count_changed(selected_side, selected_slot, value)
                 )
                 row_layout.addWidget(move_name, 3)
+                row_layout.addWidget(stack_label, 0)
                 row_layout.addWidget(hit_count, 0)
                 row_layout.addWidget(crit_button, 0)
                 row_layout.addWidget(crit_count, 0)
@@ -387,6 +397,10 @@ class DamageCalculatorWindow(QWidget):
                 damage_range.setObjectName("damageDetailDamage")
                 damage_range.setWordWrap(True)
                 damage_range.hide()
+                recovery = QLabel()
+                recovery.setObjectName("damageDetailRecovery")
+                recovery.setWordWrap(True)
+                recovery.hide()
                 multipliers = QLabel()
                 multipliers.setObjectName("damageDetailMultipliers")
                 multipliers.setWordWrap(True)
@@ -417,6 +431,7 @@ class DamageCalculatorWindow(QWidget):
                 # expanded card, after the summary and additional effects.
                 detail_layout.addWidget(ko)
                 detail_layout.addWidget(damage_range)
+                detail_layout.addWidget(recovery)
                 detail_layout.addWidget(multipliers)
                 detail_layout.addWidget(self_damage)
                 detail_layout.addWidget(considered)
@@ -433,6 +448,7 @@ class DamageCalculatorWindow(QWidget):
                 self.result_detail_fields[side].append(
                     {
                         "damage_range": damage_range,
+                        "recovery": recovery,
                         "multipliers": multipliers,
                         "self_damage": self_damage,
                         "considered": considered,
@@ -442,6 +458,7 @@ class DamageCalculatorWindow(QWidget):
                     }
                 )
                 self.result_hit_count_inputs[side].append(hit_count)
+                self.result_stack_labels[side].append(stack_label)
                 self.result_crit_buttons[side].append(crit_button)
                 self.result_crit_count_inputs[side].append(crit_count)
             tab_layout.addStretch(1)
@@ -557,7 +574,7 @@ class DamageCalculatorWindow(QWidget):
 
         # Keep the defensive/support modifiers in the same visual order on
         # both sides.  This mirrors the compact modifier mockup: Helping Hand,
-        # screens, Aurora Veil, Friend Guard, Protect, then hazards.
+        # screens, Aurora Veil, Friend Guard, Stockpile, Protect, then hazards.
         for key in ("helping_hand",):
             button = self._new_modifier_button(key)
             button.clicked.connect(
@@ -591,7 +608,7 @@ class DamageCalculatorWindow(QWidget):
             row_layout.addWidget(button, 1)
         column.addLayout(row_layout)
 
-        for key in ("aurora_veil", "friend_guard", "protect"):
+        for key in ("aurora_veil", "friend_guard"):
             button = self._new_modifier_button(key)
             button.clicked.connect(
                 lambda checked, selected_side=side, selected_key=key:
@@ -603,6 +620,44 @@ class DamageCalculatorWindow(QWidget):
             )
             self._modifier_side_buttons[side][key] = button
             column.addWidget(button)
+
+        stockpile_row = QHBoxLayout()
+        stockpile_row.setContentsMargins(0, 0, 0, 0)
+        stockpile_row.setSpacing(0)
+        stockpile_label = self._new_modifier_button("stockpile")
+        stockpile_label.setCheckable(False)
+        stockpile_label.setProperty("modifierSegment", True)
+        stockpile_counts = (1, 2, 3) if side == 0 else (3, 2, 1)
+        if side == 0:
+            stockpile_row.addWidget(stockpile_label, 3)
+        for count in stockpile_counts:
+            button = QPushButton()
+            button.setObjectName("modifierButton")
+            button.setProperty("modifierSegment", True)
+            button.setCheckable(True)
+            button.setMinimumHeight(26)
+            button.clicked.connect(
+                lambda _checked, selected_side=side, selected_count=count:
+                self._modifier_stockpile_clicked(selected_side, selected_count)
+            )
+            self._modifier_stockpile_buttons[side][count] = button
+            stockpile_row.addWidget(button, 1)
+        if side == 1:
+            stockpile_row.addWidget(stockpile_label, 3)
+        column.addLayout(stockpile_row)
+
+        key = "protect"
+        button = self._new_modifier_button(key)
+        button.clicked.connect(
+            lambda checked, selected_side=side, selected_key=key:
+            self._modifier_side_toggle_clicked(
+                selected_side,
+                selected_key,
+                checked,
+            )
+        )
+        self._modifier_side_buttons[side][key] = button
+        column.addWidget(button)
 
         stealth_rock = self._new_modifier_button("stealth_rock")
         stealth_rock.clicked.connect(
@@ -798,6 +853,16 @@ class DamageCalculatorWindow(QWidget):
             button.blockSignals(False)
         self._refresh_results()
 
+    def _modifier_stockpile_clicked(self, side: int, count: int) -> None:
+        current = self.modifier_state["sides"][side]["stockpile"]
+        selected = 0 if current == count else count
+        self.modifier_state["sides"][side]["stockpile"] = selected
+        for option, button in self._modifier_stockpile_buttons[side].items():
+            button.blockSignals(True)
+            button.setChecked(option == selected)
+            button.blockSignals(False)
+        self._refresh_results()
+
     def _refresh_modifier_labels(self) -> None:
         if not hasattr(self, "modifier_heading"):
             return
@@ -810,6 +875,9 @@ class DamageCalculatorWindow(QWidget):
             for button in buttons:
                 button.setText(label)
         for side_buttons in self._modifier_spike_buttons:
+            for count, button in side_buttons.items():
+                button.setText(str(count))
+        for side_buttons in self._modifier_stockpile_buttons:
             for count, button in side_buttons.items():
                 button.setText(str(count))
 
@@ -931,6 +999,7 @@ class DamageCalculatorWindow(QWidget):
         if normalize(combo.lineEdit().text()):
             return
         candidates = self.side_editors[side]
+        self._close_damage_detail()
         removed = candidates.pop(slot)
         if slot == self.active_editor_indices[side]:
             self._set_ability_field_effect(side, None)
@@ -959,6 +1028,8 @@ class DamageCalculatorWindow(QWidget):
         self.detail_side = side
         self._sync_result_side(side)
         if slot < len(candidates):
+            if slot != self.active_editor_indices[side]:
+                self._close_damage_detail()
             self.active_editor_indices[side] = slot
             self.editors[side] = candidates[slot]
             self._show_active_editor(side)
@@ -1054,6 +1125,7 @@ class DamageCalculatorWindow(QWidget):
         QTimer.singleShot(0, self._clear_last_picker_selection)
         self._picker_selection_guard = True
         try:
+            self._close_damage_detail()
             if slot == len(candidates):
                 self._add_editor(side, form)
                 return
@@ -1099,9 +1171,10 @@ class DamageCalculatorWindow(QWidget):
             if not 0 <= side < len(sides):
                 return {}
             state = dict(sides[side] or {})
-            # Beat Up needs the base Attack of every non-fainted ally. The
-            # calculator has the team slots already, so pass this data from
-            # the UI instead of inventing a one-time hard-coded party list.
+            # Beat Up uses the base Attack of entered, non-fainted allies when
+            # available. The calculator fills any missing counter slots with
+            # the active Pokémon's base Attack, so the UI counter stays
+            # independent of how many team entries have been selected.
             party_base_attacks = []
             for editor in self._side_editors(side):
                 if editor.form is None or editor.current_hp_value() <= 0:
@@ -1112,6 +1185,31 @@ class DamageCalculatorWindow(QWidget):
                 except (TypeError, ValueError):
                     continue
             state["party_base_attacks"] = tuple(party_base_attacks)
+            try:
+                state["stockpile_count"] = max(
+                    0,
+                    min(3, int(state.get("stockpile", state.get("stockpile_count", 0)))),
+                )
+            except (TypeError, ValueError):
+                state["stockpile_count"] = 0
+            active_editor = self._active_editor(side)
+            if active_editor is not None:
+                state["fainted_allies"] = max(
+                    0,
+                    min(100, int(getattr(active_editor, "fainted_allies", 0))),
+                )
+                state["rage_fist_hits"] = max(
+                    0,
+                    min(6, int(getattr(active_editor, "rage_fist_hits", 0))),
+                )
+                state["fury_cutter_count"] = max(
+                    1,
+                    min(4, int(getattr(active_editor, "fury_cutter_count", 1))),
+                )
+                state["beat_up_count"] = max(
+                    1,
+                    min(6, int(getattr(active_editor, "beat_up_count", 4))),
+                )
             return state
 
         return {
@@ -1347,6 +1445,7 @@ class DamageCalculatorWindow(QWidget):
         """Show the same side in the lower editor when its damage tab is clicked."""
         if side not in (0, 1):
             return
+        self._close_damage_detail()
         self.detail_side = side
         self._show_active_editor(side)
         self._update_picker_highlights()
@@ -1445,6 +1544,11 @@ class DamageCalculatorWindow(QWidget):
     def _format_damage_probability(value: float) -> str:
         percentage = max(0.0, float(value)) * 100
         return "<0.01%" if 0 < percentage < 0.01 else f"{percentage:.2f}%"
+
+    @staticmethod
+    def _format_ko_chance(value: float) -> str:
+        percentage = max(0.0, float(value)) * 100
+        return "<0.1%" if 0 < percentage < 0.1 else f"{percentage:.1f}%"
 
     @staticmethod
     def _format_hp_range(value: tuple[int, int], hp_label: str = "KP") -> str:
@@ -1577,6 +1681,12 @@ class DamageCalculatorWindow(QWidget):
                 if panel is not except_panel:
                     panel.hide()
 
+    def _close_damage_detail(self) -> None:
+        """Close an open attack detail when the active Pokémon changes."""
+        self._hide_damage_details()
+        self.selected_damage_detail = None
+        self._damage_detail_rolls_expanded = False
+
     def _toggle_damage_detail_rolls(self, side: int, slot: int) -> None:
         if side < 0 or side >= len(self.result_detail_fields) or slot < 0 or slot >= 4:
             return
@@ -1603,6 +1713,9 @@ class DamageCalculatorWindow(QWidget):
         editor = self.editors[side]
         if editor is None:
             return None
+        counter = dynamic_power_counter_range(move)
+        if counter is not None and counter[0] == "beat_up_count":
+            return self._result_dynamic_counter_parameter(side, move)
         side_state = self._field_modifiers_for_sides(side, 1 - side).get("attacker_side", {})
         hit_range = multi_hit_count_range(
             move,
@@ -1622,6 +1735,25 @@ class DamageCalculatorWindow(QWidget):
             selected = maximum if minimum == 1 else minimum
             editor.multi_hit_counts[slot] = selected
         return int(selected)
+
+    def _result_dynamic_counter_parameter(
+        self,
+        side: int,
+        move: Mapping[str, Any],
+    ) -> int | None:
+        """Return and clamp the battle-history counter for a move."""
+        editor = self.editors[side]
+        counter = dynamic_power_counter_range(move)
+        if editor is None or counter is None:
+            return None
+        key, minimum, maximum = counter
+        try:
+            value = int(getattr(editor, key, minimum))
+        except (TypeError, ValueError):
+            value = minimum
+        value = max(minimum, min(maximum, value))
+        setattr(editor, key, value)
+        return value
 
     def _result_crit_parameters(
         self,
@@ -1716,10 +1848,22 @@ class DamageCalculatorWindow(QWidget):
             attacker_form=editor.form,
             attacker_side=self._field_modifiers_for_sides(side, 1 - side).get("attacker_side", {}),
         )
+        counter = dynamic_power_counter_range(move)
+        if counter is not None and counter[0] != "beat_up_count":
+            key, minimum, maximum = counter
+            value = max(minimum, min(maximum, int(value)))
+            setattr(editor, key, value)
+            self._refresh_results()
+            return
         if hit_range is None:
             return
-        minimum, maximum = int(hit_range[0]), int(hit_range[1])
-        selected = max(minimum, min(maximum, int(value)))
+        if counter is not None and counter[0] == "beat_up_count":
+            key, minimum, maximum = counter
+            selected = max(minimum, min(maximum, int(value)))
+            setattr(editor, key, selected)
+        else:
+            minimum, maximum = int(hit_range[0]), int(hit_range[1])
+            selected = max(minimum, min(maximum, int(value)))
         editor.multi_hit_counts[slot] = selected
         if self._move_is_always_critical(move):
             editor.crit_active[slot] = True
@@ -1820,6 +1964,8 @@ class DamageCalculatorWindow(QWidget):
             "charge": "Ladevorgang" if self.language == "de" else "Charge",
             "weather_ball": "Meteorologe" if self.language == "de" else "Weather Ball",
             "terrain_pulse": "Terrain-Puls" if self.language == "de" else "Terrain Pulse",
+            "stacks": DAMAGE_UI_TEXT[self.language]["stacks"],
+            "stockpile": self._modifier_label("stockpile"),
         }
         if key in direct_labels:
             return direct_labels[key]
@@ -1881,6 +2027,7 @@ class DamageCalculatorWindow(QWidget):
         self.selected_damage_detail = selected_detail
         fields = self.result_detail_fields[side][slot]
         damage_range_label = fields["damage_range"]
+        recovery_label = fields["recovery"]
         multipliers_label = fields["multipliers"]
         self_damage_label = fields["self_damage"]
         considered_label = fields["considered"]
@@ -1890,6 +2037,8 @@ class DamageCalculatorWindow(QWidget):
         self._hide_damage_details(detail_panel)
         damage_range_label.clear()
         damage_range_label.hide()
+        recovery_label.clear()
+        recovery_label.hide()
         multipliers_label.clear()
         multipliers_label.hide()
         self_damage_label.clear()
@@ -1950,6 +2099,23 @@ class DamageCalculatorWindow(QWidget):
                 )
             )
             damage_range_label.show()
+        if damage_result.recovery:
+            recovery_parts = []
+            for item_id, recovered_range in damage_result.recovery:
+                item = self.data.items_by_name.get(str(item_id))
+                item_name = self.data.localized(item, str(item_id), self.language) if item else str(item_id)
+                recovered_text = self._format_hp_range(
+                    recovered_range,
+                    DAMAGE_UI_TEXT[self.language]["hp"],
+                )
+                recovery_parts.append(
+                    DAMAGE_UI_TEXT[self.language]["recovered_damage"].format(
+                        amount=recovered_text,
+                        item=item_name,
+                    )
+                )
+            recovery_label.setText(" · ".join(recovery_parts))
+            recovery_label.show()
         if damage_result.multipliers:
             multipliers_label.setText(
                 self._format_damage_multipliers(
@@ -1989,7 +2155,23 @@ class DamageCalculatorWindow(QWidget):
                 ko_text = DAMAGE_UI_TEXT[self.language]["ko_hazard"]
             else:
                 ko_format = "OHKO" if hits == 1 else f"{hits}HKO"
-                ko_text = DAMAGE_UI_TEXT[self.language]["ko_chance"].format(label=ko_format, chance=chance * 100)
+                ko_text = DAMAGE_UI_TEXT[self.language]["ko_chance"].format(
+                    label=ko_format,
+                    chance=self._format_ko_chance(chance),
+                )
+                next_hits = ko_summary.get("next_hits")
+                next_chance = ko_summary.get("next_chance")
+                if (
+                    0 < chance < 0.001
+                    and next_hits is not None
+                    and next_chance is not None
+                ):
+                    next_hits = int(next_hits)
+                    next_format = "OHKO" if next_hits == 1 else f"{next_hits}HKO"
+                    ko_text += " · " + DAMAGE_UI_TEXT[self.language]["ko_chance"].format(
+                        label=next_format,
+                        chance=self._format_ko_chance(float(next_chance)),
+                    )
         considered_effects = tuple(ko_summary.get("considered_effects", ())) if ko_summary else ()
         if considered_effects:
             hazard_damage_by_key = {
@@ -1999,6 +2181,17 @@ class DamageCalculatorWindow(QWidget):
             effect_labels = []
             for effect in considered_effects:
                 label = self._ko_effect_label(effect)
+                if effect == "dynamic_power" and damage_result.dynamic_power_range:
+                    power_minimum, power_maximum = damage_result.dynamic_power_range
+                    power_text = (
+                        str(power_minimum)
+                        if power_minimum == power_maximum
+                        else f"{power_minimum}–{power_maximum}"
+                    )
+                    label = (
+                        f"{label} ({DAMAGE_UI_TEXT[self.language]['power_label']} "
+                        f"{power_text})"
+                    )
                 if effect in hazard_damage_by_key:
                     label = f"{label}: −{hazard_damage_by_key[effect]} {DAMAGE_UI_TEXT[self.language]['hp']}"
                 effect_labels.append(label)
@@ -2041,8 +2234,7 @@ class DamageCalculatorWindow(QWidget):
         self.result_panel.layout().activate()
         self.result_panel.adjustSize()
         if attacker is None or defender is None or attacker.form is None or defender.form is None:
-            self._damage_detail_rolls_expanded = False
-            self._hide_damage_details()
+            self._close_damage_detail()
             for slot, (move_name, effectiveness_label, percent_label) in enumerate(self.result_rows[active_index]):
                 self._set_move_effectiveness_state(
                     self.result_row_frames[active_index][slot],
@@ -2052,6 +2244,7 @@ class DamageCalculatorWindow(QWidget):
                 effectiveness_label.setText("")
                 percent_label.setText("—")
                 self.result_hit_count_inputs[active_index][slot].hide()
+                self.result_stack_labels[active_index][slot].hide()
                 self.result_crit_count_inputs[active_index][slot].hide()
                 self.result_crit_buttons[active_index][slot].hide()
             return
@@ -2065,6 +2258,7 @@ class DamageCalculatorWindow(QWidget):
                 effectiveness_label.setText("")
                 percent_label.setText("—")
                 self.result_hit_count_inputs[active_index][slot].hide()
+                self.result_stack_labels[active_index][slot].hide()
                 self.result_crit_count_inputs[active_index][slot].hide()
                 self.result_crit_buttons[active_index][slot].hide()
                 continue
@@ -2085,14 +2279,85 @@ class DamageCalculatorWindow(QWidget):
                 attacker_side=field_modifiers.get("attacker_side", {}),
             )
             hit_input = self.result_hit_count_inputs[active_index][slot]
+            stack_label = self.result_stack_labels[active_index][slot]
             crit_button = self.result_crit_buttons[active_index][slot]
             crit_count = self.result_crit_count_inputs[active_index][slot]
+            counter_range = dynamic_power_counter_range(move)
+            stack_label.setText(DAMAGE_UI_TEXT[self.language]["stacks"])
+            stack_label.setVisible(counter_range is not None)
             crit_button.setVisible(True)
             crit_button.setChecked(
                 bool(attacker.crit_active[slot] or self._move_is_always_critical(move))
             )
             crit_button.setEnabled(not self._move_is_always_critical(move))
-            if hit_range is None:
+            if counter_range is not None:
+                counter_key, counter_minimum, counter_maximum = counter_range
+                counter_value = self._result_dynamic_counter_parameter(active_index, move)
+                counter_tooltips = {
+                    "fainted_allies": (
+                        "Fainted team members"
+                        if self.language == "en"
+                        else "Besiegte Teammitglieder"
+                    ),
+                    "rage_fist_hits": (
+                        "Hits taken"
+                        if self.language == "en"
+                        else "Erlittene Treffer"
+                    ),
+                    "fury_cutter_count": (
+                        "Consecutive hits"
+                        if self.language == "en"
+                        else "Aufeinanderfolgende Treffer"
+                    ),
+                    "beat_up_count": (
+                        "Participating team members"
+                        if self.language == "en"
+                        else "Beteiligte Teammitglieder"
+                    ),
+                }
+                counter_tooltip = counter_tooltips.get(
+                    counter_key,
+                    DAMAGE_UI_TEXT[self.language]["stacks"],
+                )
+                hit_input.setToolTip(counter_tooltip)
+                hit_input.blockSignals(True)
+                hit_input.setRange(counter_minimum, counter_maximum)
+                hit_input.setValue(int(counter_value or counter_minimum))
+                hit_input.blockSignals(False)
+                hit_input.setEnabled(counter_minimum != counter_maximum)
+                hit_input.setVisible(True)
+                selected_hit_count = (
+                    counter_value
+                    if counter_key == "beat_up_count"
+                    else None
+                )
+                if hit_range is None:
+                    crit_count.hide()
+                else:
+                    always_critical = self._move_is_always_critical(move)
+                    crit_count.setToolTip(
+                        "Number of critical hits"
+                        if self.language == "en"
+                        else "Anzahl kritischer Treffer"
+                    )
+                    selected_hit_count = int(counter_value or counter_minimum)
+                    if always_critical:
+                        attacker.crit_active[slot] = True
+                        attacker.crit_counts[slot] = selected_hit_count
+                        self.result_crit_active[active_index][slot] = True
+                        self.result_crit_counts[active_index][slot] = selected_hit_count
+                    else:
+                        attacker.crit_counts[slot] = max(
+                            0,
+                            min(selected_hit_count, int(attacker.crit_counts[slot])),
+                        )
+                    crit_count.setRange(0, selected_hit_count)
+                    crit_count.blockSignals(True)
+                    crit_count.setValue(attacker.crit_counts[slot])
+                    crit_count.blockSignals(False)
+                    crit_count.setEnabled(not always_critical)
+                    crit_count.setVisible(True)
+            elif hit_range is None:
                 hit_input.hide()
                 crit_count.hide()
                 selected_hit_count = None
@@ -2275,6 +2540,7 @@ class DamageCalculatorWindow(QWidget):
             QFrame#moveResult[effectivenessState="notEffective"] {{ background: rgba(217, 92, 92, 26); border: 1px solid #D95C5C; }}
             QFrame#moveResult[effectivenessState="notEffective"]:hover {{ background: rgba(217, 92, 92, 26); border: 1px solid #D95C5C; }}
             QLabel#moveResultName {{ background: transparent; font-size: 12px; font-weight: 650; }}
+            QLabel#stackLabel {{ background: transparent; color: {colors['muted']}; font-size: 9px; font-weight: 650; }}
             QLabel#damagePercent {{ background: transparent; color: {ORANGE}; font-size: 13px; font-weight: bold; }}
             QSpinBox#hitCount {{ color: {colors['muted']}; background: rgba(128, 128, 128, 26); border: 1px solid {colors['muted']}; border-radius: 6px; padding: 0 1px; min-height: 20px; font-size: 10px; font-weight: bold; }}
             QSpinBox#hitCount:focus {{ color: {ORANGE}; border-color: {ORANGE}; }}
@@ -2305,9 +2571,9 @@ class DamageCalculatorWindow(QWidget):
             QComboBox#pokemonPickerCombo::drop-down {{ width: 0px; border: none; }}
             QComboBox#pokemonPickerCombo::down-arrow {{ image: none; width: 0px; height: 0px; }}
             QFrame#damageDetail {{ background: transparent; border: none; border-top: 1px solid {colors['border']}; border-radius: 0px; }}
-            QLabel#damageDetailDamage, QLabel#damageDetailMultipliers, QLabel#damageDetailSelf, QLabel#damageDetailKO, QLabel#damageDetailText {{ color: {colors['text']}; }}
+            QLabel#damageDetailDamage, QLabel#damageDetailRecovery, QLabel#damageDetailMultipliers, QLabel#damageDetailSelf, QLabel#damageDetailKO, QLabel#damageDetailText {{ color: {colors['text']}; }}
             QLabel#damageDetailConsidered {{ color: {colors['muted']}; font-size: 10px; }}
-            QLabel#damageDetailDamage, QLabel#damageDetailMultipliers, QLabel#damageDetailSelf, QLabel#damageDetailKO {{ font-weight: bold; }}
+            QLabel#damageDetailDamage, QLabel#damageDetailRecovery, QLabel#damageDetailMultipliers, QLabel#damageDetailSelf, QLabel#damageDetailKO {{ font-weight: bold; }}
             QLabel#damageDetailText {{ font-size: 10px; }}
             QPushButton#damageDetailToggle {{ color: {ORANGE}; background: transparent; border: none; padding: 1px 0; text-align: left; font-size: 10px; font-weight: bold; }}
             QPushButton#damageDetailToggle:hover {{ color: {ORANGE_HOVER}; }}

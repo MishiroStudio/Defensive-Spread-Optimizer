@@ -81,6 +81,13 @@ class PokemonEditor(QWidget):
         self.multi_hit_counts: list[int | None] = [None] * 4
         self.crit_active = [False] * 4
         self.crit_counts = [0] * 4
+        # Battle-history counters used by state-dependent move powers.
+        # They belong to the edited Pokémon, so switching between saved
+        # Pokémon on one side keeps each counter independent.
+        self.fainted_allies = 0
+        self.rage_fist_hits = 0
+        self.fury_cutter_count = 1
+        self.beat_up_count = 4
         self.stat_stages = {stat: 0 for stat in STAT_KEYS}
         self._current_hp_is_default = True
         self._last_point_values = dict(self.stat_points)

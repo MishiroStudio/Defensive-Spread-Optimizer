@@ -22,6 +22,8 @@ class DamageResult:
     percent_range: tuple[float, float] | None
     self_damage: dict[str, Any] | None = None
     multipliers: tuple[tuple[str, float], ...] = ()
+    recovery: tuple[tuple[str, tuple[int, int]], ...] = ()
+    dynamic_power_range: tuple[int, int] | None = None
 
 TERRAIN_MOVE_TYPES = {
     "electric": "electric",
@@ -750,9 +752,10 @@ def _dynamic_move_power(
     callbacks therefore read explicit, optional values from the attacker and
     defender side mappings.  When such a value is not supplied, the neutral
     first-use state is used (for example, first Rollout hit, no status, and no
-    previous fainted allies).  Moves that genuinely have no meaningful power
-    without additional data, such as Beat Up without a party list or Spit Up
-    without Stockpile, still return ``None``.
+    previous fainted allies). Moves that genuinely have no meaningful power
+    without additional data, such as Spit Up without Stockpile, still return
+    ``None``. Beat Up uses the active Pokémon's base Attack as a fallback for
+    party slots that have not been entered in the team picker.
     """
     move_name = str(move.get("api_name") or "").casefold()
     attacker_side = attacker_side if isinstance(attacker_side, Mapping) else {}
@@ -772,14 +775,22 @@ def _dynamic_move_power(
 
     if move_name == "beatup":
         party_base_attacks = attacker_side.get("party_base_attacks")
-        if not isinstance(party_base_attacks, (list, tuple)):
-            return None
-        if move_hit_index >= len(party_base_attacks):
-            return None
-        try:
-            base_attack = max(0, int(party_base_attacks[move_hit_index]))
-        except (TypeError, ValueError):
-            return None
+        base_attack = None
+        if isinstance(party_base_attacks, (list, tuple)) and move_hit_index < len(party_base_attacks):
+            try:
+                base_attack = max(0, int(party_base_attacks[move_hit_index]))
+            except (TypeError, ValueError):
+                base_attack = None
+        # The visible Beat Up counter is independent of how many Pokémon have
+        # already been entered in the team picker. If a selected team does not
+        # provide enough base-Attack values for the chosen number of hits, use
+        # the active Pokémon as a neutral placeholder for the missing slots.
+        if base_attack is None:
+            base_stats = attacker_form.get("base_stats") or {}
+            try:
+                base_attack = max(0, int(base_stats.get("atk", 0)))
+            except (TypeError, ValueError):
+                return None
         return 5 + base_attack // 10
 
     if move_name == "spitup":
@@ -1016,6 +1027,42 @@ def _dynamic_move_power(
     # keeps them calculable while the optional state above can activate their
     # enhanced form when the caller supplies it.
     return int(base_power) if base_power is not None else None
+
+
+def _dynamic_stack_multiplier(
+    move: Mapping[str, Any],
+    power: float | int,
+    attacker_side: Mapping[str, Any],
+    attacker_stat_stages: Mapping[str, int] | None = None,
+) -> float | None:
+    """Return the visible stack multiplier for supported dynamic powers.
+
+    The damage formula already uses the resolved dynamic power. This value is
+    only an explanatory factor for the detail view, so it must never be
+    multiplied into the damage a second time.
+    """
+    move_name = str(move.get("api_name") or "").casefold()
+    base_power = move.get("power")
+    if move_name in {"lastrespects", "ragefist", "furycutter"}:
+        if not isinstance(base_power, (int, float)) or isinstance(base_power, bool) or base_power <= 0:
+            return None
+        return float(power) / float(base_power)
+    if move_name == "spitup":
+        stockpile_count = max(
+            0,
+            min(3, _side_int(attacker_side, "stockpile_count", "stockpile")),
+        )
+        return float(stockpile_count) if stockpile_count else None
+    if move_name in {"storedpower", "powertrip"}:
+        if not isinstance(base_power, (int, float)) or isinstance(base_power, bool) or base_power <= 0:
+            return None
+        positive_stages = sum(
+            max(0, int(value))
+            for value in (attacker_stat_stages or {}).values()
+            if isinstance(value, (int, float)) and not isinstance(value, bool)
+        )
+        return 1.0 + float(positive_stages)
+    return None
 
 
 def _dynamic_power_variants(
@@ -1654,8 +1701,39 @@ def calculate_damage_rolls(
             "spd",
             1,
         )
+    defender_stockpile = max(
+        0,
+        min(3, _side_int(defender_side, "stockpile_count", "stockpile")),
+    )
+    if defender_stockpile:
+        effective_defender_stat_stages = _stage_bonus(
+            effective_defender_stat_stages,
+            "def",
+            defender_stockpile,
+        )
+        effective_defender_stat_stages = _stage_bonus(
+            effective_defender_stat_stages,
+            "spd",
+            defender_stockpile,
+        )
+    attacker_stockpile = max(
+        0,
+        min(3, _side_int(attacker_side, "stockpile_count", "stockpile")),
+    )
+    effective_attacker_stat_stages = attacker_stat_stages
+    if attacker_stockpile:
+        effective_attacker_stat_stages = _stage_bonus(
+            effective_attacker_stat_stages,
+            "def",
+            attacker_stockpile,
+        )
+        effective_attacker_stat_stages = _stage_bonus(
+            effective_attacker_stat_stages,
+            "spd",
+            attacker_stockpile,
+        )
     effective_attacker_stat_stages = (
-        None if defender_ability == "unaware" else attacker_stat_stages
+        None if defender_ability == "unaware" else effective_attacker_stat_stages
     )
     effective_defender_stat_stages_for_damage = (
         None if attacker_ability == "unaware" else effective_defender_stat_stages
@@ -1676,6 +1754,14 @@ def calculate_damage_rolls(
     )
     is_spread_move = bool(move.get("is_spread_move"))
     power_multipliers: list[tuple[str, float]] = []
+    stack_multiplier = _dynamic_stack_multiplier(
+        move,
+        power,
+        dynamic_attacker_side,
+        attacker_stat_stages,
+    )
+    if stack_multiplier is not None:
+        power_multipliers.append(("stacks", stack_multiplier))
 
     if move_name == "steelroller" and terrain is None:
         return tuple(0 for _ in RANDOM_ROLLS)
@@ -2133,10 +2219,11 @@ def _multi_hit_distribution(
     """
     move_name = str(move.get("api_name") or "").casefold()
     if move_name == "beatup":
-        party_base_attacks = (attacker_side or {}).get("party_base_attacks")
-        if isinstance(party_base_attacks, (list, tuple)) and party_base_attacks:
-            return ((len(party_base_attacks), 1.0),)
-        return None
+        count = max(
+            1,
+            min(6, _side_int(attacker_side or {}, "beat_up_count", default=4)),
+        )
+        return ((count, 1.0),)
 
     value = _move_effects(move).get("multi_hit")
     if value is None:
@@ -2185,6 +2272,8 @@ def multi_hit_count_range(
     The normal in-game distribution remains unchanged when no explicit count
     is supplied.
     """
+    if str(move.get("api_name") or "").casefold() == "beatup":
+        return 1, 6
     distribution = _multi_hit_distribution(
         move,
         attacker_ability,
@@ -2202,6 +2291,98 @@ def multi_hit_count_range(
     # hits being inspected, so it must also allow partial sequences: a move
     # that normally starts at two hits can still be evaluated at one hit.
     return 1, max(counts)
+
+
+_DYNAMIC_POWER_COUNTERS = {
+    "lastrespects": ("fainted_allies", 0, 100),
+    "ragefist": ("rage_fist_hits", 0, 6),
+    "furycutter": ("fury_cutter_count", 1, 4),
+    "beatup": ("beat_up_count", 1, 6),
+}
+
+
+def dynamic_power_counter_range(
+    move: Mapping[str, Any],
+) -> tuple[str, int, int] | None:
+    """Return the editable battle-history counter for a dynamic-power move."""
+    move_name = str(move.get("api_name") or "").casefold()
+    counter = _DYNAMIC_POWER_COUNTERS.get(move_name)
+    if counter is None:
+        return None
+    key, minimum, maximum = counter
+    return str(key), int(minimum), int(maximum)
+
+
+def calculate_dynamic_power_range(
+    move: Mapping[str, Any],
+    attacker_form: Mapping[str, Any],
+    defender_form: Mapping[str, Any],
+    attacker_stats: Mapping[str, int],
+    defender_stats: Mapping[str, int],
+    *,
+    attacker_ability: str | None = None,
+    defender_ability: str | None = None,
+    attacker_item: str | None = None,
+    defender_item: str | None = None,
+    attacker_stat_stages: Mapping[str, int] | None = None,
+    defender_stat_stages: Mapping[str, int] | None = None,
+    attacker_burned: bool = False,
+    attacker_current_hp: int | None = None,
+    defender_current_hp: int | None = None,
+    field_modifiers: Mapping[str, Any] | None = None,
+    selected_hit_count: int | None = None,
+) -> tuple[int, int] | None:
+    """Return the resolved base-power range for a dynamic-power move.
+
+    The range is intentionally the move power before field multipliers such as
+    weather, terrain, or Charge. Those factors remain separate in the
+    multiplier trace shown below the damage range.
+    """
+    move_name = str(move.get("api_name") or "").casefold()
+    if not (_move_effects(move).get("dynamic_power") or move_name == "beatup"):
+        return None
+    field = field_modifiers if isinstance(field_modifiers, Mapping) else {}
+    attacker_side = dict(_field_side(field, "attacker_side"))
+    defender_side = _field_side(field, "defender_side")
+    attacker_side.setdefault("ability", _calculation_ability(attacker_ability))
+    room = _field_id(field.get("room"))
+    effective_attacker_item = None if room == "magic-room" else attacker_item
+    effective_defender_item = None if room == "magic-room" else defender_item
+    hit_distribution = _selected_multi_hit_distribution(
+        move,
+        attacker_ability,
+        attacker_item,
+        selected_hit_count,
+        attacker_form=attacker_form,
+        attacker_side=attacker_side,
+    )
+    hit_count = 1
+    if hit_distribution:
+        hit_count = max(1, max(int(count) for count, _probability in hit_distribution))
+    powers: list[int] = []
+    for hit_index in range(hit_count):
+        power = _dynamic_move_power(
+            move,
+            attacker_form,
+            defender_form,
+            attacker_stats,
+            defender_stats,
+            attacker_stat_stages,
+            defender_stat_stages,
+            attacker_current_hp=attacker_current_hp,
+            defender_current_hp=defender_current_hp,
+            attacker_side=attacker_side,
+            defender_side=defender_side,
+            attacker_item=effective_attacker_item,
+            defender_item=effective_defender_item,
+            attacker_burned=attacker_burned,
+            move_hit_index=hit_index,
+        )
+        if isinstance(power, (int, float)) and not isinstance(power, bool) and power > 0:
+            powers.append(int(power))
+    if not powers:
+        return None
+    return min(powers), max(powers)
 
 
 def _selected_multi_hit_distribution(
@@ -2227,7 +2408,12 @@ def _selected_multi_hit_distribution(
         selected = int(selected_hit_count)
     except (TypeError, ValueError):
         return ()
-    allowed_counts = {int(count) for count, _probability in distribution}
+    move_name = str(move.get("api_name") or "").casefold()
+    allowed_counts = (
+        set(range(1, 7))
+        if move_name == "beatup"
+        else {int(count) for count, _probability in distribution}
+    )
     maximum = max(allowed_counts, default=0)
     if not 1 <= selected <= maximum:
         return ()
@@ -2268,7 +2454,8 @@ def calculate_damage_outcomes(
     critical_hit: bool = False,
     critical_hit_count: int | None = None,
     selected_hit_count: int | None = None,
-) -> tuple[tuple[int, float], ...] | None:
+    _return_recovery_details: bool = False,
+) -> tuple[tuple[int, float], ...] | tuple[tuple[int, int, str | None, float], ...] | None:
     """Return the possible damage of one complete attack.
 
     A normal attack produces the usual 16-roll distribution.  For a
@@ -2278,7 +2465,9 @@ def calculate_damage_outcomes(
     applies Crits to the first N individual hits, so multi-hit Crits are not
     incorrectly treated as an all-or-nothing attack.  The target's current HP
     and one-use berries are updated between hits so an individual attack can
-    stop when it KOs.
+    stop when it KOs.  The private recovery-details flag is used by
+    ``calculate_damage_result`` to expose raw damage separately from HP
+    restored by a consumed item.
     """
     field = field_modifiers if isinstance(field_modifiers, Mapping) else {}
     attacker_side = _field_side(field, "attacker_side")
@@ -2314,14 +2503,56 @@ def calculate_damage_outcomes(
         )
         if variants is None:
             return None
-        distribution: dict[int, float] = {}
+        defender_max_hp = _max_hp(defender_stats)
+        starting_hp = _current_hp(defender_current_hp, defender_max_hp)
+        room = _field_id(field.get("room"))
+        initial_item = None if room == "magic-room" else defender_item
+        effectiveness = calculate_effectiveness(
+            move,
+            attacker_form,
+            defender_form,
+            attacker_ability=attacker_ability,
+            defender_ability=defender_ability,
+            attacker_item=attacker_item,
+            defender_item=defender_item,
+            field_modifiers=field_modifiers,
+            defender_at_full_hp=defender_at_full_hp,
+        )
+        dynamic_damage = bool(_move_effects(move).get("dynamic_damage"))
+        detailed_distribution: dict[tuple[int, int, str | None], float] = {}
         for rolls, variant_probability in variants:
             if not rolls:
                 return None
             for damage, roll_probability in _outcomes_from_rolls(rolls):
-                distribution[damage] = distribution.get(damage, 0.0) + (
+                damage = int(damage)
+                recovered = 0
+                recovery_item: str | None = None
+                remaining_hp = starting_hp - damage
+                if remaining_hp > 0:
+                    healed_hp, remaining_item = _post_hit_berry_effects(
+                        remaining_hp,
+                        defender_max_hp,
+                        initial_item,
+                        effectiveness,
+                        damage,
+                        not dynamic_damage,
+                    )
+                    recovered = max(0, healed_hp - remaining_hp)
+                    if recovered > 0:
+                        recovery_item = initial_item
+                key = (damage, recovered, recovery_item)
+                detailed_distribution[key] = detailed_distribution.get(key, 0.0) + (
                     float(variant_probability) * roll_probability
                 )
+        if _return_recovery_details:
+            return tuple(
+                (*key, probability)
+                for key, probability in sorted(detailed_distribution.items())
+                if probability > 0
+            )
+        distribution: dict[int, float] = {}
+        for (damage, _recovered, _recovery_item), probability in detailed_distribution.items():
+            distribution[damage] = distribution.get(damage, 0.0) + probability
         return tuple(
             (damage, probability)
             for damage, probability in sorted(distribution.items())
@@ -2342,6 +2573,8 @@ def calculate_damage_outcomes(
     attacker_hp = _current_hp(attacker_current_hp, attacker_max_hp)
     starting_hp = _current_hp(defender_current_hp, defender_max_hp)
     if starting_hp <= 0:
+        if _return_recovery_details:
+            return ((0, 0, None, 1.0),)
         return ((0, 1.0),)
 
     room = _field_id(field.get("room"))
@@ -2358,7 +2591,7 @@ def calculate_damage_outcomes(
     )
     dynamic_damage = bool(_move_effects(move).get("dynamic_damage"))
     move_name = str(move.get("api_name") or "").casefold()
-    distribution: dict[int, float] = {}
+    detailed_distribution: dict[tuple[int, int, str | None], float] = {}
 
     for hit_count, hit_count_probability in multi_hit:
         # State: current target HP, current item, accumulated damage, and a
@@ -2367,12 +2600,19 @@ def calculate_damage_outcomes(
         # gives the UI a useful theoretical 9/10-hit range for a move that
         # already KOs on hit 8.  The separate KO simulation still stops at
         # the first KO and remains the source of KO chances.
-        states: dict[tuple[int, str | None, int, bool], float] = {
-            (starting_hp, initial_item, 0, False): float(hit_count_probability)
+        states: dict[tuple[int, str | None, int, int, str | None, bool], float] = {
+            (starting_hp, initial_item, 0, 0, None, False): float(hit_count_probability)
         }
         for hit_index in range(hit_count):
-            next_states: dict[tuple[int, str | None, int, bool], float] = {}
-            for (current_hp, current_item, total_damage, terminal), state_probability in states.items():
+            next_states: dict[tuple[int, str | None, int, int, str | None, bool], float] = {}
+            for (
+                current_hp,
+                current_item,
+                total_damage,
+                total_recovered,
+                recovery_item,
+                terminal,
+            ), state_probability in states.items():
                 if _move_effects(move).get("always_critical"):
                     hit_is_critical = True
                 elif critical_hit_count is not None:
@@ -2425,9 +2665,10 @@ def calculate_damage_outcomes(
                         new_hp = calculation_hp - damage
                         new_total = total_damage + damage
                         if terminal or new_hp <= 0:
-                            key = (0, None, new_total, True)
+                            key = (0, None, new_total, total_recovered, recovery_item, True)
                             next_states[key] = next_states.get(key, 0.0) + roll_probability
                             continue
+                        previous_hp = new_hp
                         new_hp, new_item = _post_hit_berry_effects(
                             new_hp,
                             defender_max_hp,
@@ -2436,15 +2677,44 @@ def calculate_damage_outcomes(
                             damage,
                             not dynamic_damage,
                         )
+                        recovered = max(0, new_hp - previous_hp)
+                        new_total_recovered = total_recovered + recovered
+                        new_recovery_item = recovery_item
+                        if recovered > 0:
+                            new_recovery_item = current_item
                         if move_name == "knockoff" and damage > 0:
                             new_item = None
-                        key = (new_hp, new_item, new_total, False)
+                        key = (
+                            new_hp,
+                            new_item,
+                            new_total,
+                            new_total_recovered,
+                            new_recovery_item,
+                            False,
+                        )
                         next_states[key] = next_states.get(key, 0.0) + roll_probability
             states = next_states
 
-        for (_current_hp_value, _current_item, total_damage, _terminal), probability in states.items():
-            distribution[total_damage] = distribution.get(total_damage, 0.0) + probability
+        for (
+            _current_hp_value,
+            _current_item,
+            total_damage,
+            total_recovered,
+            recovery_item,
+            _terminal,
+        ), probability in states.items():
+            key = (total_damage, total_recovered, recovery_item)
+            detailed_distribution[key] = detailed_distribution.get(key, 0.0) + probability
 
+    if _return_recovery_details:
+        return tuple(
+            (*key, probability)
+            for key, probability in sorted(detailed_distribution.items())
+            if probability > 0
+        )
+    distribution: dict[int, float] = {}
+    for (damage, _recovered, _recovery_item), probability in detailed_distribution.items():
+        distribution[damage] = distribution.get(damage, 0.0) + probability
     return tuple(
         (damage, probability)
         for damage, probability in sorted(distribution.items())
@@ -2619,7 +2889,7 @@ def calculate_damage_result(
     selected_hit_count: int | None = None,
 ) -> DamageResult:
     """Calculate the shared per-attack values once for all UI consumers."""
-    outcomes = calculate_damage_outcomes(
+    outcome_details = calculate_damage_outcomes(
         move,
         attacker_form,
         defender_form,
@@ -2640,15 +2910,41 @@ def calculate_damage_result(
         critical_hit=critical_hit,
         critical_hit_count=critical_hit_count,
         selected_hit_count=selected_hit_count,
+        _return_recovery_details=True,
     )
-    if not outcomes:
+    if not outcome_details:
         return DamageResult(None, None, None, None, ())
 
-    damages = tuple(int(damage) for damage, _probability in outcomes)
+    raw_outcomes: dict[int, float] = {}
+    net_damages: list[int] = []
+    recovery_values: dict[str, list[int]] = {}
+    for raw_damage, recovered, recovery_item, probability in outcome_details:
+        raw_damage = int(raw_damage)
+        recovered = max(0, int(recovered))
+        raw_outcomes[raw_damage] = raw_outcomes.get(raw_damage, 0.0) + float(probability)
+        net_damages.append(max(0, raw_damage - recovered))
+        if recovery_item and recovered > 0:
+            recovery_values.setdefault(str(recovery_item), []).append(recovered)
+
+    outcomes = tuple(
+        (damage, probability)
+        for damage, probability in sorted(raw_outcomes.items())
+        if probability > 0
+    )
+    damages = tuple(raw_outcomes)
     damage_range = (min(damages), max(damages))
+    net_damage_range = (min(net_damages), max(net_damages))
     percent_range = damage_percent_range(
-        damage_range,
+        net_damage_range,
         _max_hp(defender_stats),
+    )
+    recovery = tuple(
+        (
+            item_id,
+            (min(amounts), max(amounts)),
+        )
+        for item_id, amounts in sorted(recovery_values.items())
+        if amounts
     )
     self_damage = calculate_self_damage_details(
         move,
@@ -2685,7 +2981,33 @@ def calculate_damage_result(
         critical_hit_count=critical_hit_count,
         selected_hit_count=selected_hit_count,
     )
-    return DamageResult(outcomes, damage_range, percent_range, self_damage, multipliers)
+    dynamic_power_range = calculate_dynamic_power_range(
+        move,
+        attacker_form,
+        defender_form,
+        attacker_stats,
+        defender_stats,
+        attacker_ability=attacker_ability,
+        defender_ability=defender_ability,
+        attacker_item=attacker_item,
+        defender_item=defender_item,
+        attacker_stat_stages=attacker_stat_stages,
+        defender_stat_stages=defender_stat_stages,
+        attacker_burned=attacker_burned,
+        attacker_current_hp=attacker_current_hp,
+        defender_current_hp=defender_current_hp,
+        field_modifiers=field_modifiers,
+        selected_hit_count=selected_hit_count,
+    )
+    return DamageResult(
+        outcomes=outcomes,
+        damage_range=damage_range,
+        percent_range=percent_range,
+        self_damage=self_damage,
+        multipliers=multipliers,
+        recovery=recovery,
+        dynamic_power_range=dynamic_power_range,
+    )
 
 
 def _healing_amount(specification: int | str, max_hp: int) -> int:
@@ -2923,6 +3245,11 @@ def _ko_effect_keys(
         effects.append("helping_hand")
     if defender_side.get("friend_guard"):
         effects.append("friend_guard")
+    if (
+        _side_int(attacker_side, "stockpile_count", "stockpile") > 0
+        or _side_int(defender_side, "stockpile_count", "stockpile") > 0
+    ):
+        effects.append("stockpile")
 
     protection_multiplier = _protection_damage_multiplier(
         move,
@@ -3141,7 +3468,12 @@ def calculate_ko_summary(
         critical_hit_count=critical_hit_count,
     )
 
-    def result(minimum_hits: int | None, chance: float | None) -> dict[str, Any]:
+    def result(
+        minimum_hits: int | None,
+        chance: float | None,
+        next_hits: int | None = None,
+        next_chance: float | None = None,
+    ) -> dict[str, Any]:
         normalized_chance = (
             None
             if chance is None
@@ -3150,6 +3482,12 @@ def calculate_ko_summary(
         return {
             "minimum_hits": minimum_hits,
             "chance": normalized_chance,
+            "next_hits": next_hits,
+            "next_chance": (
+                None
+                if next_chance is None
+                else max(0.0, min(1.0, float(next_chance)))
+            ),
             "effectiveness": effectiveness,
             "considered_effects": considered_effects,
             "hazard_damage": hazard_damage,
@@ -3264,6 +3602,7 @@ def calculate_ko_summary(
         and not move_effects.get("dynamic_damage")
     )
 
+    first_success: tuple[int, float] | None = None
     for attack_number in range(1, max_hits + 1):
         next_states: dict[tuple[int, str | None, bool], float] = {}
         successful_probability = 0.0
@@ -3353,11 +3692,24 @@ def calculate_ko_summary(
                     next_states[next_key] = next_states.get(next_key, 0.0) + path_probability
 
         if successful_probability > 0:
-            return result(attack_number, successful_probability)
+            if first_success is None:
+                first_success = (attack_number, successful_probability)
+                if not next_states:
+                    return result(attack_number, successful_probability)
+                states = next_states
+                continue
+            return result(
+                first_success[0],
+                first_success[1],
+                attack_number,
+                successful_probability,
+            )
         if not next_states:
             break
         states = next_states
 
+    if first_success is not None:
+        return result(first_success[0], first_success[1])
     return result(None, None)
 
 
